@@ -18,8 +18,8 @@ namespace csgenns
             {
                 cg.SetParameters(args);
                 cg.Run();
-                Console.WriteLine("");
-                Console.WriteLine("csgen.exe completed");
+                // Console.WriteLine("");
+                // Console.WriteLine("csgen.exe completed");
             }
         }
     }
@@ -165,11 +165,11 @@ namespace csgenns
                 this.Message($"File '{sourcefile}' cannot be found.");
                 return;
             }
-            if(destfile != "" && !System.IO.File.Exists(destfile))
-            {
-                this.Message($"File '{destfile}' cannot be found.");
-                return;
-            }
+            // if(destfile != "" && !System.IO.File.Exists(destfile))
+            // {
+            //     this.Message($"File '{destfile}' cannot be found.");
+            //     return;
+            // }
             string text = "";
             bool success = true;
             try
