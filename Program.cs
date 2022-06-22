@@ -6,6 +6,21 @@ namespace csgenns
         static void Main(string[] args)
         {
             csgenmain cg = new csgenmain();
+            // test
+            bool testme = false;
+            if(testme)
+            {
+                cg.parameters.Add("replacen");
+                cg.parameters.Add(@"c:\temp\test-replacen-source.txt");
+                cg.parameters.Add("searchfor");
+                cg.parameters.Add("replaceme");
+                cg.parameters.Add("2");
+                cg.parameters.Add("2");
+                cg.parameters.Add(@"c:\temp\test-replacen-output.txt");
+                cg.Run();
+                return;
+            }
+
             if(args.Length==0)
             {
                 cg.NoParameters();
@@ -33,15 +48,15 @@ namespace csgenns
         {
             if(parameters[0].ToLower()=="replace")
             {
-                if(parameters.Count < 4 || parameters.Count > 5 )
+                if(parameters.Count == 2 && ( parameters[1].ToLower() == "-h" || parameters[1].ToLower() == "--help"))
                 {
-                    this.Message("Incorrect number of parameters passed to csgen replace");
-                    this.Message("");
                     this.OneParameter("replace");
                     return;
                 }
-                else if(parameters[1].ToLower() == "-h" || parameters[1].ToLower() == "--help")
+                else if(parameters.Count < 4 || parameters.Count > 5 )
                 {
+                    this.Message("Incorrect number of parameters passed to csgen replace");
+                    this.Message("");
                     this.OneParameter("replace");
                     return;
                 }
@@ -53,20 +68,20 @@ namespace csgenns
                 string destfile = "";
                 if(parameters.Count==5)
                     destfile = parameters[4];
-                this.Replace(parameters[1], parameters[2], parameters[3], destfile);
+                this.Replace(parameters[1], parameters[2], parameters[3], destfile,0,0);
             }
             else if(parameters[0].ToLower()=="replacedq")
             {
-                if(parameters.Count < 3 || parameters.Count > 4 )
+                if(parameters.Count == 2 && ( parameters[1].ToLower() == "-h" || parameters[1].ToLower() == "--help"))
+                {
+                    this.OneParameter("replacedq");
+                    return;
+                }
+                else if(parameters.Count < 3 || parameters.Count > 4 )
                 {
                     this.Message("Incorrect number of parameters passed to csgen replacedq");
                     this.Message("");
                     this.OneParameter("replace");
-                    return;
-                }
-                else if(parameters[1].ToLower() == "-h" || parameters[1].ToLower() == "--help")
-                {
-                    this.OneParameter("replacedq");
                     return;
                 }
                 else if(parameters[2].ToLower() == "")
@@ -77,52 +92,52 @@ namespace csgenns
                 string destfile = "";
                 if(parameters.Count==4)
                     destfile = parameters[3];
-                this.Replace(parameters[1], '"'.ToString(), parameters[2], destfile);
+                this.Replace(parameters[1], '"'.ToString(), parameters[2], destfile,0,0);
             }
             else if(parameters[0].ToLower()=="replacewithdq")
             {
-                if(parameters.Count < 3 || parameters.Count > 4 )
+                if(parameters.Count == 2 && ( parameters[1].ToLower() == "-h" || parameters[1].ToLower() == "--help"))
+                {
+                    this.OneParameter("replacewithdq");
+                    return;
+                }                
+                else if(parameters.Count < 3 || parameters.Count > 4 )
                 {
                     this.Message("Incorrect number of parameters passed to csgen replacewithdq");
                     this.Message("");
                     this.OneParameter("replace");
                     return;
                 }
-                else if(parameters[1].ToLower() == "-h" || parameters[1].ToLower() == "--help")
-                {
-                    this.OneParameter("replacewithdq");
-                    return;
-                }
                 else if(parameters[2].ToLower() == "")
                 {
-                    this.Message("Replace text cannot be empty.");
+                    this.Message("Search text cannot be empty.");
                     return;
                 }
                 string destfile = "";
                 if(parameters.Count==4)
                     destfile = parameters[3];
-                this.Replace(parameters[1], parameters[2], '"'.ToString(), destfile);
+                this.Replace(parameters[1], parameters[2], '"'.ToString(), destfile,0,0);
             }
             else if(parameters[0].ToLower()=="replacechar" 
                 || parameters[0].ToLower()=="replacechr" 
                 || parameters[0].ToLower()=="replaceasc" 
                 || parameters[0].ToLower()=="replaceascii" )
             {
-                if(parameters.Count < 4 || parameters.Count > 5 )
+                if(parameters.Count == 2 && ( parameters[1].ToLower() == "-h" || parameters[1].ToLower() == "--help"))
+                {
+                    this.OneParameter("replacechar");
+                    return;
+                }
+                else if(parameters.Count < 4 || parameters.Count > 5 )
                 {
                     this.Message("Incorrect number of parameters passed to csgen replacechar");
                     this.Message("");
                     this.OneParameter("replace");
                     return;
                 }
-                else if(parameters[1].ToLower() == "-h" || parameters[1].ToLower() == "--help")
-                {
-                    this.OneParameter("replacechar");
-                    return;
-                }
                 else if(parameters[2].ToLower() == "")
                 {
-                    this.Message("Replace text cannot be empty.");
+                    this.Message("Search text cannot be empty.");
                     return;
                 }
                 string searchchartext = new String(parameters[2].Where(Char.IsDigit).ToArray());
@@ -152,13 +167,68 @@ namespace csgenns
                 string destfile = "";
                 if(parameters.Count==5)
                     destfile = parameters[4];
-                this.Replace(parameters[1], ((char)searchcharnum).ToString(), ((char)replacecharnum).ToString(), destfile);
+                this.Replace(parameters[1], ((char)searchcharnum).ToString(), ((char)replacecharnum).ToString(), destfile,0,0);
+            }
+            else if(parameters[0].ToLower()=="replacen"
+                || parameters[0].ToLower()=="replacenth")
+            {
+                if(parameters.Count == 2 && ( parameters[1].ToLower() == "-h" || parameters[1].ToLower() == "--help"))
+                {
+                    this.OneParameter("replacen");
+                    return;
+                }
+                else if(parameters.Count < 6 || parameters.Count > 7 )
+                {
+                    this.Message("Incorrect number of parameters passed to csgen replacen");
+                    this.Message("");
+                    this.OneParameter("replacen");
+                    return;
+                }
+                else if(parameters[2].ToLower() == "")
+                {
+                    this.Message("Search text cannot be empty.");
+                    return;
+                }
+                string nthitemtext = new String(parameters[4].Where(Char.IsDigit).ToArray());
+                string numitemstext = new String(parameters[5].Where(Char.IsDigit).ToArray());
+                if(nthitemtext == "")
+                {
+                    this.Message("The nth number must be between 1 and 65535.");
+                    return;
+                }
+                if(numitemstext == "")
+                {
+                    this.Message("The number of items to replace must be a number from 0 (all) to 65535.");
+                    return;
+                }
+                int nthitem = Int32.Parse(nthitemtext);
+                int numitems = Int32.Parse(numitemstext);
+                if(nthitem < 1 || nthitem > 65535)
+                {
+                    this.Message("The nth number must be between 1 and 65535.");
+                    return;
+                }
+                if(numitems < 0 || numitems > 65535)
+                {
+                    this.Message("The number of items to replace must be a number from 0 (all) to 65535.");
+                    return;
+                }
+                string destfile = "";
+                if(parameters.Count==7)
+                    destfile = parameters[6];
+
+// Usage: csgen replacen sourcefile searchtext replacetext [nthitem] [numitems] [destfile]
+
+                this.Replace(parameters[1], parameters[2], parameters[3], destfile, nthitem, numitems);
+
+
+
             }
 
         }
 
 
-        public void Replace(string sourcefile, string searchtext, string replacetext, string destfile)
+        public void Replace(string sourcefile, string searchtext, string replacetext, string destfile, int nthitem, int numitems)
         {
             if(!System.IO.File.Exists(sourcefile))
             {
@@ -186,7 +256,44 @@ namespace csgenns
                 return;
             }
             int occurcount = ( text.Length - text.Replace(searchtext,"").Length ) / searchtext.Length;
-            text = text.Replace(searchtext,replacetext);
+            int itemsreplaced = 0;
+            if(nthitem == 0 && numitems == 0)
+            {
+                text = text.Replace(searchtext,replacetext);
+                itemsreplaced = occurcount;
+            }
+            else if(nthitem > occurcount)
+            {
+                 this.Message($"There are fewer than {nthitem} instances of '{searchtext}' in '{sourcefile}'.");
+                 return;
+            }
+            else
+            {
+                // we will do a split then recombine
+                string[] parts = text.Split(searchtext,StringSplitOptions.None);
+                var sb = new System.Text.StringBuilder();
+                for(int i=0;i<parts.Length;i++)
+                {
+                    // if this is NOT yet at the nthitem then we put the original string back in
+                    sb.Append(parts[i]);
+                    if(i==(parts.Length-1))
+                    {
+
+                    }
+                    else if(i == (nthitem-1) || ( i > (nthitem-1) && ((itemsreplaced < numitems) || numitems == 0)))
+                    {
+                        sb.Append(replacetext);
+                        itemsreplaced++;
+                    }
+                    else
+                    {
+                        sb.Append(searchtext);
+                    }
+                }
+                text = sb.ToString();
+            }
+            
+
             if(destfile == "")
                 destfile = sourcefile;
             try
@@ -204,15 +311,19 @@ namespace csgenns
             }
             if(occurcount == 0)
             {
+                this.Message($"File '{destfile}' does not contain text '{searchtext}'.");
+            }
+            else if(itemsreplaced == 0)
+            {
                 this.Message($"Wrote to file '{destfile}' with no changes.");
             }
-            else if(occurcount == 1)
+            else if(itemsreplaced == 1)
             {
                 this.Message($"Wrote to file '{destfile}' with one change.");
             }
             else
             {
-                this.Message($"Wrote to file '{destfile}' with {occurcount} changes.");
+                this.Message($"Wrote to file '{destfile}' with {itemsreplaced} changes.");
             }
 
         }
@@ -236,6 +347,7 @@ namespace csgenns
                 this.Message("Command:");
                 this.Message("  replace           Performs a search-replace in text file.");
                 this.Message("  replacechar       Performs a search-replace with CHR() numbers in text file.");
+                this.Message("  replacen          Search and replace the nth items found in a text file.");
                 this.Message("  replacedq         Performs a search in text file for double-quotes.");
                 this.Message("  replacewithdq     Performs a replace in text file with double-quotes.");
                 this.Message("");
@@ -251,6 +363,9 @@ namespace csgenns
                 this.Message("");
                 this.Message("searchtext");
                 this.Message("  Text to be searched for.");
+                this.Message("");
+                this.Message("replacetext");
+                this.Message("  Text that will replace 'searchtext' in the new file.");
                 this.Message("");
                 this.Message("destfile");
                 this.Message("  Optional: Full path to output text file.");
@@ -291,6 +406,30 @@ namespace csgenns
                 this.Message("destfile");
                 this.Message("  Optional: Full path to output text file.");
             }
+            else if(singleparameter.Trim().ToLower()=="replacen")
+            {
+                this.Message("Usage: csgen replacen sourcefile searchtext replacetext nthitem [numitems] [destfile]");
+                this.Message("");
+                this.Message("sourcefile");
+                this.Message("  Full path to the source file to be searched.");
+                this.Message("");
+                this.Message("searchtext");
+                this.Message("  Text to be searched for.");
+                this.Message("");
+                this.Message("replacetext");
+                this.Message("  Text that will replace 'searchtext' in the new file.");
+                this.Message("");
+                this.Message("nthitem");
+                this.Message("  Find the nth-item and replace it with replacetext.");
+                this.Message("");
+                this.Message("numitems");
+                this.Message("  Optional: Find the nth item then replace this numitems times afterwards.");
+                this.Message("");
+                this.Message("destfile");
+                this.Message("  Optional: Full path to output text file.");
+            }
+
+
         }
 
 
