@@ -33,7 +33,7 @@ namespace csgenns
                 cg.parameters.Add("replaceme");
                 cg.parameters.Add("2");
                 cg.parameters.Add("1");
-                cg.parameters.Add(@"c:\temp\test-replacen-output.txt");
+//                cg.parameters.Add(@"c:\temp\test-replacen-output.txt");
                 cg.Run();
                 return;
             }
@@ -194,7 +194,7 @@ namespace csgenns
                     this.OneParameter("replacen");
                     return;
                 }
-                else if(parameters.Count < 6 || parameters.Count > 7 )
+                else if(parameters.Count < 5 || parameters.Count > 7 )
                 {
                     this.Message("Incorrect number of parameters passed to csgen replacen");
                     this.Message("");
@@ -208,15 +208,17 @@ namespace csgenns
                 }
                 string nthitemtext = new String(parameters[4].Where(Char.IsDigit).ToArray());
                 string numitemstext = new String(parameters[5].Where(Char.IsDigit).ToArray());
+                string destfile = "";
                 if(nthitemtext == "")
                 {
                     this.Message("The nth number must be between 1 and 65535.");
                     return;
                 }
-                if(numitemstext != parameters[5])
+                if(numitemstext != parameters[5] && parameters.Count==6)
                 {
                     // assume that this is a file name
                     numitemstext = "1";
+                    destfile = parameters[5];
                 }
 
                 // if(numitemstext == "")
@@ -236,11 +238,10 @@ namespace csgenns
                     this.Message("The number of items to replace must be a number from 0 (all) to 65535.");
                     return;
                 }
-                string destfile = "";
                 if(parameters.Count==7)
                     destfile = parameters[6];
-                if(parameters.Count==6)
-                    destfile = parameters[5];
+                if(parameters.Count==5)
+                    destfile = "";
 
 // Usage: csgen replacen sourcefile searchtext replacetext nthitem [numitems] [destfile]
 
