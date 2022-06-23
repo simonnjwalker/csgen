@@ -15,7 +15,7 @@ namespace csgenns
                 cg.parameters.Add("searchfor");
                 cg.parameters.Add("replaceme");
                 cg.parameters.Add("2");
-                cg.parameters.Add("2");
+                cg.parameters.Add("1");
                 cg.parameters.Add(@"c:\temp\test-replacen-output.txt");
                 cg.Run();
                 return;
@@ -196,11 +196,17 @@ namespace csgenns
                     this.Message("The nth number must be between 1 and 65535.");
                     return;
                 }
-                if(numitemstext == "")
+                if(numitemstext != parameters[5])
                 {
-                    this.Message("The number of items to replace must be a number from 0 (all) to 65535.");
-                    return;
+                    // assume that this is a file name
+                    numitemstext = "1";
                 }
+
+                // if(numitemstext == "")
+                // {
+                //     this.Message("The number of items to replace must be a number from 0 (all) to 65535.");
+                //     return;
+                // }
                 int nthitem = Int32.Parse(nthitemtext);
                 int numitems = Int32.Parse(numitemstext);
                 if(nthitem < 1 || nthitem > 65535)
@@ -216,8 +222,10 @@ namespace csgenns
                 string destfile = "";
                 if(parameters.Count==7)
                     destfile = parameters[6];
+                if(parameters.Count==6)
+                    destfile = parameters[5];
 
-// Usage: csgen replacen sourcefile searchtext replacetext [nthitem] [numitems] [destfile]
+// Usage: csgen replacen sourcefile searchtext replacetext nthitem [numitems] [destfile]
 
                 this.Replace(parameters[1], parameters[2], parameters[3], destfile, nthitem, numitems);
 
