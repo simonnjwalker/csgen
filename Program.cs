@@ -7,8 +7,25 @@ namespace csgenns
         {
             csgenmain cg = new csgenmain();
             // test
-            bool testme = false;
-            if(testme)
+            bool testreplacen = false;
+            bool testmodelgen = false;
+            if(testmodelgen)
+            {
+                cg.parameters.Add("model");
+                cg.parameters.Add("new");
+                cg.parameters.Add(@"C:\SNJW\code\zc\Data\Entities\Project.cs");
+                cg.parameters.Add("name=Project;namespace=zc.Models;fields=Id:Guid,Code:String,Name:String,Desc:String;fieldprefix=Project");
+                // var setup = cg.GetModel(cg.parameters[1],cg.parameters[2],cg.parameters[3]);
+                // foreach(var line in cg.GetModelText(setup).Split(System.Environment.NewLine,StringSplitOptions.None))
+                //     cg.Message(line);
+
+                cg.Run();
+                return;
+            }
+
+                // this.Message(@"csgen newmodel  ""name=Project;namespace=zc.Models;fields=Id:Guid,Code:String,Name:String,Desc:String;fieldprefix=Project""");
+
+            if(testreplacen)
             {
                 cg.parameters.Add("replacen");
                 cg.parameters.Add(@"c:\temp\test-replacen-source.txt");
@@ -228,13 +245,191 @@ namespace csgenns
 // Usage: csgen replacen sourcefile searchtext replacetext nthitem [numitems] [destfile]
 
                 this.Replace(parameters[1], parameters[2], parameters[3], destfile, nthitem, numitems);
+            }
+            else if(parameters[0].ToLower()=="model")
+            {
+//                  Usage: csgen model new [filename] [options]
+                if(parameters.Count == 2 && ( parameters[1].ToLower() == "-h" || parameters[1].ToLower() == "--help"))
+                {
+                    this.OneParameter("model");
+                    return;
+                }
+                else if(parameters.Count < 4 || parameters.Count > 4 )
+                {
+                    this.Message("Incorrect number of parameters passed to csgen model");
+                    this.Message("");
+                    this.OneParameter("model");
+                    return;
+                }
+                else if(parameters[1].ToLower() != "new" && parameters[1].ToLower() != "edit")
+                {
+                    this.Message("The 'csgen model' command must be followed by 'new' or 'edit'.");
+                    return;
+                }
 
-
-
+                this.Model(parameters[1].ToLower(),parameters[2].Trim(),parameters[3].Trim());
             }
 
         }
 
+        public void Model(string command, string destfile, string options)
+        {
+            modeloptions setup = this.GetModel(command,destfile,options);
+            string text = this.GetModelText(setup);
+            bool success = true;
+
+            try
+            {
+                System.IO.File.WriteAllText(destfile,text);
+            }
+            catch
+            {
+                success = false;
+            }
+            if(!success)
+            {
+                this.Message($"Could not write to file '{destfile}'.");
+                return;
+            }
+
+
+            this.Message($"Created file '{destfile}' with {setup.modelfields.Count}/{setup.parentmodels.Count}/{setup.childmodels.Count} fields/parents/children.");
+
+        }
+
+
+        public string GetModelText(modeloptions setup)
+        {
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"namespace {setup.modelnamespace}");
+            sb.AppendLine("{");
+            sb.AppendLine($"    public class {setup.modelname}");
+            sb.AppendLine("    {");
+            foreach(var item in setup.modelfields)
+            {
+                sb.AppendLine($"        public {item.datatype} {setup.fieldprefix}{item.fieldname} "+"{ get; set; }");
+            }
+            foreach(var item in setup.childmodels)
+            {
+                sb.AppendLine($"        public List<{item} {item}s "+"{ get; set; }");
+            }
+            foreach(var item in setup.parentmodels)
+            {
+                sb.AppendLine($"        public {item} {item} "+"{ get; set; }");
+            }
+
+            sb.AppendLine("    }");
+            sb.AppendLine("}");
+
+
+            return sb.ToString();
+        }
+
+/*
+
+public class Blog
+{
+    public int BlogId { get; set; }
+    public string Url { get; set; }
+
+    [DataType(DataType.Date)]
+    public DateTime ReleaseDate { get; set; }
+
+    public List<Post> Posts { get; set; }
+}
+
+public class Post
+{
+    public int PostId { get; set; }
+    public string Title { get; set; }
+    public string Content { get; set; }
+
+    public string BlogUrl { get; set; }
+    public Blog Blog { get; set; }
+}
+
+*/
+
+        public modeloptions GetModel(string command, string destfile, string options)
+        {
+
+
+            // load the options-object
+            modeloptions setup = new modeloptions();
+            setup.command = command;
+            setup.destfile = destfile;
+            setup.modelname = "";
+            setup.modelnamespace = "";
+            setup.fieldprefix = "";
+            
+            string[] optionparts = options.Split(';',StringSplitOptions.None);
+            for(int i = 0;i<optionparts.Length;i++)
+            {
+                string[] fieldparts = optionparts[i].Split('=',StringSplitOptions.None);
+                string fieldname = fieldparts[0].Trim().ToLower();
+                string fieldvalue = "";
+                if(fieldparts.Length>1)
+                    fieldvalue = fieldparts[1].Trim();
+                
+                if(fieldname=="name")
+                {
+                    setup.modelname = fieldvalue;
+                }
+                else if(fieldname=="namespace")
+                {
+                    setup.modelnamespace = fieldvalue;
+                }
+                else if(fieldname=="fieldprefix")
+                {
+                    setup.fieldprefix = fieldvalue;
+                }
+                else if(fieldname=="fields")
+                {
+                    var fields = fieldvalue.Split(',',StringSplitOptions.None);
+                    for(int j = 0;j<fields.Length;j++)
+                    {
+                        var fieldvalues = fields[j].Trim().Split(':',StringSplitOptions.None);
+                        string dbname = fieldvalues[0].Trim();
+                        string dbtype = "";
+                        if(fieldvalues.Length>1)
+                            dbtype = fieldvalues[1].Trim();
+
+                        if(dbname!="")
+                        {
+                            var dbfield = new modelfield();
+                            dbfield.fieldname = dbname;
+                            dbfield.datatype = dbtype;
+                            dbfield.ispkey = false;
+                            setup.modelfields.Add(dbfield);
+                        }
+                    }
+                }
+                else if(fieldname=="parentmodels")
+                {
+                    var parentmodels = fieldvalue.Split(',',StringSplitOptions.None);
+                    for(int j = 0;j<parentmodels.Length;j++)
+                    {
+                        setup.parentmodels.Add(parentmodels[j].Trim());
+                    }
+                }
+                else if(fieldname=="childmodels")
+                {
+                    var childmodels = fieldvalue.Split(',',StringSplitOptions.None);
+                    for(int j = 0;j<childmodels.Length;j++)
+                    {
+                        setup.childmodels.Add(childmodels[j].Trim());
+                    }
+                }
+
+
+                // this.Message("Examples:");
+                // this.Message(@"csgen newmodel Project.cs ""name=Project;namespace=zc.Models;fields=Id:Guid,Code:String,Name:String,Desc:String;fieldprefix=Project;pkey=Id;parentmodels=Agent;childmodels=Job,Staff""");
+                // this.Message(@"csgen newmodel Job.cs ""name=Job;namespace=abc.Models;fields=Id:Int32,Name:String,Desc:String;pkey=Id;parentmodels=Project;""");
+            }
+            return setup;
+
+        }
 
         public void Replace(string sourcefile, string searchtext, string replacetext, string destfile, int nthitem, int numitems)
         {
@@ -358,9 +553,13 @@ namespace csgenns
                 this.Message("  replacen          Search and replace the nth items found in a text file.");
                 this.Message("  replacedq         Performs a search in text file for double-quotes.");
                 this.Message("  replacewithdq     Performs a replace in text file with double-quotes.");
+                this.Message("  model             Creates and edits C# model classes.");
                 this.Message("");
                 this.Message("Options:");
                 this.Message("  -h|--help         Display help.");
+
+// csgen newmodel C:\SNJW\code\zc\Data\Entities\Project.cs "name=Project;namespace=zc.Models;fields=Id:Guid,Code:String,Name:String,Desc:String"
+
             }
             else if(singleparameter.Trim().ToLower()=="replace")
             {
@@ -436,7 +635,42 @@ namespace csgenns
                 this.Message("destfile");
                 this.Message("  Optional: Full path to output text file.");
             }
+            else if(singleparameter.Trim().ToLower()=="model")
+            {
+                this.Message("Usage: csgen model [command] [filename] [options]");
+                this.Message("");
+                this.Message("command");
+                this.Message("  The action to take. Possible values are:");
+                this.Message("    new         [filename] [options]: Creates a new model.");
+                this.Message("    edit        [filename] [options]: Updates an existing model.");
+                this.Message("");
+                this.Message("filename");
+                this.Message("  File to be created or edited.");
+                this.Message("");
+                this.Message("options");
+                this.Message("  A single line of text with mode information.");
+                this.Message("  Options are separated by semi-colons.");
+                this.Message("  Values for options are set with the equals sign.");
+                this.Message("  Possible options are:");
+                this.Message("    name         Model name");
+                this.Message("    namespace    C# namespace that the model is set to.");
+                this.Message("    fields       List of field names and the relevant dotnet type.");
+                this.Message("                 Syntax is fieldname1:type2[,fieldname2:type2].");
+                this.Message("    fieldprefix  Inserts text (often the table name) in front of all fields.");
+                this.Message("                 Syntax is fieldname1:type2[,fieldname2:type2].");
+                this.Message("    pkey         Specifies the field name of the primary key.");
+                this.Message("    parentmodels   Specifies the model name of each parent.");
+                this.Message("                 Syntax is parentmodel1[,parentmodel2].");
+                this.Message("    childmodels  Specifies the model name of each child.");
+                this.Message("                 Syntax is childmodel1[,childmodel2].");
+                this.Message("");
+                this.Message("Examples:");
+                this.Message(@"csgen newmodel Project.cs ""name=Project;namespace=zc.Models;fields=Id:Guid,Code:String,Name:String,Desc:String;fieldprefix=Project;pkey=Id;parentmodels=Agent;childmodels=Job,Staff""");
+                this.Message(@"csgen newmodel Job.cs ""name=Job;namespace=abc.Models;fields=Id:Int32,Name:String,Desc:String;pkey=Id;parentmodels=Project;""");
 
+//csgen newmodel C:\SNJW\code\zc\Data\Entities\Project.cs "name=Project;namespace=zc.Models;fields=Id:Guid,Code:String,Name:String,Desc:String;fieldprefix"
+
+            }
 
         }
 
@@ -536,5 +770,23 @@ c:\SNJW\code\shared\csgen>
         public void Message(string message) {Console.WriteLine(message);}
     }
 
+    public class modelfield
+    {
+        public string fieldname = "";
+        public string datatype = "";
+        public bool ispkey = false;
+    }
 
+    public class modeloptions
+    {
+        public string command = "";
+        public string destfile = "";
+        public string modelname = "";
+        public string modelnamespace = "";
+        public string fieldprefix = "";
+
+        public List<modelfield> modelfields = new List<modelfield>();
+        public List<string> parentmodels = new List<string>();
+        public List<string> childmodels = new List<string>();
+    }
 }
