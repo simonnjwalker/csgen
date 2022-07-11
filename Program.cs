@@ -7,8 +7,21 @@ namespace csgenns
         {
             csgenmain cg = new csgenmain();
             // test
+            bool testinsert = false;
             bool testreplacen = false;
             bool testmodelgen = false;
+            if(testinsert)
+            {
+                cg.parameters.Add("insert");
+                cg.parameters.Add(@"c:\temp\test-insert-source.txt");
+                cg.parameters.Add("");
+                cg.parameters.Add("3");
+                cg.parameters.Add(@"c:\temp\test-insert-output.txt");
+
+
+                cg.Run();
+                return;
+            }
             if(testmodelgen)
             {
                 cg.parameters.Add("model");
@@ -270,6 +283,57 @@ namespace csgenns
 
                 this.Model(parameters[1].ToLower(),parameters[2].Trim(),parameters[3].Trim());
             }
+            else if(parameters[0].ToLower()=="insert"
+                || parameters[0].ToLower()=="insertline")
+            {
+                if(parameters.Count == 2 && ( parameters[1].ToLower() == "-h" || parameters[1].ToLower() == "--help"))
+                {
+                    this.OneParameter("insert");
+                    return;
+                }
+                else if(parameters.Count < 3 || parameters.Count > 5 )
+                {
+                    this.Message("Incorrect number of parameters passed to csgen insert");
+                    this.Message("");
+                    this.OneParameter("insert");
+                    return;
+                }
+                // else if(parameters[2].ToLower() == "")
+                // {
+                //     this.Message("Search text cannot be empty.");
+                //     return;
+                // }
+                string insertitemtext = "";
+                string linenumtext = "";
+                if(parameters.Count>2)
+                    insertitemtext = new String(parameters[2].Where(Char.IsDigit).ToArray());
+                if(parameters.Count>3)
+                    linenumtext = new String(parameters[3].Where(Char.IsDigit).ToArray());
+                string destfile = "";
+
+                // if this is instead an output file, it will not be an integer
+                if(linenumtext != "" && linenumtext != parameters[3])
+                {
+                    // this can occur if there is a number in the file-name
+                    destfile = parameters[3];
+                    linenumtext = "";
+                }
+                else if(parameters.Count>4)
+                {
+                    destfile = parameters[4];
+                }
+                else
+                {
+                    destfile = parameters[1];
+                }
+                int linenumber = 0;
+                if(linenumtext != "")
+                    linenumber = Int32.Parse(linenumtext);
+
+// Usage: csgen insert sourcefile inserttext [linenumber] [destfile]
+
+                this.Insert(parameters[1], parameters[2], linenumber, destfile);
+            }
 
         }
 
@@ -297,7 +361,6 @@ namespace csgenns
             this.Message($"Created file '{destfile}' with {setup.modelfields.Count}/{setup.parentmodels.Count}/{setup.childmodels.Count} fields/parents/children.");
 
         }
-
 
         public string GetModelText(modeloptions setup)
         {
@@ -532,6 +595,108 @@ public class Post
 
         }
 
+        public void Insert(string sourcefile, string inserttext, int linenumber, string destfile)
+        {
+// Usage: csgen insert sourcefile inserttext [linenumber] [destfile]
+            if(!System.IO.File.Exists(sourcefile))
+            {
+                this.Message($"File '{sourcefile}' cannot be found.");
+                return;
+            }
+            string text = "";
+            bool success = true;
+            try
+            {
+                text = System.IO.File.ReadAllText(sourcefile);
+            }
+            catch
+            {
+                success = false;
+            }
+            if(!success)
+            {
+                this.Message($"Could not open file '{sourcefile}'.");
+                return;
+            }
+
+            // 2022-07-11 SNJW I'm not sure how I should account for DOS/UNIX "\r\n" vs '\n' differences
+            string newline = this.GuessNewline(text);
+            string[] lines = text.Split(newline,StringSplitOptions.None);
+
+            if(linenumber>lines.Length)
+                linenumber = 0;
+
+            // if the value of linenumber is zero then it just goes at the end
+            var sb = new System.Text.StringBuilder();
+            if(linenumber == 0)
+            {
+                sb.Append(text);
+                sb.Append(newline);
+                sb.Append(inserttext);
+// text
+            }
+            else if(linenumber == 1)
+            {
+                sb.Append(inserttext);
+                sb.Append(newline);
+                sb.Append(text);
+// text
+            }
+            else
+            {
+                // put these back together - note that linenumber is 1-based
+                for(int i = 0; i < lines.Length;i++)
+                {
+                    if(linenumber == (i + 1))
+                    {
+                        sb.Append(inserttext);
+                        sb.Append(newline);
+                    }
+                    sb.Append(lines[i]);
+                    if(i != (lines.Length - 1))
+                    {
+                        sb.Append(newline);
+                    }
+                }
+
+            }
+
+            text = sb.ToString();
+
+            if(destfile == "")
+                destfile = sourcefile;
+            try
+            {
+                System.IO.File.WriteAllText(destfile,text);
+            }
+            catch
+            {
+                success = false;
+            }
+            if(!success)
+            {
+                this.Message($"Could not insert text to file '{destfile}'.");
+                return;
+            }
+            this.Message($"Inserted text to file '{destfile}' successfully.");
+
+        }
+
+        public string GuessNewline(string text)
+        {
+            string dos = "\r\n";
+            string unix = "\n";
+            int doscount = text.Split(dos).Length - 1;
+            int unixcount = text.Split(unix).Length - 1;
+            if(doscount == 0 && unixcount == 0)
+                return dos;
+            if(doscount == 0)
+                return unix;
+// determine DOS/UNIX "\r\n" vs '\n'
+            return dos;
+        }
+
+
         public void NoParameters()
         {
             this.Message("Usage: csgen [options]");
@@ -555,6 +720,7 @@ public class Post
                 this.Message("  replacedq         Performs a search in text file for double-quotes.");
                 this.Message("  replacewithdq     Performs a replace in text file with double-quotes.");
                 this.Message("  model             Creates and edits C# model classes.");
+                this.Message("  insert            Inserts text at a specified line in a text file.");
                 this.Message("");
                 this.Message("Options:");
                 this.Message("  -h|--help         Display help.");
@@ -672,9 +838,24 @@ public class Post
 //csgen newmodel C:\SNJW\code\zc\Data\Entities\Project.cs "name=Project;namespace=zc.Models;fields=Id:Guid,Code:String,Name:String,Desc:String;fieldprefix"
 
             }
+            else if(singleparameter.Trim().ToLower()=="insert")
+            {
+                this.Message("Usage: csgen insert sourcefile inserttext [linenumber] [destfile]");
+                this.Message("");
+                this.Message("sourcefile");
+                this.Message("  Full path to the source file to have text inserted.");
+                this.Message("");
+                this.Message("inserttext");
+                this.Message("  Text to be inserted into the file.");
+                this.Message("");
+                this.Message("linenumber");
+                this.Message("  Optional: Line at which the text is inserted.  If omitted, inserted as last line.");
+                this.Message("");
+                this.Message("destfile");
+                this.Message("  Optional: Full path to output text file.");
+            }            
 
         }
-
 
 /*
 .NET SDK (6.0.201)
