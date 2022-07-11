@@ -7,9 +7,23 @@ namespace csgenns
         {
             csgenmain cg = new csgenmain();
             // test
+            bool testreplacenerror = false;
             bool testinsert = false;
             bool testreplacen = false;
             bool testmodelgen = false;
+            if(testreplacenerror)
+            {
+                cg.parameters.Add("replacenth");
+                cg.parameters.Add(@"C:\SNJW\code\xk\Areas\Identity\Pages\Account\LoginWith2fa.cshtml.cs");
+                cg.parameters.Add("using Microsoft.AspNetCore.Mvc;");
+                cg.parameters.Add("// using Microsoft.AspNetCore.Mvc;");
+//                cg.parameters.Add(@"1");
+                cg.parameters.Add(@"C:\SNJW\code\xk\Areas\Identity\Pages\Account\LoginWith2fa.cshtml.cs");
+
+
+                cg.Run();
+                return;
+            }
             if(testinsert)
             {
                 cg.parameters.Add("insert");
@@ -220,25 +234,33 @@ namespace csgenns
                     return;
                 }
                 string nthitemtext = new String(parameters[4].Where(Char.IsDigit).ToArray());
-                string numitemstext = new String(parameters[5].Where(Char.IsDigit).ToArray());
+                string numitemstext = "";
+                if(parameters.Count>5)
+                    numitemstext = new String(parameters[5].Where(Char.IsDigit).ToArray());
                 string destfile = "";
-                if(nthitemtext == "")
-                {
-                    this.Message("The nth number must be between 1 and 65535.");
-                    return;
-                }
-                if(numitemstext != parameters[5] && parameters.Count==6)
-                {
-                    // assume that this is a file name
-                    numitemstext = "1";
-                    destfile = parameters[5];
-                }
 
-                // if(numitemstext == "")
-                // {
-                //     this.Message("The number of items to replace must be a number from 0 (all) to 65535.");
-                //     return;
-                // }
+// Usage: csgen replacen sourcefile searchtext replacetext nthitem [numitems] [destfile]
+
+                // if this is instead an output file, it will not be an integer
+                if(numitemstext != "" && numitemstext != parameters[5])
+                {
+                    // this can occur if there is a number in the file-name
+                    destfile = parameters[5];
+                    numitemstext = "1";
+                }
+                else if(parameters.Count>6)
+                {
+                    destfile = parameters[6];
+                }
+                else
+                {
+                    destfile = parameters[1];
+                }
+                if(nthitemtext == "")
+                    nthitemtext = "1";
+                if(numitemstext == "")
+                    numitemstext = "1";
+
                 int nthitem = Int32.Parse(nthitemtext);
                 int numitems = Int32.Parse(numitemstext);
                 if(nthitem < 1 || nthitem > 65535)
@@ -251,10 +273,6 @@ namespace csgenns
                     this.Message("The number of items to replace must be a number from 0 (all) to 65535.");
                     return;
                 }
-                if(parameters.Count==7)
-                    destfile = parameters[6];
-                if(parameters.Count==5)
-                    destfile = "";
 
 // Usage: csgen replacen sourcefile searchtext replacetext nthitem [numitems] [destfile]
 
