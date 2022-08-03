@@ -7,10 +7,59 @@ namespace csgenns
         {
             csgenmain cg = new csgenmain();
             // test
+            bool testvm = true;
             bool testreplacenerror = false;
             bool testinsert = false;
             bool testreplacen = false;
             bool testmodelgen = false;
+            if(testvm)
+            {
+                Console.WriteLine("test 1:");
+                cg.parameters.Clear();
+                cg.parameters.Add("vm");
+                cg.parameters.Add("--name");
+                cg.parameters.Add(@"election");
+                cg.parameters.Add("--sourcefile");
+                cg.parameters.Add(@"c:\temp\viewmodel-source.csv");
+                cg.parameters.Add("--fieldnames");
+                cg.parameters.Add(@"id,userid,code,name,desc,datestart,datefinish");
+                cg.parameters.Add("--fielddescs");
+                cg.parameters.Add(@"id,userid,Code,Title,Description,Start,Finish");
+                cg.parameters.Add("--output");
+                cg.parameters.Add(@"c:\temp\viewmodel-output.cs");
+                // cg.parameters.Add("--namespace");
+                // cg.parameters.Add(@"myns");
+                cg.parameters.Add("--key");
+                cg.parameters.Add(@"id");
+                cg.Run();
+                return;
+
+                // cg.parameters.Add("-s");
+                // cg.parameters.Add(@"C:\temp\vmdest.cs");
+                // cg.parameters.Add("-s");
+                // cg.parameters.Add(@"C:\temp\vmdest.cs");
+                // cg.parameters.Add("-h");
+
+
+                // Console.WriteLine();
+                // Console.WriteLine("test 2:");
+                // cg.parameters.Clear();
+                // cg.parameters.Add("vm");
+                // cg.Run();
+                // Console.WriteLine();
+                // Console.WriteLine("test 3:");
+                // cg.parameters.Clear();
+                // cg.parameters.Add("vm");
+                // cg.parameters.Add("--help");
+                // cg.Run();
+                // Console.WriteLine();
+                // Console.WriteLine("test 4:");
+                // cg.parameters.Clear();
+                // cg.parameters.Add("vm");
+                // cg.parameters.Add("-f");
+                // cg.Run();
+                // return;
+            }
             if(testreplacenerror)
             {
                 cg.parameters.Add("replacenth");
@@ -21,7 +70,7 @@ namespace csgenns
                 cg.parameters.Add(@"C:\SNJW\code\xk\Areas\Identity\Pages\Account\LoginWith2fa.cshtml.cs");
 
 
-                cg.Run();
+                cg.RunLegacy();
                 return;
             }
             if(testinsert)
@@ -33,7 +82,7 @@ namespace csgenns
                 cg.parameters.Add(@"c:\temp\test-insert-output.txt");
 
 
-                cg.Run();
+                cg.RunLegacy();
                 return;
             }
             if(testmodelgen)
@@ -46,7 +95,7 @@ namespace csgenns
                 // foreach(var line in cg.GetModelText(setup).Split(System.Environment.NewLine,StringSplitOptions.None))
                 //     cg.Message(line);
 
-                cg.Run();
+                cg.RunLegacy();
                 return;
             }
 
@@ -61,9 +110,23 @@ namespace csgenns
                 cg.parameters.Add("2");
                 cg.parameters.Add("1");
 //                cg.parameters.Add(@"c:\temp\test-replacen-output.txt");
-                cg.Run();
+                cg.RunLegacy();
                 return;
             }
+
+            // 2022-07-27 SNJW made parameters generic
+            // If this is one of the 'original' items then use the old code 
+            if(args.Length>0)
+            {
+                string checkcommand = ","+(args[0]).ToLower().Trim()+",";
+                string olditems = ",replacedq,replacewithdq,replacechar,replacechr,replaceasc,replaceascii,replacechar,replace,replacen,replacenth,model,insert,insertline,";
+                if(!olditems.Contains(checkcommand))
+                {
+                    // do new stuff...
+                    return;
+                }
+            }
+
 
             if(args.Length==0)
             {
@@ -76,7 +139,7 @@ namespace csgenns
             else
             {
                 cg.SetParameters(args);
-                cg.Run();
+                cg.RunLegacy();
                 // Console.WriteLine("");
                 // Console.WriteLine("csgen.exe completed");
             }
@@ -87,8 +150,38 @@ namespace csgenns
     {
         public List<string> parameters = new List<string>();
 
+        public bool Run()
+        {
+            // this performed a generic analysis of parameters
+            parameterhander ph = new parameterhander();
+            if(!ph.SetParameters(parameters))
+            {
+                this.Message(ph.lastmessage);
+            }
+            else if(ph.IsHelpRequested())
+            {
+                foreach(string helpline in ph.GetHelp())
+                    this.Message(helpline);
+            }
+            else
+            {
+                var ah= new actionhandler();
+                ah.ps.AddRange(ph.ps);
+                if(ah.Run())
+                {
+                    this.Message("Completed.");
+                }
+                else
+                {
+                    this.Message(ph.lastmessage);
+                }
+            }
 
-        public void Run()
+            return true;
+        }
+
+
+        public void RunLegacy()
         {
             if(parameters[0].ToLower()=="replace")
             {
@@ -638,7 +731,7 @@ public class Post
             }
 
             // 2022-07-11 SNJW I'm not sure how I should account for DOS/UNIX "\r\n" vs '\n' differences
-            string newline = this.GuessNewline(text);
+            string newline = this.GuessDosOrUnix(text);
             string[] lines = text.Split(newline,StringSplitOptions.None);
 
             if(linenumber>lines.Length)
@@ -700,7 +793,7 @@ public class Post
 
         }
 
-        public string GuessNewline(string text)
+        public string GuessDosOrUnix(string text)
         {
             string dos = "\r\n";
             string unix = "\n";
@@ -970,6 +1063,8 @@ c:\SNJW\code\shared\csgen>
         public void Message(string message) {Console.WriteLine(message);}
     }
 
+
+
     public class modelfield
     {
         public string fieldname = "";
@@ -989,4 +1084,1192 @@ c:\SNJW\code\shared\csgen>
         public List<string> parentmodels = new List<string>();
         public List<string> childmodels = new List<string>();
     }
+
+    
+    public abstract class generichandler
+    {
+        public List<parametersetting> ps = new List<parametersetting>();
+        public string lastmessage = "";
+        public string appname = "csgen";
+
+        
+        public virtual bool Run()
+        {
+            return true;
+        }
+
+    }
+
+    public abstract class classhandler : generichandler
+    {
+
+
+        bool usecomponentmodel = true;
+        bool usedataannotations = true;
+        bool disablenullmessages = true;
+        bool usenamespace = true;
+        bool usegetsetdefault = true;
+
+
+
+        public string GetShortType(string longtype)
+        {
+            if(longtype == "System.String")
+                return "string";
+            if(longtype == "System.Int32")
+                return "int";
+            if(longtype == "System.Boolean")
+                return "bool";
+            if(longtype == "System.Byte")
+                return "byte[]";
+            return longtype;
+        } 
+
+        public string GetClassText(
+            string classname, 
+            string ns,
+            string fieldtext,
+            int indent = 4)
+        {
+
+
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            // sb.AppendLine("using System;");
+            if(usecomponentmodel)
+                sb.AppendLine("using System.ComponentModel;");
+            if(usedataannotations)
+                sb.AppendLine("using System.ComponentModel.DataAnnotations;");
+
+            if(disablenullmessages)
+                sb.AppendLine("#pragma warning disable CS8618");
+
+            int namespaceindent = 0;
+            if(ns != "") 
+            {
+                sb.AppendLine($"namespace {ns}");
+                sb.AppendLine("{");
+                namespaceindent = indent;
+            }
+
+            sb.AppendLine(new string(' ', namespaceindent) + $"public class {classname}");
+            sb.AppendLine(new string(' ', namespaceindent) + "{");
+
+            sb.Append(fieldtext);
+
+            sb.AppendLine(new string(' ', namespaceindent) + "}");
+            if(ns != "") 
+            {
+                sb.AppendLine("}");
+            }
+            return sb.ToString();
+        }
+
+        public string GetClassFieldText(
+            string name, 
+            string type = "System.String",
+            string desc = "",
+            string caption = "",
+            int maxsize = 0,
+            string required = "",
+            bool ispkey = false,
+            bool setdefaultgetset = false,
+            int indent = 4)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            if(ispkey)
+                sb.AppendLine(new string(' ',indent)+"[Key]");
+            if(desc != "")
+                sb.AppendLine(new string(' ',indent)+@$"[Description(""{desc}"")]");
+            if(required != "")
+                sb.AppendLine(new string(' ',indent)+@$"[Required(ErrorMessage = ""{required}"")]");
+            if(caption != "")
+                sb.AppendLine(new string(' ',indent)+@$"[Display(Name = ""{caption}"")]");
+            if(maxsize > 0 )
+                sb.AppendLine(new string(' ',indent)+@$"[MaxLength({maxsize})]");
+            sb.AppendLine(new string(' ',indent)+$"public {this.GetShortType(type)} {name} "+"{get;set;}");
+            return sb.ToString();
+        }
+
+
+
+    }
+    
+    public class actionhandler : generichandler
+    {
+        
+        public override bool Run()
+        {
+            bool output = true;
+
+            string action = "";
+            var checkcategory = this.ps.FirstOrDefault(x => x.isactive.Equals(true));
+            if(checkcategory == null)
+            {
+                this.lastmessage = "Cannot determine action to run.";
+                return false;
+            }
+            action = checkcategory!.category;
+            if(action == "vm")
+            {
+                vmhandler handler = new vmhandler();
+                handler.ps = this.ps;
+                return handler.Run();
+            }
+
+
+            return output;
+        }
+
+
+       
+
+    }
+
+    
+#pragma warning disable CS8620
+    public class vmhandler : classhandler
+    {
+        public vmoptions vmmodel = new vmoptions();
+        
+        public int indent = 4;
+        public override bool Run()
+        {
+            if(!this.CreateModel())
+                return false;
+            if(!this.BuildOutput())
+                return false;
+            return true;
+        }
+
+        public bool BuildOutput()
+        {
+            if(this.vmmodel.vmfields.Count==0)
+                return false;
+
+            // add fields here - placing the pkey first
+            // note that this is verified when the model is created
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            int classindent = this.indent;
+            if(this.vmmodel.vmnamespace != "")
+                classindent += this.indent;
+
+            var pkey = this.vmmodel.vmfields.FirstOrDefault(x => x.ispkey.Equals(true));
+            if(pkey != null)
+            {
+                sb.Append(this.GetClassFieldText(
+                    pkey.vmfieldname,
+                    pkey.vmfieldtype,
+                    pkey.vmfielddesc,
+                    pkey.vmfieldcap,
+                    pkey.vmfieldsize,
+                    pkey.vmfieldreq,
+                    true,
+                    false,
+                    classindent));
+                sb.AppendLine();
+            }
+            foreach(var field in this.vmmodel.vmfields)
+            {
+                if(!field.ispkey)
+                {
+                    sb.Append(this.GetClassFieldText(
+                        field.vmfieldname,
+                        field.vmfieldtype,
+                        field.vmfielddesc,
+                        field.vmfieldcap,
+                        field.vmfieldsize,
+                        field.vmfieldreq,
+                        false,
+                        false,
+                        classindent));
+                    sb.AppendLine();
+                }
+            }
+
+            string text = this.GetClassText(this.vmmodel.vmname,this.vmmodel.vmnamespace,sb.ToString(),this.indent);
+
+            bool success = true;
+            string destfile = this.vmmodel.destfile;
+            if(destfile == "")
+                destfile = this.vmmodel.vmname + ".cs";
+
+            try
+            {
+                System.IO.File.WriteAllText(destfile,text);
+            }
+            catch
+            {
+                success = false;
+            }
+            if(!success)
+            {
+                this.lastmessage = ($"Could not write to file '{destfile}'.");
+                return false;
+            }
+            
+            return true;
+        }
+
+
+        public bool CreateModel()
+        {
+
+            bool success = true;
+            vmoptions setup = new vmoptions();
+            setup.vmname = "newviewmodel"; 
+            var ph = new parameterhander();
+            var checkname = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--name") || x.synonym.Equals("-n")));
+            if(checkname != null)
+                setup.vmname = checkname.nextinput;
+            var checknamespace = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--namespace") || x.synonym.Equals("-p")));
+            if(checknamespace != null)
+                setup.vmnamespace = checknamespace.nextinput;
+
+            var checkcsv = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--sourcefile") || x.synonym.Equals("-s")));
+            if(checkcsv != null)
+            {
+                // load from a CSV first
+                csvhandler csv = new csvhandler();
+                System.Data.DataSet ds = new System.Data.DataSet();
+                try
+                {
+                    ds = csv.GetDataSetFromCsv(checkcsv.nextinput);
+                }
+                catch
+                {
+                    success = false;
+                }
+                if(!success)
+                {
+                    this.lastmessage = $"Could not load ViewModel field information from source file '{checkcsv.nextinput}'.";
+                    return false;
+                }
+                string validatetext = "";
+                int vmnamecol = -1;
+                int vmfieldnamecol = -1;
+                int vmfieldtypecol = -1;
+                int vmfieldsizecol = -1;
+                int vmfielddesccol = -1;
+                int vmfieldreqcol = -1;
+                int vmfieldcapcol = -1;
+                string vmfieldname = "";
+                string vmfieldtype = "";
+                string vmfieldsize = "";
+                string vmfielddesc = "";
+                string vmfieldreq = "";
+                string vmfieldcap = "";
+                int rowcount = 0;
+
+                if(ds!.Tables[0].Columns.Contains("vmname"))
+                    vmnamecol = ds!.Tables[0].Columns["vmname"]!.Ordinal;
+                if(ds!.Tables[0].Columns.Contains("vmfieldname"))
+                    vmfieldnamecol = ds!.Tables[0].Columns["vmfieldname"]!.Ordinal;
+                if(ds!.Tables[0].Columns.Contains("vmfieldtype"))
+                    vmfieldtypecol = ds!.Tables[0].Columns["vmfieldtype"]!.Ordinal;
+                if(ds!.Tables[0].Columns.Contains("vmfieldsize"))
+                    vmfieldsizecol = ds!.Tables[0].Columns["vmfieldsize"]!.Ordinal;
+                if(ds!.Tables[0].Columns.Contains("vmfielddesc"))
+                    vmfielddesccol = ds!.Tables[0].Columns["vmfielddesc"]!.Ordinal;
+                if(ds!.Tables[0].Columns.Contains("vmfieldreq"))
+                    vmfieldreqcol = ds!.Tables[0].Columns["vmfieldreq"]!.Ordinal;
+                if(ds!.Tables[0].Columns.Contains("vmfieldcap"))
+                    vmfieldcapcol = ds!.Tables[0].Columns["vmfieldcap"]!.Ordinal;
+
+                foreach(System.Data.DataRow dr in ds!.Tables[0].Rows)
+                {
+                    if(vmnamecol >= 0)
+                    {
+                        if(dr[vmnamecol].ToString() != setup.vmname)
+                            continue;
+                    }
+                    rowcount++;
+                    vmfieldname = "";
+                    vmfieldtype = "";
+                    vmfieldsize = "";
+                    vmfielddesc = "";
+                    vmfieldreq = "";
+                    vmfieldcap = "";
+                    if(vmfieldnamecol >= 0)
+                        vmfieldname = dr[vmfieldnamecol].ToString()!;
+                    if(vmfieldtypecol >= 0)
+                        vmfieldtype = dr[vmfieldtypecol].ToString()!;
+                    if(vmfieldsizecol >= 0)
+                        vmfieldsize = dr[vmfieldsizecol].ToString()!;
+                    if(vmfielddesccol >= 0)
+                        vmfielddesc = dr[vmfielddesccol].ToString()!;
+                    if(vmfieldreqcol >= 0)
+                        vmfieldreq = dr[vmfieldreqcol].ToString()!;
+                    if(vmfieldcapcol >= 0)
+                        vmfieldcap = dr[vmfieldcapcol].ToString()!;
+                    
+                    validatetext = ph.ValidateParameter(vmfieldname,"ViewModel Field Name",ParameterType.CsFieldName);
+                    if(validatetext != "")
+                    {
+                        this.lastmessage = $"File '{checkcsv.nextinput}' row {rowcount}.  "+validatetext;
+                        return false;
+                    }
+                    vmfieldtype = ph.FixFieldTypeCs(vmfieldtype);
+                    vmfieldsize = new String(('0' + vmfieldsize).Where(Char.IsDigit).ToArray());
+                    var newitem = new vmfield(){vmfieldname=vmfieldname,vmfieldtype=vmfieldtype,vmfieldsize=Int32.Parse(vmfieldsize),vmfielddesc=vmfielddesc,vmfieldreq=vmfieldreq,vmfieldcap=vmfieldcap};
+                    setup.vmfields.Add(newitem);
+                }
+            }
+
+            // now load fields from parameters
+            var checkfieldnames = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--fieldnames") || x.synonym.Equals("-f")));
+            var checkfieldtypes = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--fieldtypes") || x.synonym.Equals("-t")));
+            var checkfieldsizes = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--fieldsizes") || x.synonym.Equals("-z")));
+            var checkfielddescs = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--fielddescs") || x.synonym.Equals("-c")));
+            var checkfieldreqs = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--fieldreqs") || x.synonym.Equals("-q")));
+            var checkfieldcaps = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--fieldcaps") || x.synonym.Equals("-a")));
+            if(checkfieldnames != null)
+            {
+                // we can try to load these.  Note that these have already been validated
+                string[] vmfieldnames = checkfieldnames.nextinput.Split(checkfieldnames.nextparaseparator,StringSplitOptions.None);
+                for(int i = 0; i<vmfieldnames.Length;i++)
+                {
+                    var newitem = new vmfield(){vmfieldname=vmfieldnames[i]};
+                    if(checkfieldtypes != null)
+                    {
+                        string[] checkarray = checkfieldtypes.nextinput.Split(checkfieldtypes.nextparaseparator,StringSplitOptions.None);
+                        if(checkarray.Length>=i)
+                            newitem.vmfieldtype = ph.FixFieldTypeCs(checkarray[i]);
+                    }
+                    if(checkfieldsizes != null)
+                    {
+                        string[] checkarray = checkfieldsizes.nextinput.Split(checkfieldsizes.nextparaseparator,StringSplitOptions.None);
+                        if(checkarray.Length>=i)
+                            newitem.vmfieldsize = Int32.Parse(new String(('0' + checkarray[i]).Where(Char.IsDigit).ToArray()));
+                    }
+                    if(checkfielddescs != null)
+                    {
+                        string[] checkarray = checkfielddescs.nextinput.Split(checkfielddescs.nextparaseparator,StringSplitOptions.None);
+                        if(checkarray.Length>=i)
+                            newitem.vmfielddesc = checkarray[i];
+                    }
+                    if(checkfieldreqs != null)
+                    {
+                        string[] checkarray = checkfieldreqs.nextinput.Split(checkfieldreqs.nextparaseparator,StringSplitOptions.None);
+                        if(checkarray.Length>=i)
+                            newitem.vmfieldreq = checkarray[i];
+                    }
+                    if(checkfieldcaps != null)
+                    {
+                        string[] checkarray = checkfieldcaps.nextinput.Split(checkfieldcaps.nextparaseparator,StringSplitOptions.None);
+                        if(checkarray.Length>=i)
+                            newitem.vmfieldcap = checkarray[i];
+                    }
+                    setup.vmfields.Add(newitem);
+                }
+            }
+
+            // now remove duplicates
+            var distinct = setup.vmfields.GroupBy(x => x.vmfieldname).Select(y => y.FirstOrDefault()).ToList();
+            if(distinct.Count != setup.vmfields.Count)
+            {
+                setup.vmfields.Clear();
+                setup.vmfields.AddRange(distinct);
+            }
+
+            // now find the primary key
+            var checkpkey = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--key") || x.synonym.Equals("-k")));
+            if(checkpkey != null)
+            {
+                var checkvmkeyfield = setup.vmfields.FirstOrDefault(x => x.vmfieldname.ToLower().Equals(checkpkey.nextinput.ToLower()));
+                if(checkvmkeyfield != null)
+                {
+                    checkvmkeyfield.ispkey = true;
+                    setup.vmpkey = checkvmkeyfield!.vmfieldname;
+                }
+            }
+
+            // set the destination file
+            var checkdestfile = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--output") || x.synonym.Equals("-o")));
+            if(checkdestfile != null)
+                setup.destfile = checkdestfile!.nextinput;
+
+            this.vmmodel = setup;
+            return true;
+        }
+
+
+
+    }
+
+
+
+    public class vmfield
+    {
+        public string vmfieldname = "";
+        public string vmfieldtype = "System.String";
+        public int vmfieldsize = 0;
+        public string vmfielddesc = "";
+        public string vmfieldcap = "";
+        public string vmfieldreq = "";
+        public bool ispkey = false;
+    }
+
+    public class vmoptions
+    {
+        public string command = "";
+        public string destfile = "";
+        public string vmname = "";
+        public string vmnamespace = "";
+        public string vmpkey = "";
+        public string fieldprefix = "";
+
+        public List<vmfield> vmfields = new List<vmfield>();
+        public List<string> parentmodels = new List<string>();
+        public List<string> childmodels = new List<string>();
+    }
+
+
+
+    public class parameterhander
+    {
+        public List<parametersetting> ps = new List<parametersetting>();
+        public string lastmessage = "";
+        public string appname = "csgen";
+
+        public string reservedcs = ",abstract,as,base,bool,break,byte,case,catch,char,checked,class,const,continue,decimal,default,delegate,do,double,else,enum,event,explicit,extern,false,finally,fixed,float,for,foreach,goto,if,implicit,in,int,interface,internal,is,lock,long,namespace,new,null,object,operator,out,override,params,private,protected,public,readonly,ref,return,sbyte,sealed,short,sizeof,stackalloc,static,string,struct,switch,this,throw,true,try,typeof,uint,ulong,unchecked,unsafe,ushort,using,virtual,void,volatile,while,";
+
+        public string fieldtypescs = ",guid,int,int32,string,bool,date,datetime,char,decimal,double,float,long,object,sbyte,byte,short,uint,ulong,ushort,";
+
+        public string FixFieldTypeCs(string fieldtypecs)
+        {
+            string output = "System.String";
+            string checktype = (fieldtypecs.ToLower()).Replace("system.","");
+            if(!this.fieldtypescs.Contains(','+checktype+','))
+                return output;
+            if(checktype == "int" || checktype == "int32" )
+                return "System.Int32";
+            if(checktype == "date" || checktype == "datetime" )
+                return "System.DateTime";
+            if(checktype == "bool" || checktype == "boolean" )
+                return "System.Boolean";
+            if(checktype == "decimal" || checktype == "float" || checktype == "double" )
+                return "System.Double";
+            if(checktype == "byte")
+                return "System.Byte";
+            if(checktype == "guid")
+                return "System.Guid";
+            return output;
+        }
+
+        public bool SetParameters(List<string> parameters)
+        {
+            this.LoadParameterInfo();
+
+            // we will need to check the first parameter
+            // if empty, 
+            string category = "";
+            string setting = "";
+            bool ishelp = false;
+            if(parameters.Count==0)
+            {
+                category = "--help";
+                setting = "--help";
+                ishelp = true;
+            }
+            else if( parameters[0].Trim().ToLower() == "--help" || parameters[0].Trim().ToLower() == "-h"  || parameters[0].Trim().ToLower() == "" )
+            {
+                category = "--help";
+                setting = "--help";
+                ishelp = true;
+            }
+            else
+            {
+                category = parameters[0].Trim().ToLower();
+                if(parameters.Count==1)
+                {
+                    // we validate the category below
+                    // setting = "--help";
+                    // ishelp = true;
+                }
+                else if(parameters.Count==2)
+                {
+                    // if the second parameter is help then do the same as above
+                    if(parameters[1].ToLower().Trim().Equals("--help") || parameters[1].ToLower().Trim().Equals("-h"))
+                    {
+                        setting = "--help";
+                        ishelp = true;
+                    }
+                }
+                else
+                {
+                    // if the final parameter is help then get help on the first parameter after the category (if this is a match)
+                    if(parameters[parameters.Count-1].ToLower().Trim().Equals("--help") || parameters[parameters.Count-1].ToLower().Trim().Equals("-h"))
+                    {
+                        string checkparameter = parameters[1].ToLower().Trim();
+                        var checksetting = ps.Find(x => x.category.Equals(category) && (x.setting.Equals(checkparameter) || x.synonym.Equals(checkparameter)));
+                        if(checksetting != null)
+                        {
+                            setting = checksetting.setting;
+                            ishelp = true;
+                        }
+                    }
+                }
+            }
+
+            if(!ishelp)
+            {
+                // check if there is a valid category entered
+                var checkcategory = ps.Find(x => x.category.Equals(category) && x.setting.Equals("--help"));
+                if(checkcategory == null)
+                {
+                    // this category does not exist
+                    // error 
+                    this.lastmessage = $"Category '{category}' does not exist.  Enter {this.appname} --help for a list of categories.";
+                    return false;
+                }
+
+                // if this is just a single category with nothing else, get the help for it
+                if(parameters.Count==1)
+                {
+                    ishelp = true;
+                    setting = "--help";
+                }
+            }
+
+            // if this is a help request, set only the minimal properties and exit
+            if(ishelp)
+            {
+                var checkhelp = ps.Find(x => x.category.Equals(category) && (x.setting.Equals(setting) || x.synonym.Equals(setting)));
+                if(checkhelp == null)
+                {
+                    this.lastmessage = $"No help is available for category '{category}' and option '{setting}'.";
+                    return false;
+                }
+                checkhelp.isactive = true;
+                checkhelp.ishelprequest = true;
+                return true;
+            }
+
+            // go through each parameter, try to determine what each is, validate its form, and set the relevant properties on the ps object
+            bool skipnext = false;
+            for(int i = 0; i < parameters.Count; i++)
+            {
+                // if the first one, just find the category help and set active
+                if(skipnext)
+                {
+                    // do nothing here
+                    skipnext = false;
+                }
+                else if(i==0)
+                {
+                    var categorysetting = ps.Find(x => x.category.Equals(category) && (x.setting.Equals("--help")));
+                    if(categorysetting==null)
+                    {
+                        this.lastmessage = $"Cannot locate category '{category}' in parameters.";
+                        return false;
+                    }
+                    categorysetting.isactive = true;
+                }
+                else
+                {
+                    // if a parameter is passed-in, if it's not --help|-h (which is analysed and finalised above) and/or the category 
+                    // (again which is determined above) then it is basically one of three things:
+                    // 1 a recognised command (like -f|--filename)
+                    // 2 is something following a recognised command that isn't a switch
+                    // 3 is in a specific order in the parameter listing (an ordinal command)
+
+                    setting = parameters[i].Trim().ToLower();
+                    var checksetting = ps.Find(x => x.category.Equals(category) && (x.setting.Equals(setting) || x.synonym.Equals(setting)));
+                    bool isordinal = false;
+                    bool issetting = false;
+                    bool isswitch = false;
+                    parametersetting? currentsetting; 
+                    if(checksetting==null)
+                    {
+                        // check the ordinal - this might be okay if in a specific place in the parameters
+                        var ordinalsetting = ps.Find(x => x.category.Equals(category) && (x.ordinal.Equals(i+1)));
+                        if(ordinalsetting==null)
+                        {
+                            this.lastmessage = $"Parameter '{parameters[i]}' is incorrect.  Enter {this.appname} {category} --help for more information.";
+                            return false;
+                        }
+                        isordinal = true;
+                        currentsetting = ordinalsetting;
+                    }
+                    else
+                    {
+                        issetting = true;
+                        currentsetting = checksetting;
+                    }
+                    isswitch = (currentsetting.paratype == ParameterType.Switch);
+                    // if this is an ordinal, we validate it directly
+                    // if this is a switch, we do not validate at all
+                    // if this is a setting, we validate the next parameter using the 'nextxxx' properties on the current setting object
+                    string validatetext = "";
+                    if(isswitch)
+                    {
+                        validatetext = "";
+                    }
+                    else if(isordinal)
+                    {
+                        validatetext = this.ValidateParameter(parameters[i],checksetting!.description,checksetting!.paratype,checksetting!.paraintmin,checksetting!.paraintmax,checksetting!.paraseparator);
+                    }
+                    else if(issetting)
+                    {
+                        // try to grab the next parameter
+                        if(i == (parameters.Count - 1))
+                        {
+                            this.lastmessage = $"Setting '{setting}' must be followed by an additional parameter.  Enter {this.appname} {category} {setting} --help for more information.";
+                            return false;
+                        }
+                        validatetext = this.ValidateParameter(parameters[i+1],checksetting!.description,checksetting!.nextparatype,checksetting!.nextparaintmin,checksetting!.nextparaintmax,checksetting!.nextparaseparator);
+                    }
+
+                    if(validatetext != "")
+                    {
+                        this.lastmessage = validatetext;
+                        return false;
+                    }
+
+                    // now set the relevant properties of the parameter object
+                    if(isswitch)
+                    {
+                        checksetting!.isactive = true;
+                        checksetting!.input = parameters[i];
+                        checksetting!.nextisactive = false;
+                        checksetting!.nextinput = "";
+                    }
+                    else if(isordinal)
+                    {
+                        checksetting!.isactive = true;
+                        checksetting!.input = parameters[i];
+                        checksetting!.nextisactive = false;
+                        checksetting!.nextinput = "";
+                    }
+                    else if(issetting)
+                    {
+                        checksetting!.isactive = true;
+                        checksetting!.input = parameters[i];
+                        checksetting!.nextisactive = true;
+                        checksetting!.nextinput = parameters[i+1];
+                        skipnext = true;
+                    }
+                }
+            }
+            return true;
+        }
+
+        public string ValidateParameter(string parameter, string description, ParameterType paratype, int paraintmin = 0, int paraintmax = 0, string paraseparator = "")
+        {
+            if(paraseparator != "" && parameter.Contains(paraseparator))
+            {
+                string[] fields = parameter.Split(paraseparator,StringSplitOptions.None);
+                string errormessage = "";
+                foreach(var field in fields)
+                {
+                    errormessage = this.ValidateParameter(field,description,paratype,paraintmin,paraintmax);
+                    if(errormessage != "")
+                        return errormessage;
+                }
+                return "";
+            }
+
+            string output = "";
+            if(paratype == ParameterType.Any)
+            {
+
+            }
+            else if(paratype == ParameterType.Switch)
+            {
+
+            }
+            else if(paratype == ParameterType.Input)
+            {
+
+            }
+            else if(paratype == ParameterType.Text)
+            {
+
+            }
+            else if(paratype == ParameterType.File)
+            {
+
+            }
+            else if(paratype == ParameterType.Integer)
+            {
+                if(parameter=="")
+                    return $"{description} parameter must be a number between {paraintmin} and {paraintmax}.";
+                if(parameter.Contains(' '))
+                    return $"{description} parameter value '{parameter}' cannot contain spaces.";
+                if(parameter.StartsWith('-') && paraintmin >= 0 )
+                    return $"{description} parameter value '{parameter}' cannot be negative.";
+                if(parameter.Contains('.'))
+                    return $"{description} parameter value '{parameter}' must be an integer.";
+                string checkparameter = new String(parameter.Where(Char.IsDigit).ToArray());
+                if(parameter != checkparameter)
+                    return $"{description} parameter value '{parameter}' must only contain digits from 0-9.";
+                if(checkparameter.Length >= Int32.MaxValue.ToString().Length)
+                    return $"{description} parameter value '{parameter}' is too many digits.";
+                int parameternum = Int32.Parse(checkparameter);
+                if(parameternum < paraintmin)
+                    return $"{description} parameter value '{parameter}' is less than {paraintmin}.";
+                if(parameternum > paraintmax)
+                    return $"{description} parameter value '{parameter}' is more than {paraintmax}.";
+            }
+            else if(paratype == ParameterType.HtmlFieldName)
+            {
+                if(parameter=="")
+                    return $"{description} parameter cannot be blank.";
+                if(parameter.Contains(' '))
+                    return $"{description} parameter value '{parameter}' cannot contain spaces.";
+                if(parameter.StartsWith('_'))
+                    return $"{description} parameter value '{parameter}' cannot start with an underscore.";
+                if(parameter.EndsWith('_'))
+                    return $"{description} parameter value '{parameter}' cannot end with an underscore.";
+                if(Char.IsDigit(parameter[0]))
+                    return $"{description} parameter value '{parameter}' cannot start with a digit.";
+                if(parameter.Contains('.'))
+                    return $"{description} parameter value '{parameter}' cannot contain the period character.";
+                string nounderscores = parameter.Replace("_","");
+                string checkparameter = new String(nounderscores.Where(Char.IsLetterOrDigit).ToArray());
+                if(nounderscores != checkparameter)
+                    return $"{description} parameter value '{parameter}' must only contain letters, digits, and underscores.";
+            }
+            else if(paratype == ParameterType.CsFieldName)
+            {
+                if(parameter=="")
+                    return $"{description} parameter cannot be blank.";
+                if(parameter.Contains(' '))
+                    return $"{description} parameter value '{parameter}' cannot contain spaces.";
+                // if(parameter.StartsWith('_'))
+                //     return $"{description} parameter value '{parameter}' cannot start with an underscore.";
+                if(parameter.EndsWith('_'))
+                    return $"{description} parameter value '{parameter}' cannot end with an underscore.";
+                if(Char.IsDigit(parameter[0]))
+                    return $"{description} parameter value '{parameter}' cannot start with a digit.";
+                if(parameter.Contains('.'))
+                    return $"{description} parameter value '{parameter}' cannot contain the period character.";
+                string nounderscores = parameter.Replace("_","");
+                string checkparameter = new String(nounderscores.Where(Char.IsLetterOrDigit).ToArray());
+                if(nounderscores != checkparameter)
+                    return $"{description} parameter value '{parameter}' must only contain letters, digits, and underscores.";
+                if(this.reservedcs.Contains(','+parameter+','))
+                    return $"The value '{parameter}' is a reserved word in C# and cannot be used.";
+
+            }
+
+            return output;
+        }
+
+        public bool IsHelpRequested()
+        {
+            var checkhelp = ps.Find(x => x.ishelprequest.Equals(true));
+            return (checkhelp != null);
+        }
+        public List<string> GetHelp()
+        {
+            var checkhelp = ps.Find(x => x.ishelprequest.Equals(true));
+            if(checkhelp == null)
+                return new List<string>();
+            return checkhelp!.helptext;
+        }
+
+        private void LoadParameterInfo()
+        {
+            ps.Clear();
+            ps.Add(new parametersetting(){
+                category = "--help",
+                setting = "--help",
+                synonym = "-h",
+                description = this.appname + " Help Information",
+                isactive = false,
+                input = "",
+                nextisactive = false,
+                nextinput = "",
+                required  = false,
+                helptext = new List<string>(){
+                    "Usage: csgen [command] [options]",
+                    "",
+                    "Creates and edits text files to scaffold C# applications from the command-line.",
+                    "",
+                    "Command:",
+                    "  replace           Performs a search-replace in text file.",
+                    "  replacechar       Performs a search-replace with CHR() numbers in text file.",
+                    "  replacen          Search and replace the nth items found in a text file.",
+                    "  replacedq         Performs a search in text file for double-quotes.",
+                    "  replacewithdq     Performs a replace in text file with double-quotes.",
+                    "  insert            Inserts text at a specified line in a text file.",
+                    "  model             Creates a C# model class.",
+                    "  vm                Creates a C# viewmodel class.",
+                    "",
+                    "Options:",
+                    "  -h|--help         Display help for each command."
+                },
+                paratype = ParameterType.Switch,
+                paraintmin = 0,
+                paraintmax = 65535,
+                nextparatype = ParameterType.Any,
+                nextparaintmin = 0,
+                nextparaintmax = 65535
+            });
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--help",
+                synonym = "-h",
+                description = "ViewModel Creation Help",
+                restriction = "",
+                input = "",
+                nextinput = "",
+                required  = false,
+                helptext = new List<string>(){
+                    "Usage: csgen vm [options]",
+                    "",
+                    "Creates a ViewModel file.",
+                    "",
+                    "Options:",
+                    "  -n|--name         ViewModel name.",
+                    "  -p|--namespace    ViewModel namespace.",
+                    "  -o|--output       Full path to output .cs file.",
+                    "  -s|--sourcefile   Loads field properties from a CSV file.",
+                    "                    The header row must contain 'vmfieldname','vmfieldtype','vmfieldsize','vmfielddesc''vmfieldreq','vmfieldcap' to be used.",
+                    "  -f|--fieldnames   Comma-separated list of ViewModel field names in order.",
+                    "                    Syntax is vmfieldname1[,vmfieldname2][,...].",
+                    "  -t|--fieldtypes   Comma-separated list of ViewModel field types in order.",
+                    "                    Syntax is vmfieldtype1[,vmfieldtype2][,...].",
+                    "  -z|--fieldsizes   Comma-separated list of ViewModel field sizes in order.",
+                    "                    Syntax is vmfieldsize1[,vmfieldsize2][,...].",
+                    "  -c|--fielddescs   Comma-separated list of ViewModel field descriptions in order.",
+                    "                    Syntax is vmfielddesc1[,vmfielddesc2][,...].",
+                    "  -q|--fieldreqs    Comma-separated list of ViewModel field required text in order.",
+                    "                    Syntax is vmfieldreq1[,vmfieldreqc2][,...].",
+                    "  -a|--fieldcaps    Comma-separated list of ViewModel field captions in order.",
+                    "                    Syntax is vmfieldcap1[,vmfieldcap2][,...].",
+                    "  -k|--key          Specifies the primary key field.",
+                    "  -h|--help         Display help."
+                },
+                paratype = ParameterType.Switch,
+                paraintmin = 0,
+                paraintmax = 65535,
+                nextparatype = ParameterType.Any,
+                nextparaintmin = 0,
+                nextparaintmax = 65535
+            });
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--name",
+                synonym = "-n",
+                description = "ViewModel Model Name",
+                helptext = new List<string>(){
+                    "Usage: csgen vm -n viewmodelname",
+                    "",
+                    "Specify the name of the ViewModel.  This must be both valid in both HTML5 and C#.",
+                    "If no name is specified, the filename (without '.cs') is used.  If neither are supplied, the ViewModel is named 'newviewmodel'.",
+                },
+                paratype = ParameterType.Input,
+                nextparatype = ParameterType.CsClassName
+            });
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--namespace",
+                synonym = "-p",
+                description = "ViewModel Model Namespace",
+                helptext = new List<string>(){
+                    "Usage: csgen vm -p viewmodelnamespace",
+                    "",
+                    "Specify the name of the ViewModel.  This must be valid in C#.",
+                    "This parameter is option.  If no name is specified, the ViewModel class is created with no namespace.",
+                },
+                paratype = ParameterType.Input,
+                nextparatype = ParameterType.CsClassName
+            });
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--output",
+                synonym = "-o",
+                description = "ViewModel Output File",
+                helptext = new List<string>(){
+                    "Usage: csgen vm -o outputfilename",
+                    "",
+                    "Specify the name of the file to be created.",
+                    "",
+                    "If no full path is specified then the current directory is used.",
+                    "This must be a valid filename and will be overwritten without notification.",
+                    "If not specified, the model name is used with '.cs' appended.  If neither are specified, the file 'newviewmodel.cs' is created in the current directory.",
+                },
+                paratype = ParameterType.Input,
+                nextparatype = ParameterType.File
+            });
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--sourcefile",
+                synonym = "-s",
+                description = "ViewModel Field Information Source File",
+                helptext = new List<string>(){
+                    "Usage: csgen vm -s sourcefilename",
+                    "",
+                    "Specify the name of a CSV file containing fields.",
+                    "",
+                    "If no full path is specified then the current directory is checked.",
+                    "If the header row contains 'vmfieldname','vmfieldtype','vmfieldsize','vmfielddesc','vmfieldcap','vmfieldreq' then these will be used.",
+                    "",
+                    "The CSV can optionally have a 'vmname' field to filter records.",
+                    "Only records that have a matching 'vmname' the same as the specified model will be used.",
+                    "The order that fields are loaded is the natural order of the rows in the source file.",
+                    "If the -f|--fieldnames option is also used, those fields will be added after any obtained through the -s|--sourcefile load."
+                },
+                paratype = ParameterType.Input,
+                nextparatype = ParameterType.File
+            });
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--fieldnames",
+                synonym = "-f",
+                description = "ViewModel Field Names",
+                helptext = new List<string>(){
+                    "Usage: csgen vm -f fieldnames",
+                    "",
+                    "Specify a comma-separated list of fieldnames.",
+                    "",
+                    "The format of this is:",
+                    "vmfieldname1[,vmfieldname2][,...]",
+                    "",
+                    "If the -s|--sourcefile option is also used, fields will be loaded from that file first and ones specified with -f are appended.",
+                    "Each name must be valid as a CSS/HTML name."
+                },
+                paratype = ParameterType.Input,
+                nextparatype = ParameterType.HtmlFieldName,
+                nextparaseparator = ","
+            });
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--fieldtypes",
+                synonym = "-t",
+                description = "ViewModel Field Types",
+                helptext = new List<string>(){
+                    "Usage: csgen vm -t fieldtypes",
+                    "",
+                    "Specify a comma-separated list of C# types associated with fields.",
+                    "",
+                    "The format of this is:",
+                    "vmfieldtype1[,vmfieldtype2][,...]",
+                    "",
+                    "If not specified, the default is string."
+                },
+                paratype = ParameterType.Input,
+                nextparatype = ParameterType.CsClassName,
+                nextparaseparator = ","
+            });
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--fieldsizes",
+                synonym = "-z",
+                description = "ViewModel Field Sizes",
+                helptext = new List<string>(){
+                    "Usage: csgen vm -z fieldsizes",
+                    "",
+                    "Specify a comma-separated list of field sizes.",
+                    "",
+                    "The format of this is:",
+                    "vmfieldsize1[,vmfieldsize2][,...]",
+                    "",
+                    "Where the field size is set to zero then this is ignored."
+                },
+                paratype = ParameterType.Input,
+                nextparatype = ParameterType.Integer,
+                nextparaseparator = ",",
+                nextparaintmin = 0
+            });
+
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--fielddescs",
+                synonym = "-d",
+                description = "ViewModel Field Descriptions",
+                helptext = new List<string>(){
+                    "Usage: csgen vm -t fielddescs",
+                    "",
+                    "Specify a comma-separated list of field descriptions.",
+                    "",
+                    "The format of this is:",
+                    "vmfielddesc1[,vmfielddesc2][,...]"
+                },
+                paratype = ParameterType.Input,
+                nextparatype = ParameterType.CsClassName,
+                nextparaseparator = ","
+            });
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--fieldcaps",
+                synonym = "-a",
+                description = "ViewModel Field Captions",
+                helptext = new List<string>(){
+                    "Usage: csgen vm -a fieldcaps",
+                    "",
+                    "Specify a comma-separated list of the caption text that will appear in the view.",
+                    "",
+                    "The format of this is:",
+                    "vmfieldcap1[,vmfieldcap2][,...]"
+                },
+                paratype = ParameterType.Input,
+                nextparatype = ParameterType.CsClassName,
+                nextparaseparator = ","
+            });
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--fieldreqs",
+                synonym = "-d",
+                description = "ViewModel Field Required Text",
+                helptext = new List<string>(){
+                    "Usage: csgen vm -q fieldreqs",
+                    "",
+                    "Specify a comma-separated list of text that appears when required.",
+                    "Note that if blank or missing, the field is not required.",
+                    "",
+                    "The format of this is:",
+                    "vmfieldreq1[,vmfieldreq2][,...]"
+                },
+                paratype = ParameterType.Input,
+                nextparatype = ParameterType.CsClassName,
+                nextparaseparator = ","
+            });
+
+           ps.Add(new parametersetting(){
+                category = "vm",
+                setting = "--key",
+                synonym = "-k",
+                description = "ViewModel Primary Key",
+                helptext = new List<string>(){
+                    "Usage: csgen vm -k pkeyfieldname",
+                    "",
+                    "Specify the name of the primary key field.",
+                    "",
+                    "If not specified, no pkey will be set."
+                },
+                paratype = ParameterType.Input,
+                nextparatype = ParameterType.CsClassName
+            });
+
+
+
+
+
+
+/*
+
+                this.Message("Usage: csgen [command] [options]");
+                this.Message("");
+                this.Message("Command:");
+                this.Message("  replace           Performs a search-replace in text file.");
+                this.Message("  replacechar       Performs a search-replace with CHR() numbers in text file.");
+                this.Message("  replacen          Search and replace the nth items found in a text file.");
+                this.Message("  replacedq         Performs a search in text file for double-quotes.");
+                this.Message("  replacewithdq     Performs a replace in text file with double-quotes.");
+                this.Message("  model             Creates and edits C# model classes.");
+                this.Message("  insert            Inserts text at a specified line in a text file.");
+                this.Message("");
+                this.Message("Options:");
+                this.Message("  -h|--help         Display help.");
+
+
+Usage: csgen [command] [command-options]
+
+Execute a custom C# generator command.
+
+Commands:
+  add               Add a package or reference to a .NET project.
+  build             Build a .NET project.
+  build-server      Interact with servers started by a build.
+  clean             Clean build outputs of a .NET project.
+  format            Apply style preferences to a project or solution.
+  help              Show command line help.
+  list              List project references of a .NET project.
+  msbuild           Run Microsoft Build Engine (MSBuild) commands.
+  new               Create a new .NET project or file.
+  nuget             Provides additional NuGet commands.
+  pack              Create a NuGet package.
+  publish           Publish a .NET project for deployment.
+  remove            Remove a package or reference from a .NET project.
+  restore           Restore dependencies specified in a .NET project.
+  run               Build and run a .NET project output.
+  sdk               Manage .NET SDK installation.
+  sln               Modify Visual Studio solution files.
+  store             Store the specified assemblies in the runtime package store.
+  test              Run unit tests using the test runner specified in a .NET project.
+  tool              Install or manage tools that extend the .NET experience.
+  vstest            Run Microsoft Test Engine (VSTest) commands.
+  workload          Manage optional workloads.
+
+
+Run 'csgen [command] --help' for more information on a command.
+
+
+                this.Message("Usage: csgen replacen sourcefile searchtext replacetext nthitem [numitems] [destfile]");
+                this.Message("");
+                this.Message("sourcefile");
+                this.Message("  Full path to the source file to be searched.");
+                this.Message("");
+                this.Message("searchtext");
+                this.Message("  Text to be searched for.");
+                this.Message("");
+                this.Message("replacetext");
+                this.Message("  Text that will replace 'searchtext' in the new file.");
+                this.Message("");
+                this.Message("nthitem");
+                this.Message("  Find the nth-item and replace it with replacetext.");
+                this.Message("");
+                this.Message("numitems");
+                this.Message("  Optional: Find the nth item then replace this numitems times afterwards.");
+                this.Message("");
+                this.Message("destfile");
+                this.Message("  Optional: Full path to output text file.");
+*/
+
+        }
+
+    }
+    public class parametersetting
+    {
+        public string category = "";
+        public string setting = "";
+        public string synonym = "";
+        public string description = "";
+        public string restriction = "";
+        public string input = "";
+        public bool isactive = false;
+        public bool ishelprequest = false;
+        public string nextinput = "";
+        public bool nextisactive = false;
+        public bool required  = false;
+        public int ordinal = 0;
+        public List<string> helptext = new List<string>();
+        public ParameterType paratype = ParameterType.Any; // Switch, Input, Any, File, Integer, Text, CsFieldName, CsFieldInfo, CsClassName, HtmlFieldInfo, HtmlFieldName
+        public int paraintmin = 0; 
+        public int paraintmax = 65535;
+        public string paraseparator = ""; 
+        public ParameterType nextparatype = ParameterType.Any; // Switch, Input, Any, File, Integer, Text, CsFieldName, CsFieldInfo, CsClassName, HtmlFieldInfo, HtmlFieldName
+        public int nextparaintmin = 0; 
+        public int nextparaintmax = 65535; 
+        public string nextparaseparator = ""; 
+    }
+
+    public enum ParameterType
+    {
+        Any,
+        Switch,
+        Input,
+        File,
+        Integer,
+        Text,
+        CsFieldName,
+        CsFieldInfo,
+        CsClassName,
+        HtmlFieldName
+    }
+
 }
