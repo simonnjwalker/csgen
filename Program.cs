@@ -7,7 +7,7 @@ namespace csgenns
         {
             csgenmain cg = new csgenmain();
             // test
-            bool testvm = true;
+            bool testvm = false;
             bool testreplacenerror = false;
             bool testinsert = false;
             bool testreplacen = false;
@@ -123,6 +123,11 @@ namespace csgenns
                 if(!olditems.Contains(checkcommand))
                 {
                     // do new stuff...
+                    cg.SetParameters(args);
+                    cg.Run();
+
+                    // if(!cg.Run())
+                    //     Console.WriteLine("csgen.exe did not complete.");
                     return;
                 }
             }
@@ -1107,8 +1112,8 @@ c:\SNJW\code\shared\csgen>
         bool usecomponentmodel = true;
         bool usedataannotations = true;
         bool disablenullmessages = true;
-        bool usenamespace = true;
-        bool usegetsetdefault = true;
+        // bool usenamespace = true;
+        // bool usegetsetdefault = true;
 
 
 
@@ -1533,7 +1538,7 @@ c:\SNJW\code\shared\csgen>
 
         public string reservedcs = ",abstract,as,base,bool,break,byte,case,catch,char,checked,class,const,continue,decimal,default,delegate,do,double,else,enum,event,explicit,extern,false,finally,fixed,float,for,foreach,goto,if,implicit,in,int,interface,internal,is,lock,long,namespace,new,null,object,operator,out,override,params,private,protected,public,readonly,ref,return,sbyte,sealed,short,sizeof,stackalloc,static,string,struct,switch,this,throw,true,try,typeof,uint,ulong,unchecked,unsafe,ushort,using,virtual,void,volatile,while,";
 
-        public string fieldtypescs = ",guid,int,int32,string,bool,date,datetime,char,decimal,double,float,long,object,sbyte,byte,short,uint,ulong,ushort,";
+        public string fieldtypescs = ",guid,byte,int,int32,string,bool,date,datetime,char,decimal,double,float,long,object,sbyte,short,uint,ulong,ushort,";
 
         public string FixFieldTypeCs(string fieldtypecs)
         {
