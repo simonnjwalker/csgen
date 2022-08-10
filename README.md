@@ -3,8 +3,11 @@ A helper for building C# projects and generating clean code
 
 # history
 0.01 Hello World uploaded to github
+
 0.09 Functionally have search-replace and nth-item replace
+
 0.10 Added an insert text to a particular line function
+
 0.11 Fixed error with replacenth where index out-of-range
 
 
