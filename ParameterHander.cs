@@ -391,8 +391,9 @@ namespace Seamlex.Utilities
 
 
 
-        private List<ParameterSetting> GetParameterInfoByCategory(string category)
+        private List<ParameterSetting> LegacyGetParameterInfoByCategory(string category)
         {
+            throw new Exception();
             List<ParameterSetting> output = new List<ParameterSetting>();
 
             if(category == "--help")
@@ -976,6 +977,8 @@ namespace Seamlex.Utilities
                         nextparaseparator = ","
                     });
                 }
+
+
                 helptext.Add("  -h|--help         Display help.");
                 help.helptext.AddRange(helptext);
                 output.Add(help);
@@ -985,15 +988,15 @@ namespace Seamlex.Utilities
             return output;
         }
 
-        private void LoadParameterInfo()
+        private void LegacyLoadParameterInfo()
         {
             ps.Clear();
-            ps.AddRange(this.GetParameterInfoByCategory("--help"));
-            ps.AddRange(this.GetParameterInfoByCategory("vm"));
-            ps.AddRange(this.GetParameterInfoByCategory("view"));
-            ps.AddRange(this.GetParameterInfoByCategory("facade"));
-            ps.AddRange(this.GetParameterInfoByCategory("controller"));
-            ps.AddRange(this.GetParameterInfoByCategory("model"));
+            ps.AddRange(this.LegacyGetParameterInfoByCategory("--help"));
+            ps.AddRange(this.LegacyGetParameterInfoByCategory("vm"));
+            ps.AddRange(this.LegacyGetParameterInfoByCategory("view"));
+            ps.AddRange(this.LegacyGetParameterInfoByCategory("facade"));
+            ps.AddRange(this.LegacyGetParameterInfoByCategory("controller"));
+            ps.AddRange(this.LegacyGetParameterInfoByCategory("model"));
             return;
 
 
@@ -1296,23 +1299,23 @@ namespace Seamlex.Utilities
                     "  -fg|--fkey        Specifies the foreign key field.",
                     "  -fu|--user        Specifies the user key field.",
                     "  -fu|--message     Specifies the messaging field.",
-                    "  -bt|--submit      Type of Submit object on the form.",
-                    "  -ba|--subaction   Specifies the Submit action.",
-                    "  -bd|--subdclass   Colon-delimited CSS classes for the Submit object.",
-                    "  -bi|--subiclass   CSS class for an embedded <i> tag for the Submit object.",
-                    "  -zt|--return      Type of Return object on the form.",
-                    "  -za|--retaction   Specifies the Return action.",
-                    "  -zd|--retdclass   Colon-delimited CSS classes for the Return object.",
-                    "  -zi|--reticlass   CSS class for an embedded <i> tag for the Return object.",
-                    "  -ma|--formaction  Specifies the Form action.",
-                    "  -mw|--formclass   Colon-delimited CSS classes wrapping the Form object.",
-                    "  -ms|--formsub     Colon-delimited CSS classes wrapping all objects inside the Form object.",
-                    "  -pc|--pageclass   Specifies the CSS class wrapping the Info and Form sections.",
-                    "  -ic|--infoclass   Colon-delimited CSS classes wrapping the Info section above form fields.",
-                    "  -ih|--infohclass  CSS class of the heading in the Info section.",
-                    "  -it|--infotext    Text for the information section.",
-                    "  -lf|--layfiles    Colon-separated list of Layout cshtml files associated with --laynames.",
-                    "  -ln|--laynames    Colon-separated list of @section names.",
+                    "  -wst|--submit     Type of Submit object on the form.",
+                    "  -wsa|--subaction  Specifies the Submit action.",
+                    "  -wsd|--subdclass  Colon-delimited CSS classes for the Submit object.",
+                    "  -wsi|--subiclass  CSS class for an embedded <i> tag for the Submit object.",
+                    "  -wrt|--return     Type of Return object on the form.",
+                    "  -wra|--retaction  Specifies the Return action.",
+                    "  -wrd|--retdclass  Colon-delimited CSS classes for the Return object.",
+                    "  -wri|--reticlass  CSS class for an embedded <i> tag for the Return object.",
+                    "  -wfa|--formaction Specifies the Form action.",
+                    "  -wfc|--formclass  Colon-delimited CSS classes wrapping the Form object.",
+                    "  -wfs|--formsub    Colon-delimited CSS classes wrapping all objects inside the Form object.",
+                    "  -wpc|--pageclass  Specifies the CSS class wrapping the Info and Form sections.",
+                    "  -wic|--infoclass  Colon-delimited CSS classes wrapping the Info section above form fields.",
+                    "  -wih|--infohclass CSS class of the heading in the Info section.",
+                    "  -wit|--infotext   Text for the information section.",
+                    "  -wlf|--layfiles   Colon-separated list of Layout cshtml files associated with --laynames.",
+                    "  -wln|--laynames   Colon-separated list of @section names.",
                     "  -h|--help         Display help."
                 },
                 paratype = ParameterType.Switch,
@@ -1698,6 +1701,7 @@ namespace Seamlex.Utilities
         CsFieldInfo,
         CsClassName,
         CsNameSpace,
+        CssName,
         HtmlFieldName,
         HtmlFieldType
     }

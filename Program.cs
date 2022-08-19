@@ -15,8 +15,251 @@ namespace Seamlex.Utilities
             CsgenLegacy csgenold = new CsgenLegacy();
             CsgenMain cg = new CsgenMain();
             // test
+            bool testcontroller = false;
             bool testmodel = false;
+            bool testview = false;
             bool testvm = false;
+
+
+/*
+
+        public string cname {get;set;} = "";  // Name of the Controller
+        public string cnamespace {get;set;} = "";  // Namespace of the Controller
+        public string cparent {get;set;} = "";  // Name of the parentClass
+        public string ccontext {get;set;} = "";  // Class name of the ApplicationContext
+        public string cfacade {get;set;} = "";  // Does Controller use a façade?
+        public bool cidentity {get;set;} = true;  // Does Controller use Identity?
+        public bool casync {get;set;} = true;  // Does Controller use asynchronous methods?
+        public bool cdbsave {get;set;} = true;  // Does Controller issue a dbsave?
+        public bool cbinding {get;set;} = true;  // Does Controller bind individual fields?
+        public string chttp {get;set;} = "";  // GET/SET action properties
+        public string cactname {get;set;} = "";  // action name
+        public string cactsyn {get;set;} = "";  // action synonyms
+        public string cacttype {get;set;} = "";  // type (Create/Delete/Edit/Index/Details)
+        public string cactvm {get;set;} = "";  // ViewModel names
+        public string cactmodel {get;set;} = "";  // Model name
+        public string cactview {get;set;} = "";  // View name
+        public string cactpkey {get;set;} = "";  // ViewModel primary key field
+        public string cactfkey {get;set;} = "";  // ViewModel foreign key field
+        public string cactukey {get;set;} = "";  // ViewModel user key field
+        public string cactmsg {get;set;} = "";  // ViewModel message field
+
+*/
+
+            if(testcontroller)
+            {
+                cg.parameters.Clear();
+                cg.parameters.Add("controller");
+                cg.parameters.Add("--cname");
+                cg.parameters.Add("ElectionController");
+                cg.parameters.Add("--cnamespace");
+                cg.parameters.Add("Seamlex.MyEdApps");
+                cg.parameters.Add("--cparent");
+                cg.parameters.Add("Controller");
+                cg.parameters.Add("--ccontext");
+                cg.parameters.Add("ApplicationDbContext");
+                cg.parameters.Add("--cnobinding");
+                cg.parameters.Add("--output");
+                cg.parameters.Add("c:\\temp\\ElectionController.cs");
+
+                cg.parameters.Add("--chttps");  // GET/POST action properties
+                cg.parameters.Add("GET:GET+POST:GET+POST:GET:GET+POST");
+                cg.parameters.Add("--cactnames");  // action name
+                cg.parameters.Add("Index:Create:Edit:Details:Delete");  
+                cg.parameters.Add("--cactsyns");  // action synonyms
+                cg.parameters.Add("manage+all+list:new+add:edit:view:remove");
+                cg.parameters.Add("--cacttypes");  // type (Create/Delete/Edit/Index/Details)
+                cg.parameters.Add("Index:Create:Edit:Details:Delete");
+
+
+                cg.parameters.Add("--cvnames");  //  Colon-delimited ViewModel names
+                cg.parameters.Add("election");
+                cg.parameters.Add("--cmnames");  // Colon-delimited Model names
+                cg.parameters.Add("Election");
+                cg.parameters.Add("--cwnames");  // Colon-delimited View names
+                cg.parameters.Add("Crete Election");
+                cg.parameters.Add("--cvpkeys");  // Colon-delimited ViewModel primary key fields
+                cg.parameters.Add("id");
+                cg.parameters.Add("--cvfkeys");  // Colon-delimited ViewModel foreign key fields
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--cmpkeys");  // Colon-delimited Model primary key fields
+                cg.parameters.Add("Id");
+                cg.parameters.Add("--cmfkeys");  // Colon-delimited Model foreign key fields
+                cg.parameters.Add("UserId");
+                cg.parameters.Add("--cmparents");  // Colon-delimited Model parent table names
+                cg.parameters.Add("IdentityUser");
+                cg.parameters.Add("--cvukeys");  // Colon-delimited action ViewModel user key fields
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--cvmsgs");  // Colon-delimited action ViewModel message fields
+                cg.parameters.Add("message");
+
+
+                // cg.parameters.Add("--sourcefile");
+                // cg.parameters.Add("c:\\temp\\sourcefile.csv");
+                cg.parameters.Add("--vfnames");
+                cg.parameters.Add("id,userid,code,name,desc,start,message");
+                cg.parameters.Add("--vftypes");
+                cg.parameters.Add("string,string,string,string,string,DateTime,string");
+                cg.parameters.Add("--vfsizes");
+                cg.parameters.Add("32,32,10,0,0,0,100");
+                cg.parameters.Add("--vfdescs");
+                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
+                cg.parameters.Add("--vfcaps");
+                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
+                cg.parameters.Add("--vpkey");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--vuserkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--vmessage");
+                cg.parameters.Add("message");
+
+                cg.parameters.Add("--mfnames");
+                cg.parameters.Add("Id,foreigntableId,Code,Name,Desc,Start,Message");
+                cg.parameters.Add("--mftypes");
+                cg.parameters.Add("Guid,Guid,string,string,string,DateTime,string");
+                // cg.parameters.Add("--mfsizes");
+                // cg.parameters.Add("0,0,10,0,0,0,100");
+                // cg.parameters.Add("--mfsizes");
+                // cg.parameters.Add("string,string,string,string,string,DateTime,string");
+
+                cg.Run();
+                System.Diagnostics.Process.Start("notepad.exe","c:\\temp\\ElectionController.cs");
+                return;                
+            }
+
+
+/*
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using lm.Models;
+using lm.Models.vm;
+using lm.Data.Context;
+
+// disable compiler warnings: some methods are synchronous but will be asynchronous later, and others I have left in as placeholders
+#pragma warning disable 1998
+
+namespace lm.Controllers
+{
+    public class ModelController : Controller
+    {
+        private readonly lmdbContext db;
+
+        public ModelController(lmdbContext context)
+        {
+            db = context;
+        }
+
+        // GET: Model
+        public async Task<IActionResult> Index()
+        {
+
+*/
+            if(testview)
+            {
+                cg.parameters.Clear();
+                cg.parameters.Add("view");
+                cg.parameters.Add("--wname");
+                cg.parameters.Add("Election List");
+                cg.parameters.Add("--vname");
+                cg.parameters.Add("election");
+                cg.parameters.Add("--vnamespace");
+                cg.parameters.Add("Seamlex.MyEdApps");
+                cg.parameters.Add("--output");
+                cg.parameters.Add("c:\\temp\\list.cshtml");
+                // cg.parameters.Add("--sourcefile");
+                // cg.parameters.Add("c:\\temp\\sourcefile.csv");
+                cg.parameters.Add("--vfnames");
+                cg.parameters.Add("id,userid,code,name,desc,start,message");
+                cg.parameters.Add("--vftypes");
+                cg.parameters.Add("string,string,string,string,string,DateTime,string");
+                cg.parameters.Add("--vfsizes");
+                cg.parameters.Add("32,32,10,0,0,0,100");
+                cg.parameters.Add("--vfdescs");
+                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
+                cg.parameters.Add("--vfcaps");
+                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
+                cg.parameters.Add("--vpkey");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--vuserkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--vmessage");
+                cg.parameters.Add("message");
+
+                cg.parameters.Add("--wftypes");
+                cg.parameters.Add("hidden,hidden,text,text,textarea,date,hidden");
+
+                cg.parameters.Add("--wfdclasses");
+                cg.parameters.Add("col-md-6:single-input,col-md-6:single-input,col-md-6:single-input,col-md-6:single-input,col-md-12:single-input,col-md-6:single-input,col-md-6:single-input");
+                cg.parameters.Add("--wficlasses");
+                cg.parameters.Add(",,lni lni-user,lni lni-phone,lni lni-format,lni lni-comments-alt,lni lni-envelope");
+                cg.parameters.Add("--wfclasses");
+                cg.parameters.Add("form-input,form-input,form-input,form-input,form-input,form-input,form-input");
+
+
+                // cg.parameters.Add("--vfkey");
+                // cg.parameters.Add("parentid");
+                // cg.parameters.Add("--vftable");
+                // cg.parameters.Add("parenttable");
+                //cg.parameters.Add("--help");
+
+                cg.parameters.Add("--wsubmit");
+                cg.parameters.Add("button");
+                cg.parameters.Add("--wsubaction");
+                cg.parameters.Add("post");
+                cg.parameters.Add("--wsubdclass");
+                cg.parameters.Add("col-md-12:form-button");
+                cg.parameters.Add("--wsubiclass");
+                cg.parameters.Add("lni lni-telegram-original");
+
+                cg.parameters.Add("--wreturn");
+                cg.parameters.Add("a");
+                cg.parameters.Add("--wretaction");
+                cg.parameters.Add("link");
+                cg.parameters.Add("--wretdclass");
+                cg.parameters.Add("col-md-12:form-button");
+                cg.parameters.Add("--wreticlass");
+                cg.parameters.Add("lni lni-telegram-original");
+
+                cg.parameters.Add("--wfrmaction");
+                cg.parameters.Add("Create");
+                cg.parameters.Add("--wfrmclass");
+                cg.parameters.Add("row:col-lg-8:contact-form-wrapper");
+                cg.parameters.Add("--wfrmsub");
+                cg.parameters.Add("row");
+
+
+                cg.parameters.Add("--wpageclass");
+                cg.parameters.Add("container");
+                cg.parameters.Add("--winfoclass");
+                cg.parameters.Add("row justify-content-center:col-xxl-5 col-xl-5 col-lg-7 col-md-10:section-title text-center mb-50");
+                cg.parameters.Add("--winfohclass");
+                cg.parameters.Add("mb-15");
+                cg.parameters.Add("--winfohead");
+                cg.parameters.Add("Manage Elections");
+                cg.parameters.Add("--winfotext");
+                cg.parameters.Add("Below is a list of all elections that you manage");
+
+                cg.parameters.Add("--wlayfiles");
+                cg.parameters.Add("_MainHeadPartial.cshtml:_MainStylesPartial.cshtml:_MainPreloadPartial.cshtml:_MainHeaderPartial.cshtml:_MainClientPartial.cshtml:_MainFooterPartial.cshtml:_MainScriptsPartial.cshtml");
+                cg.parameters.Add("--wlaynames");
+                cg.parameters.Add("Head:Styles:Preload:Header:Client:Footer:Scripts");
+                cg.parameters.Add("--wlayout");
+                cg.parameters.Add("_Main");
+
+                cg.parameters.Add("--waction");
+                cg.parameters.Add("create");
+
+                cg.Run();
+                System.Diagnostics.Process.Start("notepad.exe","c:\\temp\\list.cshtml");
+                return;                
+            }
+
             if(testmodel)
             {
                 cg.parameters.Clear();
