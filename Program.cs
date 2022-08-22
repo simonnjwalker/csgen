@@ -15,6 +15,8 @@ namespace Seamlex.Utilities
             CsgenLegacy csgenold = new CsgenLegacy();
             CsgenMain cg = new CsgenMain();
             // test
+            bool testwparameters = false;
+            bool testcparameters = false;
             bool testcontroller = false;
             bool testmodel = false;
             bool testview = false;
@@ -23,6 +25,186 @@ namespace Seamlex.Utilities
 
 /*
 
+c:\SNJW\code\shared\csgen.exe view --wname "Create Model" --sourcefile xoload-small.csv --output c:\SNJW\code\xo\Views\Model\Create.cshtml --vpkey id --vfkey userid --vftable AspNetUsers --vuserkey userid --vmessage message --wsubmit Submit --wsubaction Create --wreturn Index --wfrmaction Submit --winfohead Create a new Model" --winfotext "Enter the new model details below and click 'Create'" --wlayfiles _MainHeadPartial.cshtml:_MainStylesPartial.cshtml:_MainPreloadPartial.cshtml:_MainHeaderPartial.cshtml:_MainClientPartial.cshtml:_MainFooterPartial.cshtml:_MainScriptsPartial.cshtml --laynames Head:Styles:Preload:Header:Client:Footer:Scripts --wlayout Layout
+
+*/
+
+            if(testwparameters)
+            {
+
+                string outputfile = @"c:\SNJW\code\xo\Views\Model\Create.cshtml";
+                cg.parameters.Clear();
+                cg.parameters.Add("view");
+
+                cg.parameters.Add("--wname");
+                cg.parameters.Add("Create Model");
+                cg.parameters.Add("--waction");
+                cg.parameters.Add("Create");
+                // cg.parameters.Add("--source");
+                // cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-small.csv");
+                cg.parameters.Add("--output");
+                cg.parameters.Add(outputfile);
+                cg.parameters.Add("--vname");
+                cg.parameters.Add("model");
+                cg.parameters.Add("--vfnames");
+                cg.parameters.Add("id,code,name,desc,message");
+                cg.parameters.Add("--vftypes");
+                cg.parameters.Add("string");
+                cg.parameters.Add("--vpkey");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--vfkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--vftable");
+                cg.parameters.Add("AspNetUsers");
+                cg.parameters.Add("--vuserkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--vmessage");
+                cg.parameters.Add("message");
+                cg.parameters.Add("--wsubmit");
+                cg.parameters.Add("Submit");
+                cg.parameters.Add("--wsubaction");
+                cg.parameters.Add("Create");
+                cg.parameters.Add("--wreturn");
+                cg.parameters.Add("Index");
+                cg.parameters.Add("--wfrmaction");
+                cg.parameters.Add("Submit");
+                cg.parameters.Add("--winfohead");
+                cg.parameters.Add("Create a new Model");
+                cg.parameters.Add("--winfotext");
+                cg.parameters.Add("Enter the new model details below and click 'Create'");
+                cg.parameters.Add("--wlayfiles");
+                cg.parameters.Add("_MainHeadPartial.cshtml:_MainStylesPartial.cshtml:_MainPreloadPartial.cshtml:_MainHeaderPartial.cshtml:_MainClientPartial.cshtml:_MainFooterPartial.cshtml:_MainScriptsPartial.cshtml");
+                cg.parameters.Add("--wlaynames");
+                cg.parameters.Add("Head:Styles:Preload:Header:Client:Footer:Scripts");
+                cg.parameters.Add("--wlayout");
+                cg.parameters.Add("Layout");
+
+                cg.parameters.Add("--wfdclasses");
+                cg.parameters.Add("col-md-6:single-input");
+                cg.parameters.Add("--wficlasses");
+                cg.parameters.Add(",,lni lni-user,lni lni-phone,lni lni-format,lni lni-comments-alt,lni lni-envelope");
+                cg.parameters.Add("--wfclasses");
+                cg.parameters.Add("form-input");
+
+
+                cg.parameters.Add("--fillempty");
+
+    
+                cg.Run();
+                if(System.IO.File.Exists(outputfile))
+                    System.Diagnostics.Process.Start("notepad.exe",outputfile);
+                return;                
+            }
+
+        
+
+
+            if(testcparameters)
+            {
+
+
+//                c:\SNJW\code\shared\csgen.exe controller --cname ModelController --sourcefile xoload-small.csv --output c:\SNJW\code\xo\Controllers\ModelController.cs --cparent Controller --croute Model/Create --ccontext ApplicationDbContext --vpkey id --vfkey userid --vftable AspNetUsers --vuserkey userid --vmessage message  --mpkey id --mfkey userid --mftable AspNetUsers --chttps GET:GET/POST:GET/POST:GET/POST:GET --cactnames Index:Create:Edit:Delete:Details --cacttypes Index:Create:Edit:Delete:Details --cvnames Index:Create:Edit:Delete:Details --cmnames Model --cwnames Index:Create:Edit:Delete:Details --cvpkeys id --cvfkeys userid --cmpkeys ModelId --cmfkeys ModelUserId --cmparents AspNetUsers --cvukeys userid --cvmsgs message
+
+                string outputfile = @"c:\SNJW\code\xo\Controllers\ModelController.cs";
+                cg.parameters.Clear();
+                cg.parameters.Add("controller");
+
+                cg.parameters.Add("--cname");
+                cg.parameters.Add("ModelController");
+                cg.parameters.Add("--cnamespace");
+                cg.parameters.Add("Seamlex.MyEdApps");
+                cg.parameters.Add("--source");
+                cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-small.csv");
+                cg.parameters.Add("--output");
+                cg.parameters.Add(outputfile);
+                cg.parameters.Add("--cparent");
+                cg.parameters.Add("Controller");
+                cg.parameters.Add("--croute");
+                cg.parameters.Add("Model/Create");
+                cg.parameters.Add("--ccontext");
+                cg.parameters.Add("ApplicationDbContext");
+                cg.parameters.Add("--vpkey");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--vfkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--vftable");
+                cg.parameters.Add("AspNetUsers");
+                cg.parameters.Add("--vuserkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--vmessage");
+                cg.parameters.Add("message");
+                cg.parameters.Add("--mpkey");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--mfkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--mftable");
+                cg.parameters.Add("AspNetUsers");
+                cg.parameters.Add("--chttps");
+                cg.parameters.Add("GET:GET/POST:GET/POST:GET/POST:GET");
+                cg.parameters.Add("--cactnames");
+                cg.parameters.Add("Index:Create:Edit:Delete:Details");
+                cg.parameters.Add("--cacttypes");
+                cg.parameters.Add("Index:Create:Edit:Delete:Details");
+                cg.parameters.Add("--cvnames");
+                cg.parameters.Add("model");
+                cg.parameters.Add("--cmnames");
+                cg.parameters.Add("Model");
+                cg.parameters.Add("--cwnames");
+                cg.parameters.Add("Index:Create:Edit:Delete:Details");
+                cg.parameters.Add("--cvpkeys");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--cvfkeys");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--cmpkeys");
+                cg.parameters.Add("ModelId");
+                cg.parameters.Add("--cmfkeys");
+                cg.parameters.Add("ModelUserId");
+                cg.parameters.Add("--cmparents");
+                cg.parameters.Add("AspNetUsers");
+                cg.parameters.Add("--cvukeys");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--cvmsgs");
+                cg.parameters.Add("message");
+
+                cg.parameters.Add("--fillempty");
+
+                /*
+                string outputfile = @"c:\SNJW\code\xo\Models\vm\model.cs";
+                cg.parameters.Clear();
+                cg.parameters.Add("vm");
+                cg.parameters.Add("--vname");
+                cg.parameters.Add("model");
+                // cg.parameters.Add("--source");
+                // cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-small.csv");
+                cg.parameters.Add("--output");
+                cg.parameters.Add(outputfile);
+                cg.parameters.Add("--vpkey");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--vftable");
+                cg.parameters.Add("AspNetUsers");
+                cg.parameters.Add("--fillempty");
+
+                cg.parameters.Add("--vfnames");
+                cg.parameters.Add("id,userid,code,name,desc,start,message");
+                cg.parameters.Add("--vftypes");
+                cg.parameters.Add("string,string,string,string,string,DateTime,string");
+                cg.parameters.Add("--vfsizes");
+                cg.parameters.Add("32,32,10,0,0,0,100");
+                cg.parameters.Add("--vfdescs");
+                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
+                cg.parameters.Add("--vfcaps");
+                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
+                */
+
+    
+                cg.Run();
+                if(System.IO.File.Exists(outputfile))
+                    System.Diagnostics.Process.Start("notepad.exe",outputfile);
+                return;                
+            }
+
+
+/*
         public string cname {get;set;} = "";  // Name of the Controller
         public string cnamespace {get;set;} = "";  // Namespace of the Controller
         public string cparent {get;set;} = "";  // Name of the parentClass
@@ -48,6 +230,9 @@ namespace Seamlex.Utilities
 
             if(testcontroller)
             {
+
+
+
                 cg.parameters.Clear();
                 cg.parameters.Add("controller");
                 cg.parameters.Add("--cname");
@@ -94,7 +279,7 @@ namespace Seamlex.Utilities
                 cg.parameters.Add("message");
 
 
-                // cg.parameters.Add("--sourcefile");
+                // cg.parameters.Add("--source");
                 // cg.parameters.Add("c:\\temp\\sourcefile.csv");
                 cg.parameters.Add("--vfnames");
                 cg.parameters.Add("id,userid,code,name,desc,start,message");
@@ -172,7 +357,7 @@ namespace lm.Controllers
                 cg.parameters.Add("Seamlex.MyEdApps");
                 cg.parameters.Add("--output");
                 cg.parameters.Add("c:\\temp\\list.cshtml");
-                // cg.parameters.Add("--sourcefile");
+                // cg.parameters.Add("--source");
                 // cg.parameters.Add("c:\\temp\\sourcefile.csv");
                 cg.parameters.Add("--vfnames");
                 cg.parameters.Add("id,userid,code,name,desc,start,message");
@@ -270,7 +455,7 @@ namespace lm.Controllers
                 //   cg.parameters.Add("Seamlex.MyEdApps");
                 cg.parameters.Add("--output");
                 cg.parameters.Add("c:\\temp\\election.cs");
-                cg.parameters.Add("--sourcefile");
+                cg.parameters.Add("--source");
                 cg.parameters.Add("c:\\temp\\sourcefile.csv");
                 cg.parameters.Add("--mfnames");
                 cg.parameters.Add("id,userid,code,name,desc,start,message");
@@ -306,7 +491,7 @@ namespace lm.Controllers
                 cg.parameters.Add("Seamlex.MyEdApps");
                 cg.parameters.Add("--output");
                 cg.parameters.Add("c:\\temp\\election.cs");
-                cg.parameters.Add("--sourcefile");
+                cg.parameters.Add("--source");
                 cg.parameters.Add("c:\\temp\\sourcefile.csv");
                 cg.parameters.Add("--vfnames");
                 cg.parameters.Add("id");

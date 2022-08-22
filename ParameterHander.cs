@@ -393,7 +393,7 @@ namespace Seamlex.Utilities
 
         private List<ParameterSetting> LegacyGetParameterInfoByCategory(string category)
         {
-            throw new Exception();
+            // throw new Exception();
             List<ParameterSetting> output = new List<ParameterSetting>();
 
             if(category == "--help")
@@ -414,17 +414,17 @@ namespace Seamlex.Utilities
                         "Creates and edits text files to scaffold C# applications from the command-line.",
                         "",
                         "Command:",
-                        "  replace           Performs a search-replace in text file.",
-                        "  replacechar       Performs a search-replace with CHR() numbers in text file.",
-                        "  replacen          Search and replace the nth items found in a text file.",
-                        "  replacedq         Performs a search in text file for double-quotes.",
-                        "  replacewithdq     Performs a replace in text file with double-quotes.",
-                        "  insert            Inserts text at a specified line in a text file.",
-                        "  model             Creates a .cs Model class.",
-                        "  vm                Creates a .cs ViewModel class.",
-                        "  view              Creates a .cshtml View file.",
-                        "  controller        Creates a .cs Controller class.",
-                        "  facade            Creates a .cs Facade class.",
+                        "  replace           Search+replace in a text file.",
+                        "  replacechar       Search+replace using CHR() numbers in a text file.",
+                        "  replacen          Search+replace the nth item found in a text file.",
+                        "  replacedq         Search in a text file for double-quotes.",
+                        "  replacewithdq     Replace in a text file with double-quotes.",
+                        "  insert            Insert text at a specified line in a text file.",
+                        "  model             Create a .cs Model class.",
+                        "  vm                Create a .cs ViewModel class.",
+                        "  view              Create a .cshtml View file.",
+                        "  controller        Create a .cs Controller class.",
+                        "  facade            Create a .cs Facade class.",
                         "",
                         "Options:",
                         "  -h|--help         Display help for each command."
@@ -584,10 +584,10 @@ namespace Seamlex.Utilities
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.File
                     });
-                helptext.Add($"  -s|--sourcefile   Loads field properties from a CSV file.");
+                helptext.Add($"  -s|--source       Loads field properties from a CSV file.");
                 load.Add(new ParameterSetting(){
                         category = category,
-                        setting = "--sourcefile",
+                        setting = "--source",
                         synonym = "-s",
                         description = "Model/ViewModel Field Information Source File",
                         helptext = new List<string>(){
@@ -598,7 +598,7 @@ namespace Seamlex.Utilities
                             "If no full path is specified then the current directory is checked.",
                             "",
                             "The order that fields are loaded is the natural order of the rows in the source file.",
-                            "If the -f|--fieldnames option is also used, those fields will be added after any obtained through the -s|--sourcefile load.",
+                            "If the -f|--fieldnames option is also used, those fields will be added after any obtained through the -s|--source     load.",
                             "",
                             "Each item in the header row aligns with the relavent parameter:",
                             "vfnames,vftypes,vfsizes,vfdescs,vfreqs,vfcaps,mfnames,mftypes,wfclass,wftype, wfdclass, wficlass",
@@ -644,7 +644,7 @@ namespace Seamlex.Utilities
                             "The format of this is:",
                             "vfname1[,vfname2][,...]",
                             "",
-                            "If the -s|--sourcefile option is also used, fields will be loaded from that file first.",
+                            "If the -s|--source     option is also used, fields will be loaded from that file first.",
                             "",
                             "Each name must be valid as a CSS/HTML name."
                         },
@@ -666,7 +666,7 @@ namespace Seamlex.Utilities
                             "The format of this is:",
                             "vftype1[,vftype2][,...]",
                             "",
-                            "If the -s|--sourcefile option is also used, fields will be loaded from that file first.",
+                            "If the -s|--source     option is also used, fields will be loaded from that file first.",
                             "",
                             "If not specified,unknown, or unsupported this will default to string."
                         },
@@ -997,7 +997,8 @@ namespace Seamlex.Utilities
             ps.AddRange(this.LegacyGetParameterInfoByCategory("facade"));
             ps.AddRange(this.LegacyGetParameterInfoByCategory("controller"));
             ps.AddRange(this.LegacyGetParameterInfoByCategory("model"));
-            return;
+            if(ps.ToString()!="?")
+                return;
 
 
            ps.Add(new ParameterSetting(){
@@ -1018,7 +1019,7 @@ namespace Seamlex.Utilities
                     "  -n|--name         ViewModel name.",
                     "  -p|--namespace    ViewModel namespace.",
                     "  -o|--output       Full path to output .cs file.",
-                    "  -s|--sourcefile   Loads field properties from a CSV file.",
+                    "  -s|--source       Loads field properties from a CSV file.",
                     "                    The header row must contain 'vmfieldname','vmfieldtype','vmfieldsize','vmfielddesc''vmfieldreq','vmfieldcap' to be used.",
                     "  -vf|--fieldnames  Comma-separated list of ViewModel field names in order.",
                     "                    Syntax is vmfieldname1[,vmfieldname2][,...].",
@@ -1093,7 +1094,7 @@ namespace Seamlex.Utilities
 
            ps.Add(new ParameterSetting(){
                 category = "vm",
-                setting = "--sourcefile",
+                setting = "--source",
                 synonym = "-s",
                 description = "ViewModel Field Information Source File",
                 helptext = new List<string>(){
@@ -1107,7 +1108,7 @@ namespace Seamlex.Utilities
                     "The CSV can optionally have a 'vmname' field to filter records.",
                     "Only records that have a matching 'vmname' the same as the specified model will be used.",
                     "The order that fields are loaded is the natural order of the rows in the source file.",
-                    "If the -f|--fieldnames option is also used, those fields will be added after any obtained through the -s|--sourcefile load."
+                    "If the -f|--fieldnames option is also used, those fields will be added after any obtained through the -s|--source     load."
                 },
                 paratype = ParameterType.Input,
                 nextparatype = ParameterType.File
@@ -1126,7 +1127,7 @@ namespace Seamlex.Utilities
                     "The format of this is:",
                     "vmfieldname1[,vmfieldname2][,...]",
                     "",
-                    "If the -s|--sourcefile option is also used, fields will be loaded from that file first and ones specified with -f are appended.",
+                    "If the -s|--source     option is also used, fields will be loaded from that file first and ones specified with -f are appended.",
                     "Each name must be valid as a CSS/HTML name."
                 },
                 paratype = ParameterType.Input,
@@ -1270,7 +1271,7 @@ namespace Seamlex.Utilities
                     "  -p|--namespace    ViewModel namespace.",
                     "  -l|--layout       Layout cshtml file.",
                     "  -o|--output       Full path to output .cshtml file.",
-                    "  -s|--sourcefile   Loads field properties from a CSV file.",
+                    "  -s|--source       Loads field properties from a CSV file.",
                     "                    The header row must contain 'vmfieldname','vmfieldtype','vmfieldsize','vmfielddesc''vmfieldreq','vmfieldcap' to be used.",
                     "                    The header row can also contain 'viewfclass','viewftype','viewfdclass','viewficlass','viewfrows' to be used.",
                     "  -vf|--fieldnames  Comma-separated list of ViewModel field names in order.",
@@ -1391,7 +1392,7 @@ namespace Seamlex.Utilities
 
            ps.Add(new ParameterSetting(){
                 category = "view",
-                setting = "--sourcefile",
+                setting = "--source",
                 synonym = "-s",
                 description = "View Field Information Source File",
                 helptext = new List<string>(){
@@ -1408,7 +1409,7 @@ namespace Seamlex.Utilities
                     "The CSV can optionally have a 'vmname' field to filter records.",
                     "Only records that have a matching 'vmname' the same as the specified model will be used.",
                     "The order that fields are loaded is the natural order of the rows in the source file.",
-                    "If the -vf|--fieldnames option is also used, those fields will be added after any obtained through the -s|--sourcefile load."
+                    "If the -vf|--fieldnames option is also used, those fields will be added after any obtained through the -s|--source     load."
                 },
                 paratype = ParameterType.Input,
                 nextparatype = ParameterType.File
@@ -1427,7 +1428,7 @@ namespace Seamlex.Utilities
                     "The format of this is:",
                     "vmfieldname1[,vmfieldname2][,...]",
                     "",
-                    "If the -s|--sourcefile option is also used, fields will be loaded from that file first and ones specified with -f are appended.",
+                    "If the -s|--source     option is also used, fields will be loaded from that file first and ones specified with -f are appended.",
                     "Each name must be valid as a CSS/HTML name."
                 },
                 paratype = ParameterType.Input,

@@ -26,7 +26,7 @@ namespace Seamlex.Utilities
             // if there is a CSV file specified, grab these first
             List<mvvmfield> csvfields = new List<mvvmfield>();
             List<mvvmfield> parafields = new List<mvvmfield>();
-            var checkcsv = ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--sourcefile") || x.synonym.Equals("-s")));
+            var checkcsv = ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--source") || x.synonym.Equals("-s")));
             if(checkcsv != null)
             {
                 // load from a CSV first
@@ -69,7 +69,7 @@ namespace Seamlex.Utilities
 
             // now load the equivalent of the CSV data from parameters - these are appended
             int maxrows = 0;
-            foreach(var checkfield in commafields.Where(x => x.ismvvmfield.Equals(true))) // .Where(x => x.isfilter.Equals(false))
+            foreach(var checkfield in commafields.Where(x => x.ismvvmfield.Equals(true) && x.isfilter.Equals(false)))
             {
                 // did the user specify some field information?
                 // if so, we need to find the fieldtype with the most comma-separated field values
@@ -183,8 +183,26 @@ namespace Seamlex.Utilities
                     output.genfields.AddRange(csvfields.Where(x => x.mfname != "" && x.mftype != ""));
                 }
             }
-            else if(output.category=="controller" || output.category=="facade")
+            else if(output.category=="view")
             {
+                if(csvfields.Exists(x => x.vname.Equals(output.vname)))
+                {
+                    output.genfields.AddRange(csvfields.Where(x => x.vname.Equals(output.vname) && x.vftype != "" && x.vfname != ""));
+                }
+                else
+                {
+                    output.genfields.AddRange(csvfields.Where(x => x.vftype != "" && x.vfname != ""));
+                }
+            }
+            else
+            {
+                // we need ALL the loaded fields for other categories
+                output.genfields.AddRange(csvfields);
+            }
+            
+            if(output.category=="controller" || output.category=="facade")
+            {
+
                 // 
                 // create the controller-specific fields
                 // the reason that these exist are to make creation of the Controller.cs file easier
@@ -235,64 +253,125 @@ namespace Seamlex.Utilities
                 output.controlleractions.AddRange(ctrlfields);
             }
 
-            // add both the CSV and parameter items to the output
-            output.genfields.AddRange(parafields);
-
-            foreach(var genfield in output.genfields)
+            foreach(var genfield in parafields)
             {
                 if(genfield.mname == "" & genfield.mfname != "")
                     genfield.mname = output.mname;
                 if(genfield.vname == "" & genfield.vfname != "")
                     genfield.vname = output.vname;
             }
-            if(output.fillblanks)
+            if(output.fillempty && parafields.Count>1)
             {
                 // Where the first item in a child has text in fields,
                 // use that text is ALL subsequent children where that field is blank
+                // however, this ONLY APPLIES TO THE SELECTED MODEL/VM/VIEW
                 Type maintype = output.GetType();
-                if(output.genfields.Count>1)
+
+                Type mvvmfieldtype = parafields[0].GetType();
+                foreach(var mvvmfieldprop in mvvmfieldtype.GetProperties())
                 {
-                    Type mvvmfieldtype = output.genfields[0].GetType();
-                    foreach(var mvvmfieldprop in mvvmfieldtype.GetProperties())
+                    if(mvvmfieldprop.PropertyType.FullName != "System.String")
+                        continue;
+                    string fieldname = mvvmfieldprop.Name.ToLower().Trim();
+                    var checkfield = commafields.First(x => x.singlename.Equals(fieldname));
+                    if(checkfield==null)
+                        continue;
+                    if(checkfield.isfilter || checkfield.isunique)
+                        continue;
+
+                    // we need to find the first 
+                    string firstvalue = (string)(mvvmfieldprop.GetValue(parafields[0]) ?? "");
+                    string firstletter = mvvmfieldprop.Name.ToLower().Substring(0,1);
+
+                    if(fieldname.Equals("wfclass"))
+                        firstvalue += "";
+
+                    if(firstvalue != "")
                     {
-                        if(mvvmfieldprop.PropertyType.FullName != "System.String")
-                            continue;
-                        string firstvalue = (string)(mvvmfieldprop.GetValue(output.genfields[0]) ?? "");
-                        if(firstvalue != "")
+                        foreach(var genfield in parafields)
                         {
-                            foreach(var genfield in output.genfields)
-                            {
-                                // if this is blank, set it to the first value
-                                string currentvalue = (string)(mvvmfieldprop.GetValue(genfield) ?? "");
-                                if(currentvalue == "")
-                                        mvvmfieldprop.SetValue(genfield, firstvalue);
-                            }
-                        }
-                    }
-                }
-                if(output.controlleractions.Count>1)
-                {
-                    Type ctrlfieldtype = output.controlleractions[0].GetType();
-                    foreach(var ctrlfieldprop in ctrlfieldtype.GetProperties())
-                    {
-                        if(ctrlfieldprop.PropertyType.FullName != "System.String")
-                            continue;
-                        string firstvalue = (string)(ctrlfieldprop.GetValue(output.controlleractions[0]) ?? "");
-                        if(firstvalue != "")
-                        {
-                            foreach(var ctrlfield in output.controlleractions)
-                            {
-                                // if this is blank, set it to the first value
-                                string currentvalue = (string)(ctrlfieldprop.GetValue(ctrlfield) ?? "");
-                                if(currentvalue == "")
-                                        ctrlfieldprop.SetValue(ctrlfield, firstvalue);
-                            }
+                            // if((genfield.mname != output.mname || output.mname == "") && ( genfield.vname != output.vname || output.vname != ""))
+                            //     continue;
+
+                            // only propagate fields that are relevant
+                            // if((firstletter=="m" && genfield.mname.Trim() == "") ||
+                            //     (firstletter=="v" && genfield.vname.Trim() == "") ||
+                            //     (firstletter=="w" && genfield.wname.Trim() == ""))
+                            //     continue;
+
+                            // if this is blank, set it to the first value
+                            string currentvalue = (string)(mvvmfieldprop.GetValue(genfield) ?? "");
+                            if(currentvalue == "")
+                                mvvmfieldprop.SetValue(genfield, firstvalue);
                         }
                     }
                 }
             }
 
 
+            if(output.fillempty && output.controlleractions.Count>1)
+            {
+                Type ctrlfieldtype = output.controlleractions[0].GetType();
+                foreach(var ctrlfieldprop in ctrlfieldtype.GetProperties())
+                {
+                    if(ctrlfieldprop.PropertyType.FullName != "System.String")
+                        continue;
+                    string firstvalue = (string)(ctrlfieldprop.GetValue(output.controlleractions[0]) ?? "");
+                    if(firstvalue != "")
+                    {
+                        foreach(var ctrlfield in output.controlleractions)
+                        {
+                            // if this is blank, set it to the first value
+                            string currentvalue = (string)(ctrlfieldprop.GetValue(ctrlfield) ?? "");
+                            if(currentvalue == "")
+                                    ctrlfieldprop.SetValue(ctrlfield, firstvalue);
+                        }
+                    }
+                }
+            }
+
+            // add both the CSV and parameter items to the output
+
+            // now filter any of the CSV records that are not required
+            if(output.category=="vm")
+            {
+                // if at least one record has a name then filter, otherwise take them all
+                if(parafields.Exists(x => x.vname.Equals(output.vname)))
+                {
+                    output.genfields.AddRange(parafields.Where(x => x.vname.Equals(output.vname) && x.vfname != "" && x.vftype != ""));
+                }
+                else
+                {
+                    output.genfields.AddRange(parafields.Where(x => x.vfname != "" && x.vftype != ""));
+                }
+            }
+            else if(output.category=="model")
+            {
+                if(parafields.Exists(x => x.mname.Equals(output.mname)))
+                {
+                    output.genfields.AddRange(parafields.Where(x => x.mname.Equals(output.mname) && x.mfname != "" && x.mftype != ""));
+                }
+                else
+                {
+                    output.genfields.AddRange(parafields.Where(x => x.mfname != "" && x.mftype != ""));
+                }
+            }
+            else if(output.category=="view")
+            {
+                if(parafields.Exists(x => x.vname.Equals(output.vname)))
+                {
+                    output.genfields.AddRange(parafields.Where(x => x.vname.Equals(output.vname) && x.vftype != "" && x.vfname != ""));
+                }
+                else
+                {
+                    output.genfields.AddRange(parafields.Where(x => x.vftype != "" && x.vfname != ""));
+                }
+            }
+            else
+            {
+                // we need ALL the loaded fields for other categories
+                output.genfields.AddRange(parafields);
+            }
 
             this.mv = output;
 
@@ -329,6 +408,7 @@ namespace Seamlex.Utilities
                 this.lastmessage = $"Creating a {source.categoryname} requires a Controller action name.";
                 return false;
             }
+            
 
             return true;
         }
@@ -431,7 +511,7 @@ namespace Seamlex.Utilities
             sb.AppendLine($"<tr>");
 
             int fieldcount = 0;            
-            foreach(var genfield in source.genfields)
+            foreach(var genfield in source.genfields.Where(x => x.vname.Equals(source.vname) && x.vfname != ""))
             {
                 if(genfield.wftype.Trim().ToLower() != "hidden")
                 {
@@ -448,7 +528,7 @@ namespace Seamlex.Utilities
             sb.AppendLine($"<tbody>");
             sb.AppendLine("@foreach (var item in Model) {");
             sb.AppendLine($"<tr>");
-            foreach(var genfield in source.genfields)
+            foreach(var genfield in source.genfields.Where(x => x.vname.Equals(source.vname)))
             {
                 if(genfield.wftype.Trim().ToLower() != "hidden")
                 {
@@ -539,14 +619,14 @@ namespace Seamlex.Utilities
         {
             // the outer is the same for all action types but the inside is structured differently
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            foreach(var genfield in source.genfields)
+            foreach(var genfield in source.genfields.Where(x => x.vname.Equals(source.vname)))
                 sb.Append(this.GetViewSingleFieldText(genfield));
             return sb.ToString();
         }
         public string GetViewFormText(mvvm source)
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            foreach(var genfield in source.genfields)
+            foreach(var genfield in source.genfields.Where(x => x.vname.Equals(source.vname)))
                 sb.Append(this.GetViewSingleFieldText(genfield));
             return sb.ToString();
         }
@@ -704,8 +784,8 @@ namespace Seamlex.Utilities
                     sb.AppendLine($"@model {source.vname}");
                 }
             }
-            if(source.layout != "")
-                sb.AppendLine("@{Layout = \"" + source.layout +"\";}");
+            if(source.wlayout != "")
+                sb.AppendLine("@{Layout = \"" + source.wlayout +"\";}");
             if(source.wpageclass != "")
                 sb.AppendLine($"<div class=\"{source.wpageclass}\">");
 
@@ -730,35 +810,6 @@ namespace Seamlex.Utilities
             sb.AppendLine(formtext);
 
 
-            // for (int i = 0; i < enddiv; i++)
-            //     sb.AppendLine($"</div>");
-
-
-            //     cg.parameters.Add("--wfrmaction");
-            //     cg.parameters.Add("Create");
-            //     cg.parameters.Add("--wfrmclass");
-            //     cg.parameters.Add("row:col-lg-8:contact-form-wrapper");
-            //     cg.parameters.Add("--wfrmsub");
-            //     cg.parameters.Add("row");
-
-            //     string inputtype = "text";
-            //     if(genfield.wftype.Trim().ToLower() != "")
-            //         inputtype = genfield.wftype.Trim().ToLower();
-            //     if(genfield.wftype.Trim().ToLower() != "textarea")
-            //     {
-            //         sb.AppendLine($"<input asp-for=\"{genfield.vfname}\" name=\"{genfield.vname}.{genfield.vfname}\" class=\"{genfield.wfclass}\" type=\"{inputtype}\" placeholder=\"{genfield.vfcap}\">");
-            //     }
-            //     else
-            //     {
-            //         int rows = this.GuessRowSize(genfield.vfsize); 
-            //         sb.AppendLine($"<textarea asp-for=\"{genfield.vfname}\" name=\"{genfield.vname}.{genfield.vfname}\" class=\"{genfield.wfclass}\" type=\"{inputtype}\" placeholder=\"{genfield.vfcap}\" rows=\"{rows}\">");
-            //     }
-
-            //     if(genfield.wficlass.Trim() != "")
-            //         sb.AppendLine($"<i class=\"{genfield.wficlass}\"></i>");
-
-
-
 
             if(source.wpageclass != "")
                 sb.AppendLine("</div>");
@@ -780,79 +831,6 @@ namespace Seamlex.Utilities
             }
 
             return sb.ToString();
-
-
-/*
-
-@model vmelection
-@{Layout = "_Main";}
-<h4>vmelection</h4>
-<hr />
-@* <section id="contact" class="contact-section contact-style-3"> *@
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-xxl-5 col-xl-5 col-lg-7 col-md-10">
-            <div class="section-title text-center mb-50">
-                <h3 class="mb-15">Get in touch</h3>
-                <p>Find out more about how to combine legal writing and software development.</p>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="contact-form-wrapper">
-                <form asp-action="Create">
-                    <div class="row">
-<!-- innertext goes here --!>
-
-                        <div class="col-md-12">
-                            <div class="form-button">
-                                <button type="submit" class="button"> <i class="lni lni-telegram-original"></i> Submit</button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <a asp-action="Index">Back to List</a>
-                        </div>
-
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-@section Head {<partial name="_MainHeadPartial.cshtml" />}
-@section Styles {<partial name="_MainStylesPartial.cshtml" />}
-@section Preload {<partial name="_MainPreloadPartial.cshtml" />}
-@section Header {<partial name="_MainHeaderPartial.cshtml" />}
-@section Client {<partial name="_MainClientPartial.cshtml" />}
-@section Footer {<partial name="_MainFooterPartial.cshtml" />}
-@section Scripts {<partial name="_MainScriptsPartial.cshtml" />}
-
-
-
-*/
-
-                    // helptext.Add("  -wst|--submit     Type of Submit object on the form.");
-                    // helptext.Add("  -wsa|--subaction  Specifies the Submit action.");
-                    // helptext.Add("  -wsd|--subdclass  Colon-delimited CSS classes for the Submit object.");
-                    // helptext.Add("  -wsi|--subiclass  CSS class for an embedded <i> tag for the Submit object.");
-                    // helptext.Add("  -wrt|--return     Type of Return object on the form.");
-                    // helptext.Add("  -wra|--retaction  Specifies the Return action.");
-                    // helptext.Add("  -wrd|--retdclass  Colon-delimited CSS classes for the Return object.");
-                    // helptext.Add("  -wri|--reticlass  CSS class for an embedded <i> tag for the Return object.");
-                    // helptext.Add("  -wfa|--formaction Specifies the Form action.");
-                    // helptext.Add("  -wfc|--formclass  Colon-delimited CSS classes wrapping the Form object.");
-                    // helptext.Add("  -wfs|--formsub    Colon-delimited CSS classes wrapping all objects inside the Form object.");
-                    // helptext.Add("  -wpc|--pageclass  Specifies the CSS class wrapping the Info and Form sections.");
-                    // helptext.Add("  -wic|--infoclass  Colon-delimited CSS classes wrapping the Info section above form fields.");
-                    // helptext.Add("  -wih|--infohclass CSS class of the heading in the Info section.");
-                    // helptext.Add("  -wit|--infotext   Text for the information section.");
-                    // helptext.Add("  -wlf|--layfiles   Colon-separated list of Layout cshtml files associated with --laynames.");
-                    // helptext.Add("  -wln|--laynames   Colon-separated list of @section names.");
-
         }
 
         public string GetShortType(string longtype)
@@ -884,7 +862,7 @@ namespace Seamlex.Utilities
             // put the primary key at the top
             foreach(var field in source.genfields)
             {
-                if(source.mpkey!="" && source.category=="model" && field.mfname==source.mpkey)
+                if(source.category=="model" && field.mname == source.mname && source.mpkey!="" && field.mfname==source.mpkey)
                 {
                     sb.Append(this.GetClassSingleFieldText(
                         field.mfname,
@@ -898,7 +876,7 @@ namespace Seamlex.Utilities
                         classindent));
                     sb.AppendLine();
                 }
-                else if(source.vpkey!="" && source.category=="vm" && field.vfname==source.vpkey)
+                else if(source.category=="vm" && field.vname == source.vname && source.vpkey!="" && field.vfname==source.vpkey)
                 {
                     sb.Append(this.GetClassSingleFieldText(
                         field.vfname,
@@ -917,7 +895,7 @@ namespace Seamlex.Utilities
             // next put in the other fields
             foreach(var field in source.genfields)
             {
-                if(source.category=="model" && field.mfname != source.mpkey)
+                if(source.category=="model" && field.mname == source.mname && field.mfname!=source.mpkey)
                 {
                     sb.Append(this.GetClassSingleFieldText(
                         field.mfname,
@@ -931,7 +909,7 @@ namespace Seamlex.Utilities
                         classindent));
                     sb.AppendLine();
                 }
-                else if(source.category=="vm" && field.vfname != source.vpkey)
+                else if(source.category=="vm" && field.vname == source.vname && field.vfname!=source.vpkey)
                 {
                     sb.Append(this.GetClassSingleFieldText(
                         field.vfname,
@@ -952,7 +930,7 @@ namespace Seamlex.Utilities
         public string GetClassOuterText(mvvm source, string innertext)
         {
             int indent = source.indent;
-            int namespaceindent = source.indent;
+            int nsindent = 0;
 
             bool usecomponentmodel = true;
             bool usedataannotations = true;
@@ -962,14 +940,20 @@ namespace Seamlex.Utilities
             if(source.category == "model")
             {
                 if(source.mnamespace != "")
+                {
+                    nsindent += indent;
                     ns = source.mnamespace;
+                }
                 if(source.mname != "")
                     classname = source.mname;
             }
-            if(source.category == "vm")
+            else if(source.category == "vm")
             {
                 if(source.vnamespace != "")
+                {
+                    nsindent += indent;
                     ns = source.vnamespace;
+                }
                 if(source.vname != "")
                     classname = source.vname;
             }
@@ -988,12 +972,11 @@ namespace Seamlex.Utilities
             {
                 sb.AppendLine($"namespace {ns}");
                 sb.AppendLine("{");
-                indent += namespaceindent;
             }
-            sb.AppendLine(new string(' ', indent) + $"public class {classname}");
-            sb.AppendLine(new string(' ', indent) + "{");
+            sb.AppendLine(new string(' ', nsindent) + $"public class {classname}");
+            sb.AppendLine(new string(' ', nsindent) + "{");
             sb.Append(innertext);
-            sb.AppendLine(new string(' ', indent) + "}");
+            sb.AppendLine(new string(' ', nsindent) + "}");
             if(ns != "") 
             {
                 sb.AppendLine("}");
@@ -1140,6 +1123,7 @@ namespace Seamlex.Utilities
             for(int i = 0; i < actionhttps.Length; i++)
             {
                 string thisactionhttp = actionhttps[i];
+                sb.AppendLine();
                 sb.AppendLine(new string(' ', nsindent+indent) + $"// {thisactionhttp}: {routename}/{actionname}");
                 sb.AppendLine(new string(' ', nsindent+indent) + $"[Http{thisactionhttp[0]}{thisactionhttp.Substring(1,thisactionhttp.Length-1).ToLower()}]");
                 if(!source.cnouser)
@@ -1178,7 +1162,6 @@ namespace Seamlex.Utilities
 
 
                 sb.AppendLine(new string(' ', nsindent+indent) + "}");
-                sb.AppendLine();
 
             }
 
@@ -1282,7 +1265,8 @@ namespace Seamlex.Utilities
                     singlename="vfname",
                     pluralname="vfnames",
                     synonym="vf",
-                    ismvvmfield = true
+                    ismvvmfield = true,
+                    isunique = true
                 },
                 new commafield(){
                     singlename="vftype",
@@ -1318,7 +1302,8 @@ namespace Seamlex.Utilities
                     singlename="mfname",
                     pluralname="mfnames",
                     synonym="mf",
-                    ismvvmfield = true
+                    ismvvmfield = true,
+                    isunique = true
                 },
                 new commafield(){
                     singlename="mftype",
@@ -1366,7 +1351,8 @@ namespace Seamlex.Utilities
                     singlename="cactname",
                     pluralname="cactnames",
                     synonym="can",
-                    isctrlaction = true
+                    isctrlaction = true,
+                    isunique = true
                 },
                 new commafield(){
                     singlename="cactsyn",
@@ -1486,6 +1472,7 @@ namespace Seamlex.Utilities
         public bool isfilter = false;
         public bool isctrlaction = false;
         public bool ismvvmfield = false;
+        public bool isunique = false;
 
     }
 
@@ -1495,9 +1482,9 @@ namespace Seamlex.Utilities
         public string mname {get;set;} = "";  // Model name.
         public string wname {get;set;} = "";  // View name.
 
-        public bool ispkey {get;set;} = false;
-        public bool ismodel {get;set;} = false;
-        public bool isvm {get;set;} = false;
+        // public bool ispkey {get;set;} = false;
+        // public bool ismodel {get;set;} = false;
+        // public bool isvm {get;set;} = false;
 
         public string mfname {get;set;} = "";  // Comma-separated list of Model field names in order.");
         public string mftype {get;set;} = "";  //Comma-separated list of Model field types in order.");
@@ -1593,9 +1580,9 @@ namespace Seamlex.Utilities
 
         // these are set using System.Reflection:
         public string output {get;set;} = "";  //  Full path to output .cs file.
-        public string sourcefile {get;set;} = "";  // Loads field properties from a CSV file.
+        public string source {get;set;} = "";  // Loads field properties from a CSV file.
 
-        public bool fillblanks {get;set;} = true;  // Where only one item is specified as a parameter, use it for ALL children where empty
+        public bool fillempty {get;set;} = false;  // Where only one item is specified as a parameter, use it for ALL children where empty
 
         // public string fieldprefix = "";
         public string vname {get;set;} = "";
@@ -1616,7 +1603,6 @@ namespace Seamlex.Utilities
         public string vftable {get;set;} = "";  // Specifies the parent of the ViewModel.
         public string vuserkey {get;set;} = "";  // Specifies the userid field in the ViewModel.
         public string vmessage {get;set;} = "";  // Specifies a field in the ViewModel to relay messages.
-        public string layout {get;set;} = "";  // Specifies a field in the ViewModel to relay messages.
 
         public string wsubmit {get;set;} = "";  // Type of Submit object on the form.
         public string wsubaction {get;set;} = "";  // Specifies the Submit action.

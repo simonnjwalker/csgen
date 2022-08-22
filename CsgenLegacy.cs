@@ -1159,7 +1159,7 @@ c:\SNJW\code\shared\csgen>
             if(checknamespace != null)
                 setup.vmnamespace = checknamespace.nextinput;
 
-            var checkcsv = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--sourcefile") || x.synonym.Equals("-s")));
+            var checkcsv = this.ps.FirstOrDefault(x => x.isactive.Equals(true) && (x.setting.Equals("--source") || x.synonym.Equals("-s")));
             if(checkcsv != null)
             {
                 // load from a CSV first

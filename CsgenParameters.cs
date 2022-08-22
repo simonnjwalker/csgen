@@ -232,10 +232,10 @@ namespace Seamlex.Utilities
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.File
                     });
-                helptext.Add($"  -s|--sourcefile   Loads field properties from a CSV file.");
+                helptext.Add($"  -s|--source       Loads field properties from a CSV file.");
                 load.Add(new ParameterSetting(){
                         category = category,
-                        setting = "--sourcefile",
+                        setting = "--source",
                         synonym = "-s",
                         description = "Model/ViewModel Field Information Source File",
                         helptext = new List<string>(){
@@ -246,7 +246,7 @@ namespace Seamlex.Utilities
                             "If no full path is specified then the current directory is checked.",
                             "",
                             "The order that fields are loaded is the natural order of the rows in the source file.",
-                            "If the -f|--fieldnames option is also used, those fields will be added after any obtained through the -s|--sourcefile load.",
+                            "If the -f|--fieldnames option is also used, those fields will be added after any obtained through the -s|--source     load.",
                             "",
                             "Each item in the header row aligns with the relavent parameter:",
                             "vfnames,vftypes,vfsizes,vfdescs,vfreqs,vfcaps,mfnames,mftypes,wfclass,wftype, wfdclass, wficlass",
@@ -257,6 +257,33 @@ namespace Seamlex.Utilities
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.File
                     });
+
+                if(category == "model" || category == "controller" || category == "facade" || category == "vm" || category == "view" )
+                {
+                helptext.Add($"  -l|--fillempty    Fill in blank {category} records.");
+                load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--fillempty",
+                        synonym = "-l",
+                        description = $"Fill {category.Substring(0,1).ToUpper()}{category.Substring(1,category.Length-1).ToUpper()} Field Information where blank",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -l",
+                            "",
+                            $"If selected, each {category} record in the source fields which has data in the first record will be cascaded to other records.",
+                            "",
+                            $"For example if the first three lines are:",
+                            $"{category.Substring(0,1)}name='my{category}',{category.Substring(0,1)}fname='id',{category.Substring(0,1)}ftype='string' ",
+                            $"{category.Substring(0,1)}name='my{category}',{category.Substring(0,1)}fname='code',{category.Substring(0,1)}ftype='' ",
+                            $"{category.Substring(0,1)}name='my{category}',{category.Substring(0,1)}fname='name',{category.Substring(0,1)}ftype='' ",
+                            "",
+                            "Then if --fillempty is set, the second and third rows will also be set to 'string'"
+                        },
+                        paratype = ParameterType.Switch
+                    });
+                }
+                    helptext.Add($"                    Field properties are filtered by the 'mname' field matching the --mname property.");
+
+                    
 
 
 
@@ -292,7 +319,7 @@ namespace Seamlex.Utilities
                             "The format of this is:",
                             "vfname1[,vfname2][,...]",
                             "",
-                            "If the -s|--sourcefile option is also used, fields will be loaded from that file first.",
+                            "If the -s|--source     option is also used, fields will be loaded from that file first.",
                             "",
                             "Each name must be valid as a CSS/HTML name."
                         },
@@ -314,7 +341,7 @@ namespace Seamlex.Utilities
                             "The format of this is:",
                             "vftype1[,vftype2][,...]",
                             "",
-                            "If the -s|--sourcefile option is also used, fields will be loaded from that file first.",
+                            "If the -s|--source     option is also used, fields will be loaded from that file first.",
                             "",
                             "If not specified,unknown, or unsupported this will default to string."
                         },
@@ -405,7 +432,7 @@ namespace Seamlex.Utilities
                     helptext.Add("                    Syntax is mfname1[,mfname2][,...].");
                     helptext.Add("  -mt|--mftypes     Comma-separated list of Model field types in order.");
                     helptext.Add("                    Syntax is mftype1[,mftype2][,...].");
-                    helptext.Add("  -ms|--mfsizes     Comma-separated list of Model field types in order.");
+                    helptext.Add("  -ms|--mfsizes     Comma-separated list of Model field sizes in order.");
                     helptext.Add("                    Syntax is mfsize1[,mfsize2][,...].");
 
                     load.Add(new ParameterSetting(){
@@ -440,6 +467,8 @@ namespace Seamlex.Utilities
                             "mftype1[,mftype2][,...]",
                             "",
                             "Field types that are empty, not C# data types, or not language shortcuts default to 'System.String'.",
+                            "",
+                            "Note that if only one item is entered and --fillblanks is used then this will apply to all items."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.Any,
@@ -459,7 +488,7 @@ namespace Seamlex.Utilities
                             "The format of this is:",
                             "mfsize1[,mfsize2][,...]",
                             "",
-                            "Field types that are empty are deemed '0'.",
+                            "Note that if only one item is entered and --fillblanks is used then this will apply to all items."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.Integer,
@@ -492,6 +521,8 @@ namespace Seamlex.Utilities
                             "wfclass1[,wfclass2][,...]",
                             "",
                             "This is the class of the field itself and contain spaces.",
+                            "",
+                            "Note that if only one item is entered and --fillblanks is used then this will apply to all items."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.Any,
@@ -511,7 +542,9 @@ namespace Seamlex.Utilities
                             "The format of this is:",
                             "wftype1[,wftype2][,...]",
                             "",
-                            "This defaults to 'input' if missing or unrecognised."
+                            "This defaults to 'input' if missing or unrecognised.",
+                            "",
+                            "Note that if only one item is entered and --fillblanks is used then this will apply to all items."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.Any,
@@ -533,6 +566,8 @@ namespace Seamlex.Utilities
                             "",
                             "If there are colons, the particular form object is wrapped in nested <div> tags.",
                             "Otherwise you can simply have spaces between class names.",
+                            "",
+                            "Note that if only one item is entered and --fillblanks is used then this will apply to all items."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.Any,
@@ -550,7 +585,9 @@ namespace Seamlex.Utilities
                             "Specify a comma-separated list of CSS classes for an <i> tag that follows a form field.",
                             "",
                             "The format of this is:",
-                            "wficlass1[,wficlass2][,...]"
+                            "wficlass1[,wficlass2][,...]",
+                            "",
+                            "Note that if only one item is entered and --fillblanks is used then this will apply to all items."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.Any,
@@ -1195,7 +1232,7 @@ namespace Seamlex.Utilities
                             "",
                             "Colon-delimited GET/POST action properties.",
                             "",
-                            "Where the same named action has both GET and POST controller methods, enter 'GET+POST' or 'GP'.",
+                            "Where the same named action has both GET and POST controller methods, enter 'GET/POST' or 'GP'.",
                             "If a delimited part contains 'g' or 'G' a GET action will be created for the action corresponding to that part.",
                             "If a delimited part contains 'p' or 'P' a POST action will be created for the action corresponding to that part.",
                             "If empty, the --cactype will be checked.  Index/Details types will have only GET and Create/Delete/Edit will have both."
@@ -1259,7 +1296,7 @@ namespace Seamlex.Utilities
                             $"Usage: csgen {category} -cvn vmnames",
                             "",
                             "Colon-delimited action list of ViewModel names.",
-                            "If only one is specified, this ViewModel is used for all Controller actions."
+                            "If only one is specified and --fillblanks is used, this ViewModel is used for all Controller actions."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.CsClassName,
@@ -1274,7 +1311,7 @@ namespace Seamlex.Utilities
                             $"Usage: csgen {category} -cmn modelnames",
                             "",
                             "Colon-delimited action Model names.",
-                            "If only one is specified, this Model is used for all Controller actions."
+                            "If only one is specified and --fillblanks is used, this Model is used for all Controller actions."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.CsClassName,
@@ -1449,7 +1486,7 @@ namespace Seamlex.Utilities
     //     //             "  -n|--name         ViewModel name.",
     //     //             "  -p|--namespace    ViewModel namespace.",
     //     //             "  -o|--output       Full path to output .cs file.",
-    //     //             "  -s|--sourcefile   Loads field properties from a CSV file.",
+    //     //             "  -s|--source       Loads field properties from a CSV file.",
     //     //             "                    The header row must contain 'vmfieldname','vmfieldtype','vmfieldsize','vmfielddesc''vmfieldreq','vmfieldcap' to be used.",
     //     //             "  -vf|--fieldnames  Comma-separated list of ViewModel field names in order.",
     //     //             "                    Syntax is vmfieldname1[,vmfieldname2][,...].",
@@ -1524,7 +1561,7 @@ namespace Seamlex.Utilities
 
     //     //    ps.Add(new ParameterSetting(){
     //     //         category = "vm",
-    //     //         setting = "--sourcefile",
+    //     //         setting = "--source",
     //     //         synonym = "-s",
     //     //         description = "ViewModel Field Information Source File",
     //     //         helptext = new List<string>(){
@@ -1538,7 +1575,7 @@ namespace Seamlex.Utilities
     //     //             "The CSV can optionally have a 'vmname' field to filter records.",
     //     //             "Only records that have a matching 'vmname' the same as the specified model will be used.",
     //     //             "The order that fields are loaded is the natural order of the rows in the source file.",
-    //     //             "If the -f|--fieldnames option is also used, those fields will be added after any obtained through the -s|--sourcefile load."
+    //     //             "If the -f|--fieldnames option is also used, those fields will be added after any obtained through the -s|--source     load."
     //     //         },
     //     //         paratype = ParameterType.Input,
     //     //         nextparatype = ParameterType.File
@@ -1557,7 +1594,7 @@ namespace Seamlex.Utilities
     //     //             "The format of this is:",
     //     //             "vmfieldname1[,vmfieldname2][,...]",
     //     //             "",
-    //     //             "If the -s|--sourcefile option is also used, fields will be loaded from that file first and ones specified with -f are appended.",
+    //     //             "If the -s|--source     option is also used, fields will be loaded from that file first and ones specified with -f are appended.",
     //     //             "Each name must be valid as a CSS/HTML name."
     //     //         },
     //     //         paratype = ParameterType.Input,
@@ -1701,7 +1738,7 @@ namespace Seamlex.Utilities
     //                 "  -p|--namespace    ViewModel namespace.",
     //                 "  -l|--layout       Layout cshtml file.",
     //                 "  -o|--output       Full path to output .cshtml file.",
-    //                 "  -s|--sourcefile   Loads field properties from a CSV file.",
+    //                 "  -s|--source       Loads field properties from a CSV file.",
     //                 "                    The header row must contain 'vmfieldname','vmfieldtype','vmfieldsize','vmfielddesc''vmfieldreq','vmfieldcap' to be used.",
     //                 "                    The header row can also contain 'viewfclass','viewftype','viewfdclass','viewficlass','viewfrows' to be used.",
     //                 "  -vf|--fieldnames  Comma-separated list of ViewModel field names in order.",
@@ -1822,7 +1859,7 @@ namespace Seamlex.Utilities
 
     //        ps.Add(new ParameterSetting(){
     //             category = "view",
-    //             setting = "--sourcefile",
+    //             setting = "--source",
     //             synonym = "-s",
     //             description = "View Field Information Source File",
     //             helptext = new List<string>(){
@@ -1839,7 +1876,7 @@ namespace Seamlex.Utilities
     //                 "The CSV can optionally have a 'vmname' field to filter records.",
     //                 "Only records that have a matching 'vmname' the same as the specified model will be used.",
     //                 "The order that fields are loaded is the natural order of the rows in the source file.",
-    //                 "If the -vf|--fieldnames option is also used, those fields will be added after any obtained through the -s|--sourcefile load."
+    //                 "If the -vf|--fieldnames option is also used, those fields will be added after any obtained through the -s|--source     load."
     //             },
     //             paratype = ParameterType.Input,
     //             nextparatype = ParameterType.File
@@ -1858,7 +1895,7 @@ namespace Seamlex.Utilities
     //                 "The format of this is:",
     //                 "vmfieldname1[,vmfieldname2][,...]",
     //                 "",
-    //                 "If the -s|--sourcefile option is also used, fields will be loaded from that file first and ones specified with -f are appended.",
+    //                 "If the -s|--source     option is also used, fields will be loaded from that file first and ones specified with -f are appended.",
     //                 "Each name must be valid as a CSS/HTML name."
     //             },
     //             paratype = ParameterType.Input,
