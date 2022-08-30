@@ -15,12 +15,200 @@ namespace Seamlex.Utilities
             CsgenLegacy csgenold = new CsgenLegacy();
             CsgenMain cg = new CsgenMain();
             // test
+            bool testfparameters = true;
             bool testwparameters = false;
             bool testcparameters = false;
             bool testcontroller = false;
             bool testmodel = false;
             bool testview = false;
             bool testvm = false;
+
+
+            if(testfparameters)
+            {
+
+// TO DO: come back and fix this after the facade
+                string outputfile = @"c:\SNJW\code\xo\Models\facade\ModelFacade.cs";
+                cg.parameters.Clear();
+                cg.parameters.Add("facade");
+
+                cg.parameters.Add("--fname");
+                cg.parameters.Add("ModelFacade");
+                cg.parameters.Add("--vname");
+                cg.parameters.Add("model");
+                cg.parameters.Add("--mname");
+                cg.parameters.Add("Model");
+                cg.parameters.Add("--fnamespace");
+                cg.parameters.Add("Seamlex.MyEdApps");
+                cg.parameters.Add("--fdbsave");
+                cg.parameters.Add("--source");
+                cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-small.csv");
+                cg.parameters.Add("--output");
+                cg.parameters.Add(outputfile);
+                // cg.parameters.Add("--cparent");
+                // cg.parameters.Add("Controller");
+                // cg.parameters.Add("--croute");
+                // cg.parameters.Add("Model/Create");
+                cg.parameters.Add("--cdcontext");
+                cg.parameters.Add("xo.Data.ApplicationDbContext");
+                // cg.parameters.Add("--cdpropname");
+                // cg.parameters.Add("db");
+                cg.parameters.Add("--vpkey");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--vfkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--vftable");
+                cg.parameters.Add("AspNetUsers");
+                cg.parameters.Add("--vuserkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--vmessage");
+                cg.parameters.Add("message");
+                cg.parameters.Add("--mpkey");
+                cg.parameters.Add("Id");
+                cg.parameters.Add("--mfkey");
+                cg.parameters.Add("Id");
+                cg.parameters.Add("--mparent");
+                cg.parameters.Add("AspNetUsers");
+                cg.parameters.Add("--mparkey");
+                cg.parameters.Add("Id");
+
+                // cg.parameters.Add("--cacthttps");
+                // cg.parameters.Add("GET:GET/POST:GET/POST:GET/POST:GET");
+                // cg.parameters.Add("--cactnames");
+                // cg.parameters.Add("Create:Index:Edit:Delete:Details");
+                // cg.parameters.Add("--cacttypes");
+                // cg.parameters.Add("Create:Index:Edit:Delete:Details");
+                // cg.parameters.Add("--cvnames");
+                // cg.parameters.Add("model");
+                // cg.parameters.Add("--cmnames");
+                // cg.parameters.Add("Model");
+                // cg.parameters.Add("--cwnames");
+                // cg.parameters.Add("Create:Index:Edit:Delete:Details");
+                // cg.parameters.Add("--cfnames");
+                // cg.parameters.Add("ModelFacade");
+
+                cg.parameters.Add("--cvpkeys");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--cvfkeys");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--cmpkeys");
+                cg.parameters.Add("ModelId");
+                cg.parameters.Add("--cmfkeys");
+                cg.parameters.Add("ModelUserId");
+                cg.parameters.Add("--cmparents");
+                cg.parameters.Add("AspNetUsers");
+                cg.parameters.Add("--cmparkeys");
+                cg.parameters.Add("Id");
+
+                cg.parameters.Add("--cvmkeys");
+                cg.parameters.Add("Id");
+                cg.parameters.Add("--cvukeys");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--cvmsgs");
+                cg.parameters.Add("message");
+
+                cg.parameters.Add("--ftype");
+                cg.parameters.Add("insert");
+
+                cg.parameters.Add("--fillempty");
+                // cg.parameters.Add("--cnofacade");
+
+
+                cg.Run();
+                if(System.IO.File.Exists(outputfile))
+                    System.Diagnostics.Process.Start("notepad.exe",outputfile);
+                return;                
+            }
+
+
+
+/*
+c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SNJW\code\scriptloader\scriptloader-small.csv" --output c:\SNJW\code\xo\Controllers\ModelController.cs --cparent Controller --croute Model/Create --ccontext xo.Data.ApplicationDbContext --vpkey id --vfkey userid --vftable AspNetUsers --vuserkey userid --vmessage message  --mpkey id --mfkey userid --mftable AspNetUsers --chttps GET:GET/POST:GET/POST:GET/POST:GET --cactnames Index:Create:Edit:Delete:Details --cacttypes Index:Create:Edit:Delete:Details --cvnames model --cmnames Model --cwnames Index:Create:Edit:Delete:Details --cvpkeys id --cvfkeys userid --cmpkeys ModelId --cmfkeys ModelUserId --cmparents AspNetUsers --cvukeys userid --cvmsgs message --fillempty
+*/
+
+            if(testcparameters)
+            {
+
+// TO DO: come back and fix this after the facade
+                string outputfile = @"c:\SNJW\code\xo\Controllers\ModelController2.cs";
+                cg.parameters.Clear();
+                cg.parameters.Add("controller");
+
+                cg.parameters.Add("--cname");
+                cg.parameters.Add("ModelController");
+                // cg.parameters.Add("--cnamespace");
+                // cg.parameters.Add("Seamlex.MyEdApps");
+                cg.parameters.Add("--source");
+                cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-small.csv");
+                cg.parameters.Add("--output");
+                cg.parameters.Add(outputfile);
+                cg.parameters.Add("--cparent");
+                cg.parameters.Add("Controller");
+                cg.parameters.Add("--croute");
+                cg.parameters.Add("Model/Create");
+                cg.parameters.Add("--cdcontext");
+                cg.parameters.Add("xo.Data.ApplicationDbContext");
+                cg.parameters.Add("--cdpropname");
+                cg.parameters.Add("db");
+                cg.parameters.Add("--vpkey");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--vfkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--vftable");
+                cg.parameters.Add("AspNetUsers");
+                cg.parameters.Add("--vuserkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--vmessage");
+                cg.parameters.Add("message");
+                cg.parameters.Add("--mpkey");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--mfkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--mftable");
+                cg.parameters.Add("AspNetUsers");
+                cg.parameters.Add("--cacthttps");
+                cg.parameters.Add("GET:GET/POST:GET/POST:GET/POST:GET");
+                cg.parameters.Add("--cactnames");
+                cg.parameters.Add("Create:Index:Edit:Delete:Details");
+                cg.parameters.Add("--cacttypes");
+                cg.parameters.Add("Create:Index:Edit:Delete:Details");
+                cg.parameters.Add("--cvnames");
+                cg.parameters.Add("model");
+                cg.parameters.Add("--cmnames");
+                cg.parameters.Add("Model");
+                cg.parameters.Add("--cwnames");
+                cg.parameters.Add("Create:Index:Edit:Delete:Details");
+                cg.parameters.Add("--cfnames");
+                cg.parameters.Add("ModelFacade");
+                cg.parameters.Add("--cvpkeys");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--cvfkeys");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--cmpkeys");
+                cg.parameters.Add("ModelId");
+                cg.parameters.Add("--cmfkeys");
+                cg.parameters.Add("ModelUserId");
+                cg.parameters.Add("--cmparents");
+                cg.parameters.Add("AspNetUsers");
+                cg.parameters.Add("--cmparkeys");
+                cg.parameters.Add("Id");
+
+                cg.parameters.Add("--cvmkeys");
+                cg.parameters.Add("Id");
+                cg.parameters.Add("--cvukeys");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--cvmsgs");
+                cg.parameters.Add("message");
+
+                cg.parameters.Add("--fillempty");
+                cg.parameters.Add("--cnofacade");
+
+
+                cg.Run();
+                if(System.IO.File.Exists(outputfile))
+                    System.Diagnostics.Process.Start("notepad.exe",outputfile);
+                return;                
+            }
 
 
 /*
@@ -98,110 +286,6 @@ c:\SNJW\code\shared\csgen.exe view --wname "Create Model" --sourcefile xoload-sm
 
         
 
-
-            if(testcparameters)
-            {
-
-
-//                c:\SNJW\code\shared\csgen.exe controller --cname ModelController --sourcefile xoload-small.csv --output c:\SNJW\code\xo\Controllers\ModelController.cs --cparent Controller --croute Model/Create --ccontext ApplicationDbContext --vpkey id --vfkey userid --vftable AspNetUsers --vuserkey userid --vmessage message  --mpkey id --mfkey userid --mftable AspNetUsers --chttps GET:GET/POST:GET/POST:GET/POST:GET --cactnames Index:Create:Edit:Delete:Details --cacttypes Index:Create:Edit:Delete:Details --cvnames Index:Create:Edit:Delete:Details --cmnames Model --cwnames Index:Create:Edit:Delete:Details --cvpkeys id --cvfkeys userid --cmpkeys ModelId --cmfkeys ModelUserId --cmparents AspNetUsers --cvukeys userid --cvmsgs message
-
-                string outputfile = @"c:\SNJW\code\xo\Controllers\ModelController.cs";
-                cg.parameters.Clear();
-                cg.parameters.Add("controller");
-
-                cg.parameters.Add("--cname");
-                cg.parameters.Add("ModelController");
-                cg.parameters.Add("--cnamespace");
-                cg.parameters.Add("Seamlex.MyEdApps");
-                cg.parameters.Add("--source");
-                cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-small.csv");
-                cg.parameters.Add("--output");
-                cg.parameters.Add(outputfile);
-                cg.parameters.Add("--cparent");
-                cg.parameters.Add("Controller");
-                cg.parameters.Add("--croute");
-                cg.parameters.Add("Model/Create");
-                cg.parameters.Add("--ccontext");
-                cg.parameters.Add("ApplicationDbContext");
-                cg.parameters.Add("--vpkey");
-                cg.parameters.Add("id");
-                cg.parameters.Add("--vfkey");
-                cg.parameters.Add("userid");
-                cg.parameters.Add("--vftable");
-                cg.parameters.Add("AspNetUsers");
-                cg.parameters.Add("--vuserkey");
-                cg.parameters.Add("userid");
-                cg.parameters.Add("--vmessage");
-                cg.parameters.Add("message");
-                cg.parameters.Add("--mpkey");
-                cg.parameters.Add("id");
-                cg.parameters.Add("--mfkey");
-                cg.parameters.Add("userid");
-                cg.parameters.Add("--mftable");
-                cg.parameters.Add("AspNetUsers");
-                cg.parameters.Add("--chttps");
-                cg.parameters.Add("GET:GET/POST:GET/POST:GET/POST:GET");
-                cg.parameters.Add("--cactnames");
-                cg.parameters.Add("Index:Create:Edit:Delete:Details");
-                cg.parameters.Add("--cacttypes");
-                cg.parameters.Add("Index:Create:Edit:Delete:Details");
-                cg.parameters.Add("--cvnames");
-                cg.parameters.Add("model");
-                cg.parameters.Add("--cmnames");
-                cg.parameters.Add("Model");
-                cg.parameters.Add("--cwnames");
-                cg.parameters.Add("Index:Create:Edit:Delete:Details");
-                cg.parameters.Add("--cvpkeys");
-                cg.parameters.Add("id");
-                cg.parameters.Add("--cvfkeys");
-                cg.parameters.Add("userid");
-                cg.parameters.Add("--cmpkeys");
-                cg.parameters.Add("ModelId");
-                cg.parameters.Add("--cmfkeys");
-                cg.parameters.Add("ModelUserId");
-                cg.parameters.Add("--cmparents");
-                cg.parameters.Add("AspNetUsers");
-                cg.parameters.Add("--cvukeys");
-                cg.parameters.Add("userid");
-                cg.parameters.Add("--cvmsgs");
-                cg.parameters.Add("message");
-
-                cg.parameters.Add("--fillempty");
-
-                /*
-                string outputfile = @"c:\SNJW\code\xo\Models\vm\model.cs";
-                cg.parameters.Clear();
-                cg.parameters.Add("vm");
-                cg.parameters.Add("--vname");
-                cg.parameters.Add("model");
-                // cg.parameters.Add("--source");
-                // cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-small.csv");
-                cg.parameters.Add("--output");
-                cg.parameters.Add(outputfile);
-                cg.parameters.Add("--vpkey");
-                cg.parameters.Add("id");
-                cg.parameters.Add("--vftable");
-                cg.parameters.Add("AspNetUsers");
-                cg.parameters.Add("--fillempty");
-
-                cg.parameters.Add("--vfnames");
-                cg.parameters.Add("id,userid,code,name,desc,start,message");
-                cg.parameters.Add("--vftypes");
-                cg.parameters.Add("string,string,string,string,string,DateTime,string");
-                cg.parameters.Add("--vfsizes");
-                cg.parameters.Add("32,32,10,0,0,0,100");
-                cg.parameters.Add("--vfdescs");
-                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
-                cg.parameters.Add("--vfcaps");
-                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
-                */
-
-    
-                cg.Run();
-                if(System.IO.File.Exists(outputfile))
-                    System.Diagnostics.Process.Start("notepad.exe",outputfile);
-                return;                
-            }
 
 
 /*

@@ -112,8 +112,8 @@ namespace Seamlex.Utilities
                 
                 if(category != "model")
                 {
-                    helptext.Add("  -vn|--vname       ViewModel name.");
-                    helptext.Add("  -vm|--vnamespace  ViewModel namespace.");
+                    helptext.Add("  -vn|--vname        ViewModel name.");
+                    helptext.Add("  -vm|--vnamespace   ViewModel namespace.");
                     load.Add(new ParameterSetting(){
                             category = category,
                             setting = "--vname",
@@ -146,8 +146,8 @@ namespace Seamlex.Utilities
                 }
                 if(category == "view" || category == "controller" )
                 {
-                    helptext.Add("  -wn|--wname       View name.");
-                    helptext.Add("  -wa|--waction     Structure of the View (Index/Create/Edit/Delete/Details).");
+                    helptext.Add("  -wn|--wname        View name.");
+                    helptext.Add("  -wa|--waction      Structure of the View (Index/Create/Edit/Delete/Details).");
                     load.Add(new ParameterSetting(){
                             category = category,
                             setting = "--wname",
@@ -179,8 +179,8 @@ namespace Seamlex.Utilities
                 }
                 if(category == "model" || category == "controller" || category == "facade" )
                 {
-                    helptext.Add("  -mn|--mname       Model name.");
-                    helptext.Add("  -mm|--mnamespace  Model namespace.");
+                    helptext.Add("  -mn|--mname        Model name.");
+                    helptext.Add("  -mm|--mnamespace   Model namespace.");
                     load.Add(new ParameterSetting(){
                             category = category,
                             setting = "--mname",
@@ -209,10 +209,86 @@ namespace Seamlex.Utilities
                             paratype = ParameterType.Input,
                             nextparatype = ParameterType.CsNameSpace
                         });
-
+                }
+                if(category == "controller" || category == "facade" )
+                {
+                    helptext.Add("  -fn|--fname        Facade name.");
+                    helptext.Add("  -fm|--fnamespace   Facade namespace.");
+                    load.Add(new ParameterSetting(){
+                            category = category,
+                            setting = "--fname",
+                            synonym = "-fn",
+                            description = "Facade Name",
+                            helptext = new List<string>(){
+                                $"Usage: csgen {category} -fn facadename",
+                                "",
+                                "Specify the name of the Facade.",
+                                "If not supplied, the name will be 'newfacade'."
+                            },
+                            paratype = ParameterType.Input,
+                            nextparatype = ParameterType.CsClassName
+                        });
+                    load.Add(new ParameterSetting(){
+                            category = category,
+                            setting = "--fnamespace",
+                            synonym = "-fm",
+                            description = "Facade Namespace",
+                            helptext = new List<string>(){
+                                $"Usage: csgen {category} -fm facadenamespace",
+                                "",
+                                "Specify the name of the Facade namespace.",
+                                "If not supplied, no namespace will be used."
+                            },
+                            paratype = ParameterType.Input,
+                            nextparatype = ParameterType.CsNameSpace
+                        });
+                }
+                
+                if(category == "facade" )
+                {
+                    helptext.Add("  -ft|--ftype        Facade type.");
+                    helptext.Add("  -fdb|--fdbsave     Facade issues dbsave commands.");
+                    load.Add(new ParameterSetting(){
+                            category = category,
+                            setting = "--ftype",
+                            synonym = "-ft",
+                            description = "Facade Type",
+                            helptext = new List<string>(){
+                                $"Usage: csgen {category} -ft facadetype",
+                                "",
+                                "Specify the type of the Facade.",
+                                "",
+                                "Each Facade has a Pull() which is SQL SELECT",
+                                "",
+                                "The type determines the Push() function:",
+                                "",
+                                "select   Push() is empty",
+                                "insert   Push() is SQL INSERT",
+                                "update   Push() is SQL UPDATE",
+                                "delete   Push() is SQL DELETE",
+                                "",
+                                "If not supplied, the type will be 'select'."
+                            },
+                            paratype = ParameterType.Input,
+                            nextparatype = ParameterType.CsClassName
+                        });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--fdbsave",
+                        synonym = "-fdb",
+                        description = "Put dbsave commands in the Facade",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -fdb",
+                            "",
+                            "By default the Controller will do the dbsave and not the Facade.",
+                            "Set this to issue dbsave commands in the Facade."
+                        },
+                        paratype = ParameterType.Switch
+                    });
                 }
 
-                helptext.Add($"  -o|--output       Full path to output .{fileextension} file.");
+
+                helptext.Add($"  -o|--output        Full path to output .{fileextension} file.");
                 load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--output",
@@ -232,7 +308,7 @@ namespace Seamlex.Utilities
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.File
                     });
-                helptext.Add($"  -s|--source       Loads field properties from a CSV file.");
+                helptext.Add($"  -s|--source        Loads field properties from a CSV file.");
                 load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--source",
@@ -260,59 +336,61 @@ namespace Seamlex.Utilities
 
                 if(category == "model" || category == "controller" || category == "facade" || category == "vm" || category == "view" )
                 {
-                helptext.Add($"  -l|--fillempty    Fill in blank {category} records.");
-                load.Add(new ParameterSetting(){
-                        category = category,
-                        setting = "--fillempty",
-                        synonym = "-l",
-                        description = $"Fill {category.Substring(0,1).ToUpper()}{category.Substring(1,category.Length-1).ToUpper()} Field Information where blank",
-                        helptext = new List<string>(){
-                            $"Usage: csgen {category} -l",
-                            "",
-                            $"If selected, each {category} record in the source fields which has data in the first record will be cascaded to other records.",
-                            "",
-                            $"For example if the first three lines are:",
-                            $"{category.Substring(0,1)}name='my{category}',{category.Substring(0,1)}fname='id',{category.Substring(0,1)}ftype='string' ",
-                            $"{category.Substring(0,1)}name='my{category}',{category.Substring(0,1)}fname='code',{category.Substring(0,1)}ftype='' ",
-                            $"{category.Substring(0,1)}name='my{category}',{category.Substring(0,1)}fname='name',{category.Substring(0,1)}ftype='' ",
-                            "",
-                            "Then if --fillempty is set, the second and third rows will also be set to 'string'"
-                        },
-                        paratype = ParameterType.Switch
-                    });
+                    helptext.Add($"  -l|--fillempty     Fill in blank {category} records.");
+                    load.Add(new ParameterSetting(){
+                            category = category,
+                            setting = "--fillempty",
+                            synonym = "-l",
+                            description = $"Fill {category.Substring(0,1).ToUpper()}{category.Substring(1,category.Length-1).ToUpper()} Field Information where blank",
+                            helptext = new List<string>(){
+                                $"Usage: csgen {category} -l",
+                                "",
+                                $"If selected, each {category} record in the source fields which has data in the first record will be cascaded to other records.",
+                                "",
+                                $"For example if the first three lines are:",
+                                $"{category.Substring(0,1)}name='my{category}',{category.Substring(0,1)}fname='id',{category.Substring(0,1)}ftype='string' ",
+                                $"{category.Substring(0,1)}name='my{category}',{category.Substring(0,1)}fname='code',{category.Substring(0,1)}ftype='' ",
+                                $"{category.Substring(0,1)}name='my{category}',{category.Substring(0,1)}fname='name',{category.Substring(0,1)}ftype='' ",
+                                "",
+                                "Then if --fillempty is set, the second and third rows will also be set to 'string'"
+                            },
+                            paratype = ParameterType.Switch
+                        });
                 }
-                    helptext.Add($"                    Field properties are filtered by the 'mname' field matching the --mname property.");
+                    // helptext.Add($"                    Field properties are filtered by the 'mname' field matching the --mname property.");
 
                     
 
 
 
-                if(category == "model" || category == "controller" || category == "facade" )
-                    helptext.Add($"                    Field properties are filtered by the 'mname' field matching the --mname property.");
-                if(category == "vm" || category == "view" )
-                    helptext.Add($"                    Field properties are filtered by the 'vname' field matching the --vname property.");
+                // if(category == "model" || category == "controller" || category == "facade" )
+                //     helptext.Add($"                    Field properties are filtered by the 'mname' field matching the --mname property.");
+                // if(category == "vm" || category == "view" )
+                //     helptext.Add($"                    Field properties are filtered by the 'vname' field matching the --vname property.");
+                
+                
                 if(category != "model" )
                 {
-                    helptext.Add("  -vf|--vfnames     Comma-separated list of ViewModel field names in order.");
-                    helptext.Add("                    Syntax is vfname1[,vfname2][,...].");
-                    helptext.Add("  -vt|--vftypes     Comma-separated list of ViewModel field types in order.");
-                    helptext.Add("                    Syntax is vftype1[,vftype2][,...].");
-                    helptext.Add("  -vz|--vfsizes     Comma-separated list of ViewModel field sizes in order.");
-                    helptext.Add("                    Syntax is vfsize1[,vfsize2][,...].");
-                    helptext.Add("  -vc|--vfdescs     Comma-separated list of ViewModel field descriptions in order.");
-                    helptext.Add("                    Syntax is vfdesc1[,vfdesc2][,...].");
-                    helptext.Add("  -vq|--vfreqs      Comma-separated list of ViewModel field required text in order.");
-                    helptext.Add("                    Syntax is vfreq1[,vfreqc2][,...].");
-                    helptext.Add("  -va|--vfcaps      Comma-separated list of ViewModel field captions in order.");
-                    helptext.Add("                    Syntax is vfcap1[,vfcap2][,...].");
+                    helptext.Add("  -vfn|--vfnames     Comma-separated list of ViewModel field names in order.");
+                    helptext.Add("                     Syntax is vfname1[,vfname2][,...].");
+                    helptext.Add("  -vft|--vftypes     Comma-separated list of ViewModel field types in order.");
+                    helptext.Add("                     Syntax is vftype1[,vftype2][,...].");
+                    helptext.Add("  -vfz|--vfsizes     Comma-separated list of ViewModel field sizes in order.");
+                    helptext.Add("                     Syntax is vfsize1[,vfsize2][,...].");
+                    helptext.Add("  -vfc|--vfdescs     Comma-separated list of ViewModel field descriptions in order.");
+                    helptext.Add("                     Syntax is vfdesc1[,vfdesc2][,...].");
+                    helptext.Add("  -vfq|--vfreqs      Comma-separated list of ViewModel field required text in order.");
+                    helptext.Add("                     Syntax is vfreq1[,vfreqc2][,...].");
+                    helptext.Add("  -vfa|--vfcaps      Comma-separated list of ViewModel field captions in order.");
+                    helptext.Add("                     Syntax is vfcap1[,vfcap2][,...].");
 
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vfnames",
-                        synonym = "-vf",
+                        synonym = "-vfn",
                         description = "ViewModel Field Names",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -vf fieldnames",
+                            $"Usage: csgen {category} -vfn fieldnames",
                             "",
                             "Specify a comma-separated list of fieldnames.",
                             "",
@@ -331,10 +409,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vftypes",
-                        synonym = "-vt",
+                        synonym = "-vft",
                         description = "ViewModel Field Types",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -vf fieldtypes",
+                            $"Usage: csgen {category} -vft fieldtypes",
                             "",
                             "Specify a comma-separated list of supported DataTypes associated with fields.",
                             "",
@@ -353,10 +431,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vfsizes",
-                        synonym = "-vz",
+                        synonym = "-vfz",
                         description = "ViewModel Field Sizes",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -vz fieldsizes",
+                            $"Usage: csgen {category} -vfz fieldsizes",
                             "",
                             "Specify a comma-separated list of field sizes.",
                             "",
@@ -374,10 +452,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vfdescs",
-                        synonym = "-vc",
+                        synonym = "-vfc",
                         description = "ViewModel Field Descriptions",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -vc fielddescs",
+                            $"Usage: csgen {category} -vfc fielddescs",
                             "",
                             "Specify a comma-separated list of supported DataTypes associated with fields.",
                             "",
@@ -392,10 +470,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vfreqs",
-                        synonym = "-vq",
+                        synonym = "-vfq",
                         description = "ViewModel Field Required Text",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -vq fieldreqtext",
+                            $"Usage: csgen {category} -vfq fieldreqtext",
                             "",
                             "Specify a comma-separated list of validation text to appear.",
                             "",
@@ -410,10 +488,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vfcaps",
-                        synonym = "-va",
+                        synonym = "-vfa",
                         description = "ViewModel Field Captions",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -va fieldcaps",
+                            $"Usage: csgen {category} -vfa fieldcaps",
                             "",
                             "Specify a comma-separated list of label text associated with fields.",
                             "",
@@ -428,20 +506,20 @@ namespace Seamlex.Utilities
                 }
                 if(category == "model" || category == "controller" || category == "facade" )
                 {
-                    helptext.Add("  -mf|--mfnames     Comma-separated list of Model field names in order.");
-                    helptext.Add("                    Syntax is mfname1[,mfname2][,...].");
-                    helptext.Add("  -mt|--mftypes     Comma-separated list of Model field types in order.");
-                    helptext.Add("                    Syntax is mftype1[,mftype2][,...].");
-                    helptext.Add("  -ms|--mfsizes     Comma-separated list of Model field sizes in order.");
-                    helptext.Add("                    Syntax is mfsize1[,mfsize2][,...].");
+                    helptext.Add("  -mff|--mfnames     Comma-separated list of Model field names in order.");
+                    helptext.Add("                     Syntax is mfname1[,mfname2][,...].");
+                    helptext.Add("  -mft|--mftypes     Comma-separated list of Model field types in order.");
+                    helptext.Add("                     Syntax is mftype1[,mftype2][,...].");
+                    helptext.Add("  -mfs|--mfsizes     Comma-separated list of Model field sizes in order.");
+                    helptext.Add("                     Syntax is mfsize1[,mfsize2][,...].");
 
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--mfnames",
-                        synonym = "-mf",
+                        synonym = "-mff",
                         description = "Model Field Names",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -mf fieldnames",
+                            $"Usage: csgen {category} -mff fieldnames",
                             "",
                             "Specify a comma-separated list of Model field names.",
                             "",
@@ -456,10 +534,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--mftypes",
-                        synonym = "-mt",
+                        synonym = "-mft",
                         description = "Model Field Types",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -mt fieldtypes",
+                            $"Usage: csgen {category} -mft fieldtypes",
                             "",
                             "Specify a comma-separated list of Model field types.",
                             "",
@@ -478,10 +556,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--mfsizes",
-                        synonym = "-ms",
+                        synonym = "-mfs",
                         description = "Model Field Sizes",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -ms fieldsizes",
+                            $"Usage: csgen {category} -mfs fieldsizes",
                             "",
                             "Specify a comma-separated list of Model field sizes.",
                             "",
@@ -498,22 +576,22 @@ namespace Seamlex.Utilities
                 }
                 if(category == "view"  )
                 {
-                    helptext.Add("  -we|--wfclasses   Comma-separated list of View form field CSS classes in order.");
-                    helptext.Add("                    Syntax is wfclass1[,wfclass2][,...].");
-                    helptext.Add("  -wy|--wftypes     Comma-separated list of View form field HTML types in order.");
-                    helptext.Add("                    Syntax is wftype1[,wftype2][,...].");
-                    helptext.Add("  -wd|--wfdclasses  Comma-separated list of colon-delimited CSS classes in order to wrap a form field in <div> tags.");
-                    helptext.Add("                    Syntax is wfdclass1a:wfdclass1b[:wfdclass1c][,wfdclass2a][,...].");
-                    helptext.Add("  -wi|--wficlasses  Comma-separated list of a CSS class for an <i> tag that follows a form field.");
-                    helptext.Add("                    Syntax is wficlass1[,wficlass2][,...].");
+                    helptext.Add("  -wwe|--wfclasses   Comma-separated list of View form field CSS classes in order.");
+                    helptext.Add("                     Syntax is wfclass1[,wfclass2][,...].");
+                    helptext.Add("  -wwy|--wftypes     Comma-separated list of View form field HTML types in order.");
+                    helptext.Add("                     Syntax is wftype1[,wftype2][,...].");
+                    helptext.Add("  -wwd|--wfdclasses  Comma-separated list of colon-delimited CSS classes in order to wrap a form field in <div> tags.");
+                    helptext.Add("                     Syntax is wfdclass1a:wfdclass1b[:wfdclass1c][,wfdclass2a][,...].");
+                    helptext.Add("  -wwi|--wficlasses  Comma-separated list of a CSS class for an <i> tag that follows a form field.");
+                    helptext.Add("                     Syntax is wficlass1[,wficlass2][,...].");
 
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--wfclasses",
-                        synonym = "-we",
+                        synonym = "-wwe",
                         description = "View Form Field CSS Classes",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -we cssclasses",
+                            $"Usage: csgen {category} -wwe cssclasses",
                             "",
                             "Specify a comma-separated list of View form field CSS classes in order.",
                             "",
@@ -532,10 +610,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--wftypes",
-                        synonym = "-wy",
+                        synonym = "-wwy",
                         description = "View Form Field HTML Types",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -wy fieldtypes",
+                            $"Usage: csgen {category} -wwy fieldtypes",
                             "",
                             "Specify a comma-separated list of View form field HTML types in order.",
                             "",
@@ -554,10 +632,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--wfdclasses",
-                        synonym = "-wd",
+                        synonym = "-wwd",
                         description = "View Form Field <div> wrapper CSS Classes",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -wd cssclasses",
+                            $"Usage: csgen {category} -wwd cssclasses",
                             "",
                             "Specify a comma-separated list of colon-delimited CSS classes in order to wrap a form field in <div> tags.",
                             "",
@@ -577,10 +655,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--wficlasses",
-                        synonym = "-wi",
+                        synonym = "-wwi",
                         description = "View Form Field <i> wrapper CSS Classes",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -wi cssclasses",
+                            $"Usage: csgen {category} -wwi cssclasses",
                             "",
                             "Specify a comma-separated list of CSS classes for an <i> tag that follows a form field.",
                             "",
@@ -597,16 +675,16 @@ namespace Seamlex.Utilities
 
                 if(category == "view" || category == "vm" || category == "controller" || category == "facade" )
                 {
-                    helptext.Add("  -fk|--vpkey       Specifies the primary key field in the ViewModel.");
-                    helptext.Add("  -fy|--vfkey       Specifies the foreign key field in the ViewModel.");
-                    helptext.Add("  -fb|--vftable     Specifies the parent of the ViewModel.");
+                    helptext.Add("  -vfk|--vpkey       Specifies the primary key field in the ViewModel.");
+                    helptext.Add("  -vfy|--vfkey       Specifies the foreign key field in the ViewModel.");
+                    helptext.Add("  -vfb|--vftable     Specifies the parent of the ViewModel.");
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vpkey",
-                        synonym = "-fk",
+                        synonym = "-vfk",
                         description = "ViewModel Primary Key Field",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -fk primarykey",
+                            $"Usage: csgen {category} -vfk primarykey",
                             "",
                             "Specify the primary key field in the ViewModel."
                         },
@@ -617,10 +695,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vfkey",
-                        synonym = "-fy",
+                        synonym = "-vfy",
                         description = "ViewModel Parent Foreign Key Field",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -fy foreignkey",
+                            $"Usage: csgen {category} -vfy foreignkey",
                             "",
                             "Specify the foreign key field in the ViewModel."
                         },
@@ -631,10 +709,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vftable",
-                        synonym = "-fb",
+                        synonym = "-vfb",
                         description = "ViewModel Parent Table",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -fb parenttable",
+                            $"Usage: csgen {category} -vfb parenttable",
                             "",
                             "Specify the parent of this ViewModel."
                         },
@@ -645,15 +723,15 @@ namespace Seamlex.Utilities
                 }
                 if(category == "vm" || category == "controller" || category == "facade" || category == "view" )
                 {
-                    helptext.Add("  -fu|--vuserkey    Specifies the userid field in the ViewModel.");
-                    helptext.Add("  -fm|--vmessage    Specifies a field in the ViewModel to relay messages.");
+                    helptext.Add("  -vfu|--vuserkey    Specifies the userid field in the ViewModel.");
+                    helptext.Add("  -vfm|--vmessage    Specifies a field in the ViewModel to relay messages.");
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vuserkey",
-                        synonym = "-fu",
+                        synonym = "-vfu",
                         description = "ViewModel UserId Field",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -fu useridfield",
+                            $"Usage: csgen {category} -vfu useridfield",
                             "",
                             "Specify a field that the ViewModel uses to check and pass UserId details."
                         },
@@ -663,10 +741,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vmessage",
-                        synonym = "-fm",
+                        synonym = "-vfm",
                         description = "ViewModel Message Field",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -fm messagefield",
+                            $"Usage: csgen {category} -vfm messagefield",
                             "",
                             "Specify a field that the ViewModel uses to pass messages."
                         },
@@ -677,17 +755,18 @@ namespace Seamlex.Utilities
 
                 if(category == "model" || category == "controller" || category == "facade" )
                 {
-                    helptext.Add("  -fp|--mpkey       Specifies the primary key field in the Model.");
-                    helptext.Add("  -ff|--mfkey       Specifies the foreign key field in the Model.");
-                    helptext.Add("  -ft|--mftable     Specifies the parent of the Model.");
+                    helptext.Add("  -mfp|--mpkey       Specifies the primary key field in the Model.");
+                    helptext.Add("  -mff|--mfkey       Specifies the foreign key field in the Model.");
+                    helptext.Add("  -mft|--mparent     Specifies the parent of the Model.");
+                    helptext.Add("  -mfk|--mparkey     Specifies the primary key field in parent of the Model.");
 
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--mpkey",
-                        synonym = "-fp",
+                        synonym = "-mfp",
                         description = "Model Primary Key Field",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -fp primarykey",
+                            $"Usage: csgen {category} -mfp primarykey",
                             "",
                             "Specify the primary key field in the Model."
                         },
@@ -698,10 +777,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--mfkey",
-                        synonym = "-ff",
+                        synonym = "-mff",
                         description = "Model Parent Foreign Key Field",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -ff foreignkey",
+                            $"Usage: csgen {category} -mff foreignkey",
                             "",
                             "Specify the foreign key field in the Model."
                         },
@@ -711,13 +790,34 @@ namespace Seamlex.Utilities
                     });
                     load.Add(new ParameterSetting(){
                         category = category,
-                        setting = "--mftable",
-                        synonym = "-ft",
+                        setting = "--mparent",
+                        synonym = "-mft",
                         description = "Model Parent Table",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -ft parenttable",
+                            $"Usage: csgen {category} -mft parenttable",
                             "",
-                            "Specify the parent of this Model."
+                            "Specify the parent (and higher) name for this Model.",
+                            "",
+                            "The format of this is:",
+                            "cmparent[.cmgrandparent][.cmgreatgrandparent][...]",
+                            "",
+                            "Subsequent period-delimited Models (grandparents) are used for cross-checking ownership with Identity.",
+                            "If this is the case, the final item should be '.AspNetUsers' or whatever the Identity table name is."
+
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.Any,
+                        nextparaseparator = ","
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--mparkey",
+                        synonym = "-mfk",
+                        description = "Model Parent Table Primary Key",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -mfk parenttableid",
+                            "",
+                            "Specify the primary key parent of this Model."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.Any,
@@ -1053,7 +1153,7 @@ namespace Seamlex.Utilities
                 }
 
 
-                if(category == "controller" || category == "facade")
+                if(category == "controller")
                 {
 
                     helptext.Add("  -cn|--cname        Name of the Controller class.");
@@ -1100,10 +1200,31 @@ namespace Seamlex.Utilities
                     });
                 }
 
+                if(category == "controller" || category == "facade")
+                {
+                    helptext.Add("  -cdc|--cdcontext   Class name of the ApplicationDbContext.");
+
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--cdcontext",
+                        synonym = "-cdc",
+                        description = "Class name of the ApplicationDbContext",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -cdc dbcontextname",
+                            "",
+                            "Class name of the ApplicationContext.",
+                            "",
+                            "This should be fully-qualified with its namespace."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CsNameSpace
+                    });
+                }
+
                 if(category == "controller" )
                 {
-                    helptext.Add("  -cr|--croute       Name of the Controller URI route.");
-                    helptext.Add("  -cx|--ccontext     Class name of the ApplicationContext.");
+                    helptext.Add("  -cdp|--cdpropname  Property name of the ApplicationDbContext.");
+                    helptext.Add("  -cur|--curoute     Name of the Controller URI route.");
 
                     helptext.Add("  -cnf|--cnofacade   Controller does not use a facade.");
                     helptext.Add("  -cni|--cnouser     Controller does not use Identity.");
@@ -1111,7 +1232,7 @@ namespace Seamlex.Utilities
                     helptext.Add("  -cnd|--cnodbsave   Controller does not use issue a dbsave command.");
                     helptext.Add("  -cnb|--cnobinding  Controller does not use bind individual fields.");
 
-                    helptext.Add("  -cap|--chttps      Colon-delimited GET/POST action properties.");
+                    helptext.Add("  -cap|--cacthttps   Colon-delimited GET/POST action properties.");
                     helptext.Add("  -can|--cactnames   Colon-delimited action names.");
                     helptext.Add("  -cas|--cactsyns    Colon-delimited action synonyms.");
                     helptext.Add("  -cat|--cacttypes   Colon-delimited action types (Create/Delete/Edit/Index/Details).");
@@ -1119,42 +1240,34 @@ namespace Seamlex.Utilities
                     helptext.Add("  -cvn|--cvnames     Colon-delimited ViewModel names.");
                     helptext.Add("  -cmn|--cmnames     Colon-delimited Model names.");
                     helptext.Add("  -cwn|--cwnames     Colon-delimited View names.");
-                    helptext.Add("  -cvk|--cvpkeys     Colon-delimited ViewModel primary key fields.");
-                    helptext.Add("  -cvf|--cvfkeys     Colon-delimited ViewModel foreign key fields.");
-                    helptext.Add("  -cmk|--cmpkeys     Colon-delimited Model primary key fields.");
-                    helptext.Add("  -cmf|--cmfkeys     Colon-delimited Model foreign key fields.");
-                    helptext.Add("  -cmp|--cmparents   Colon-delimited Model parent table names.");
-                    helptext.Add("  -cvu|--cvukeys     Colon-delimited action ViewModel user key fields.");
-                    helptext.Add("  -cvm|--cvmsgs      Colon-delimited action ViewModel message fields.");
+                    helptext.Add("  -cfn|--cfnames     Colon-delimited Facade names.");
 
                     load.Add(new ParameterSetting(){
                         category = category,
-                        setting = "--croute",
-                        synonym = "-cr",
-                        description = "Route name for the controller",
+                        setting = "--cdpropname",
+                        synonym = "-cdp",
+                        description = "Property name of the ApplicationDbContext",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -cr routename",
+                            $"Usage: csgen {category} -cdp dbcontextpropname",
                             "",
-                            "Class name of the ApplicationContext."
+                            "Property/variable name of the ApplicationDbContext in each Controller/Facade."
                         },
                         paratype = ParameterType.Input,
-                        nextparatype = ParameterType.Any,
-                        nextparaseparator = ":"
+                        nextparatype = ParameterType.CsFieldName
                     });
 
                     load.Add(new ParameterSetting(){
                         category = category,
-                        setting = "--ccontext",
-                        synonym = "-cx",
-                        description = "Class name of the ApplicationContext",
+                        setting = "--curoute",
+                        synonym = "-cur",
+                        description = "Route name for the controller",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -cx dbcontextname",
+                            $"Usage: csgen {category} -cur routename",
                             "",
-                            "Class name of the ApplicationContext."
+                            "Base URI route name for this Controller."
                         },
                         paratype = ParameterType.Input,
-                        nextparatype = ParameterType.Any,
-                        nextparaseparator = ":"
+                        nextparatype = ParameterType.Any
                     });
 
                     load.Add(new ParameterSetting(){
@@ -1200,7 +1313,7 @@ namespace Seamlex.Utilities
                         category = category,
                         setting = "--cnodbsave",
                         synonym = "-cnd",
-                        description = "No not put dbsave commands in the Controller",
+                        description = "Do not put dbsave commands in the Controller",
                         helptext = new List<string>(){
                             $"Usage: csgen {category} -cnd",
                             "",
@@ -1224,7 +1337,7 @@ namespace Seamlex.Utilities
                     });
                     load.Add(new ParameterSetting(){
                         category = category,
-                        setting = "--chttps",
+                        setting = "--cacthttps",
                         synonym = "-cap",
                         description = "Colon-delimited GET/POST action properties",
                         helptext = new List<string>(){
@@ -1332,6 +1445,36 @@ namespace Seamlex.Utilities
                         nextparatype = ParameterType.Any,
                         nextparaseparator = ":"
                     });
+
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--cfnames",
+                        synonym = "-cfn",
+                        description = "Colon-delimited action Facade names",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -cfn facadenames",
+                            "",
+                            "Colon-delimited action list of Facade names.",
+                            "If only one is specified and --fillblanks is used, this Facade is used for all Controller actions."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CsClassName,
+                        nextparaseparator = ":"
+                    });
+                }
+
+                if(category == "controller" || category == "facade")
+                {
+                    helptext.Add("  -cvk|--cvpkeys     Colon-delimited ViewModel primary key fields.");
+                    helptext.Add("  -cvf|--cvfkeys     Colon-delimited ViewModel foreign key fields.");
+                    helptext.Add("  -cmk|--cmpkeys     Colon-delimited Model primary key fields.");
+                    helptext.Add("  -cmf|--cmfkeys     Colon-delimited Model foreign key fields.");
+                    helptext.Add("  -cmp|--cmparents   Colon-delimited Model parent(+grandparent) names.");
+                    helptext.Add("  -cmy|--cmparkeys   Colon-delimited Model parent(+grandparent) key fields.");
+                    helptext.Add("  -cmu|--cmukeys     Colon-delimited action Model User key fields.");
+                    helptext.Add("  -cvu|--cvukeys     Colon-delimited action ViewModel user key fields.");
+                    helptext.Add("  -cvm|--cvmsgs      Colon-delimited action ViewModel message fields.");
+
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--cvpkeys",
@@ -1392,11 +1535,62 @@ namespace Seamlex.Utilities
                         category = category,
                         setting = "--cmparents",
                         synonym = "-cmp",
-                        description = "Colon-delimited action Model parent table fields",
+                        description = "Colon-delimited action Model parent(+grandparent) table fields",
                         helptext = new List<string>(){
                             $"Usage: csgen {category} -cmp modelparentnames",
                             "",
-                            "Colon-delimited action Model parent table names."
+                            "Colon-delimited action Model parent (and higher) table names.",
+                            "",
+                            "The format of this is:",
+                            "cmparent1[.cmgrandparent1][.cmgreatgrandparent1][,cmparent2][.cmgrandparent2][.cmgreatgrandparent2][,...]",
+                            "",
+                            $"The colon-delimited list is used in the {category.Substring(0,1).ToUpper()}{category.Substring(1,category.Length-1)}.",
+                            "",
+                            "Subsequent period-delimited Models (grandparents) are used for cross-checking ownership with Identity.",
+                            "If this is the case, the final item should be '.AspNetUsers' or whatever the Identity table name is."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.Any,
+                        nextparaseparator = ":"
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--cmparkeys",
+                        synonym = "-cmy",
+                        description = "Colon-delimited Model parent(+grandparent) key fields",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -cmy modelparentkeyfieldnames",
+                            "",
+                            "Colon-delimited action Model parent (and higher) key field names.",
+                            "",
+                            "The format of this is:",
+                            "cmparentkey1[.cmgrandparentkey1][.cmgreatgrandparentkey1][,cmparentkey2][.cmgrandparentkey2][.cmgreatgrandparentkey2][,...]",
+                            "",
+                            $"The colon-delimited list is used in the {category.Substring(0,1).ToUpper()}{category.Substring(1,category.Length-1)}.",
+                            "",
+                            "Subsequent period-delimited Models (grandparents) are used for cross-checking ownership with Identity.",
+                            "If this is the case, the final item should be 'Id' or whatever the pkey of the Identity table is."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.Any,
+                        nextparaseparator = ":"
+                    });
+
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--cvmkeys",
+                        synonym = "-cvm",
+                        description = "Colon-delimited action Model UserId fields",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -cvu modeluserkeynames",
+                            "",
+                            "Colon-delimited action Model user key fields.",
+                            "",
+                            "If the --fillblanks option is set, the first item is used.",
+                            "",
+                            "Note that this is used to check the userid in the Model for ownership.",
+                            "",
+                            "By default, this is 'Id' in the 'AspNetUsers' table."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.Any,
@@ -1455,7 +1649,7 @@ namespace Seamlex.Utilities
 */
 
 
-                helptext.Add("  -h|--help         Display help.");
+                helptext.Add("  -h|--help          Display help.");
                 help.helptext.AddRange(helptext);
                 output.Add(help);
                 output.AddRange(load);
