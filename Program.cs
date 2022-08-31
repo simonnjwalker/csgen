@@ -15,7 +15,7 @@ namespace Seamlex.Utilities
             CsgenLegacy csgenold = new CsgenLegacy();
             CsgenMain cg = new CsgenMain();
             // test
-            bool testfparameters = true;
+            bool testfparameters = false;
             bool testwparameters = false;
             bool testcparameters = false;
             bool testcontroller = false;

@@ -1946,7 +1946,7 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
             string facadename = source.fname;
             string facadetype = source.ftype;
 
-            string identityname = "AspNetUsers";
+            // string identityname = "AspNetUsers";
             string identityid = "Id";
             string modelobject = "Item";
             string vmobject = "vm";
