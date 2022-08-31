@@ -506,7 +506,7 @@ namespace Seamlex.Utilities
                 }
                 if(category == "model" || category == "controller" || category == "facade" )
                 {
-                    helptext.Add("  -mff|--mfnames     Comma-separated list of Model field names in order.");
+                    helptext.Add("  -mfn|--mfnames     Comma-separated list of Model field names in order.");
                     helptext.Add("                     Syntax is mfname1[,mfname2][,...].");
                     helptext.Add("  -mft|--mftypes     Comma-separated list of Model field types in order.");
                     helptext.Add("                     Syntax is mftype1[,mftype2][,...].");
@@ -516,10 +516,10 @@ namespace Seamlex.Utilities
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--mfnames",
-                        synonym = "-mff",
+                        synonym = "-mfn",
                         description = "Model Field Names",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -mff fieldnames",
+                            $"Usage: csgen {category} -mfn fieldnames",
                             "",
                             "Specify a comma-separated list of Model field names.",
                             "",
@@ -755,46 +755,44 @@ namespace Seamlex.Utilities
 
                 if(category == "model" || category == "controller" || category == "facade" )
                 {
-                    helptext.Add("  -mfp|--mpkey       Specifies the primary key field in the Model.");
-                    helptext.Add("  -mff|--mfkey       Specifies the foreign key field in the Model.");
-                    helptext.Add("  -mft|--mparent     Specifies the parent of the Model.");
-                    helptext.Add("  -mfk|--mparkey     Specifies the primary key field in parent of the Model.");
+                    helptext.Add("  -mpk|--mpkey       Specifies the primary key field in the Model.");
+                    helptext.Add("  -mfk|--mfkey       Specifies the foreign key field in the Model.");
+                    helptext.Add("  -mpt|--mparent     Specifies the parent of the Model.");
+                    helptext.Add("  -mpp|--mparkey     Specifies the primary key field in parent of the Model.");
 
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--mpkey",
-                        synonym = "-mfp",
+                        synonym = "-mpk",
                         description = "Model Primary Key Field",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -mfp primarykey",
+                            $"Usage: csgen {category} -mpk primarykey",
                             "",
                             "Specify the primary key field in the Model."
                         },
                         paratype = ParameterType.Input,
-                        nextparatype = ParameterType.Any,
-                        nextparaseparator = ","
+                        nextparatype = ParameterType.CsFieldName
                     });
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--mfkey",
-                        synonym = "-mff",
+                        synonym = "-mfk",
                         description = "Model Parent Foreign Key Field",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -mff foreignkey",
+                            $"Usage: csgen {category} -mfk foreignkey",
                             "",
                             "Specify the foreign key field in the Model."
                         },
                         paratype = ParameterType.Input,
-                        nextparatype = ParameterType.Any,
-                        nextparaseparator = ","
+                        nextparatype = ParameterType.CsFieldName
                     });
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--mparent",
-                        synonym = "-mft",
+                        synonym = "-mpt",
                         description = "Model Parent Table",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -mft parenttable",
+                            $"Usage: csgen {category} -mpt parenttable",
                             "",
                             "Specify the parent (and higher) name for this Model.",
                             "",
@@ -806,22 +804,20 @@ namespace Seamlex.Utilities
 
                         },
                         paratype = ParameterType.Input,
-                        nextparatype = ParameterType.Any,
-                        nextparaseparator = ","
+                        nextparatype = ParameterType.CsFieldName
                     });
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--mparkey",
-                        synonym = "-mfk",
+                        synonym = "-mpp",
                         description = "Model Parent Table Primary Key",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -mfk parenttableid",
+                            $"Usage: csgen {category} -mpp parenttableid",
                             "",
                             "Specify the primary key parent of this Model."
                         },
                         paratype = ParameterType.Input,
-                        nextparatype = ParameterType.Any,
-                        nextparaseparator = ","
+                        nextparatype = ParameterType.CsFieldName
                     });
                 }
                 // if(category == "model" || category == "controller" || category == "facade" )
@@ -1223,6 +1219,8 @@ namespace Seamlex.Utilities
 
                 if(category == "controller" )
                 {
+
+                    helptext.Add("  -cca|--careaname   Name of the Controller Area.");
                     helptext.Add("  -cdp|--cdpropname  Property name of the ApplicationDbContext.");
                     helptext.Add("  -cur|--curoute     Name of the Controller URI route.");
 
@@ -1244,6 +1242,19 @@ namespace Seamlex.Utilities
 
                     load.Add(new ParameterSetting(){
                         category = category,
+                        setting = "--careaname",
+                        synonym = "-cca",
+                        description = "Name of the Controller Area",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -cca areaname",
+                            "",
+                            "Name of the Controller Area.  If not entered, no Area is used."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CsFieldName
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
                         setting = "--cdpropname",
                         synonym = "-cdp",
                         description = "Property name of the ApplicationDbContext",
@@ -1255,7 +1266,6 @@ namespace Seamlex.Utilities
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.CsFieldName
                     });
-
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--curoute",

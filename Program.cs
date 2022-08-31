@@ -18,7 +18,7 @@ namespace Seamlex.Utilities
             bool testfparameters = false;
             bool testwparameters = false;
             bool testcparameters = false;
-            bool testcontroller = false;
+            bool testcontroller = false; // 
             bool testmodel = false;
             bool testview = false;
             bool testvm = false;
@@ -315,7 +315,7 @@ c:\SNJW\code\shared\csgen.exe view --wname "Create Model" --sourcefile xoload-sm
             if(testcontroller)
             {
 
-
+                string output = @"c:\SNJW\code\xp\Areas\Election\Controllers\ElectionController.cs";
 
                 cg.parameters.Clear();
                 cg.parameters.Add("controller");
@@ -325,28 +325,36 @@ c:\SNJW\code\shared\csgen.exe view --wname "Create Model" --sourcefile xoload-sm
                 cg.parameters.Add("Seamlex.MyEdApps");
                 cg.parameters.Add("--cparent");
                 cg.parameters.Add("Controller");
-                cg.parameters.Add("--ccontext");
-                cg.parameters.Add("ApplicationDbContext");
+                cg.parameters.Add("--cdcontext");
+                cg.parameters.Add("xp.Data.ApplicationDbContext");
+                cg.parameters.Add("--careaname");
+                cg.parameters.Add("Election");
+
                 cg.parameters.Add("--cnobinding");
+
+                cg.parameters.Add("--source");
+                cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-election.csv");
+
                 cg.parameters.Add("--output");
-                cg.parameters.Add("c:\\temp\\ElectionController.cs");
+                cg.parameters.Add(output);
 
-                cg.parameters.Add("--chttps");  // GET/POST action properties
-                cg.parameters.Add("GET:GET+POST:GET+POST:GET:GET+POST");
-                cg.parameters.Add("--cactnames");  // action name
-                cg.parameters.Add("Index:Create:Edit:Details:Delete");  
-                cg.parameters.Add("--cactsyns");  // action synonyms
-                cg.parameters.Add("manage+all+list:new+add:edit:view:remove");
-                cg.parameters.Add("--cacttypes");  // type (Create/Delete/Edit/Index/Details)
-                cg.parameters.Add("Index:Create:Edit:Details:Delete");
+                cg.parameters.Add("--cacthttps");
+                cg.parameters.Add("GET/POST:GET:GET/POST:GET/POST:GET");
+                cg.parameters.Add("--cactnames");
+                cg.parameters.Add("Create:Index:Edit:Delete:Details");
+                cg.parameters.Add("--cacttypes");
+                cg.parameters.Add("Create:Index:Edit:Delete:Details");
 
+
+                cg.parameters.Add("--vname");  //  Colon-delimited ViewModel names
+                cg.parameters.Add("election");
 
                 cg.parameters.Add("--cvnames");  //  Colon-delimited ViewModel names
                 cg.parameters.Add("election");
                 cg.parameters.Add("--cmnames");  // Colon-delimited Model names
                 cg.parameters.Add("Election");
                 cg.parameters.Add("--cwnames");  // Colon-delimited View names
-                cg.parameters.Add("Crete Election");
+                cg.parameters.Add("Create Election");
                 cg.parameters.Add("--cvpkeys");  // Colon-delimited ViewModel primary key fields
                 cg.parameters.Add("id");
                 cg.parameters.Add("--cvfkeys");  // Colon-delimited ViewModel foreign key fields
@@ -354,14 +362,22 @@ c:\SNJW\code\shared\csgen.exe view --wname "Create Model" --sourcefile xoload-sm
                 cg.parameters.Add("--cmpkeys");  // Colon-delimited Model primary key fields
                 cg.parameters.Add("Id");
                 cg.parameters.Add("--cmfkeys");  // Colon-delimited Model foreign key fields
-                cg.parameters.Add("UserId");
+                cg.parameters.Add("ElectionUserId");
                 cg.parameters.Add("--cmparents");  // Colon-delimited Model parent table names
-                cg.parameters.Add("IdentityUser");
+                cg.parameters.Add("User");
                 cg.parameters.Add("--cvukeys");  // Colon-delimited action ViewModel user key fields
                 cg.parameters.Add("userid");
                 cg.parameters.Add("--cvmsgs");  // Colon-delimited action ViewModel message fields
                 cg.parameters.Add("message");
 
+                cg.parameters.Add("--cfnames");  // Colon-delimited Facade names
+                cg.parameters.Add("enfacade");
+
+                cg.parameters.Add("--fillempty");
+
+//                cg.parameters.Add("--cnofacade");
+
+/*
 
                 // cg.parameters.Add("--source");
                 // cg.parameters.Add("c:\\temp\\sourcefile.csv");
@@ -391,8 +407,10 @@ c:\SNJW\code\shared\csgen.exe view --wname "Create Model" --sourcefile xoload-sm
                 // cg.parameters.Add("--mfsizes");
                 // cg.parameters.Add("string,string,string,string,string,DateTime,string");
 
+                */
+
                 cg.Run();
-                System.Diagnostics.Process.Start("notepad.exe","c:\\temp\\ElectionController.cs");
+                System.Diagnostics.Process.Start("notepad.exe",output);
                 return;                
             }
 
@@ -526,40 +544,35 @@ namespace lm.Controllers
 
                 cg.Run();
                 System.Diagnostics.Process.Start("notepad.exe","c:\\temp\\list.cshtml");
-                return;                
+                return;   
             }
 
             if(testmodel)
             {
+
+
+ // c:\SNJW\code\shared\csgen.exe model --mname Ballot --source "C:\SNJW\code\scriptloader\scriptloader-election.csv" --output c:\SNJW\code\xp\Areas\Election\Models\data\Ballot.cs --mpkey BallotId --mfkey BallotElectionId --mparent Election
+                string output = @"c:\SNJW\code\xp\Areas\Election\Models\data\Ballot.cs";               
                 cg.parameters.Clear();
                 cg.parameters.Add("model");
                 cg.parameters.Add("--mname");
-                cg.parameters.Add("election");
+                cg.parameters.Add("Ballot");
                 //   cg.parameters.Add("--mnamespace");
                 //   cg.parameters.Add("Seamlex.MyEdApps");
-                cg.parameters.Add("--output");
-                cg.parameters.Add("c:\\temp\\election.cs");
                 cg.parameters.Add("--source");
-                cg.parameters.Add("c:\\temp\\sourcefile.csv");
-                cg.parameters.Add("--mfnames");
-                cg.parameters.Add("id,userid,code,name,desc,start,message");
-                cg.parameters.Add("--mftypes");
-                cg.parameters.Add("string,string,string,string,string,DateTime,string");
-                // cg.parameters.Add("--vfsizes");
-                // cg.parameters.Add("32,32,10,0,0,0,100");
-                // cg.parameters.Add("--vfdescs");
-                // cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
-                // cg.parameters.Add("--vfcaps");
-                // cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
+                cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-election.csv");
+                cg.parameters.Add("--output");
+                cg.parameters.Add(output);
                 cg.parameters.Add("--mpkey");
-                cg.parameters.Add("id");
-                // cg.parameters.Add("--vfkey");
-                // cg.parameters.Add("parentid");
-                // cg.parameters.Add("--vftable");
-                // cg.parameters.Add("parenttable");
-                //cg.parameters.Add("--help");
+                cg.parameters.Add("BallotId");
+                cg.parameters.Add("--mfkey");
+                cg.parameters.Add("BallotElectionId");
+                cg.parameters.Add("--mparent");
+                cg.parameters.Add("Election");
+
 
                 cg.Run();
+                System.Diagnostics.Process.Start("notepad.exe",output);
                 return;                
             }
 
