@@ -859,6 +859,14 @@ namespace Seamlex.Utilities
 
                 if(category == "view" )
                 {
+                    helptext.Add("  -wbn|--wbtnname    Colon-separated list of button names on the form.");
+                    helptext.Add("  -wby|--wbtntype    Colon-separated list of button types on the form.");
+                    helptext.Add("  -wbt|--wbtntext    Colon-separated list of form button text.");
+                    helptext.Add("  -wbc|--wbtnclass   Colon-separated list of form button CSS classes.");
+                    helptext.Add("  -wbd|--wbtndclass  Colon-separated list of CSS classes wrapping form buttons.");
+                    helptext.Add("  -wbi|--wbtniclass  Colon-separated list of form button embedded <i> tags.");
+                    helptext.Add("  -wbo|--wbtnonclick Colon-separated list of JS code for form buttons.");
+
                     helptext.Add("  -wst|--wsubmit     Type of Submit object on the form.");
                     helptext.Add("  -wsa|--wsubaction  Specifies the Submit action.");
                     helptext.Add("  -wsd|--wsubdclass  Colon-delimited CSS classes for the Submit object.");
@@ -867,9 +875,19 @@ namespace Seamlex.Utilities
                     helptext.Add("  -wra|--wretaction  Specifies the Return action.");
                     helptext.Add("  -wrd|--wretdclass  Colon-delimited CSS classes for the Return object.");
                     helptext.Add("  -wri|--wreticlass  CSS class for an embedded <i> tag for the Return object.");
+
                     helptext.Add("  -wfa|--wfrmaction  Specifies the Form action.");
+                    helptext.Add("  -wfm|--wfrmmethod  Specifies the Form method.");
                     helptext.Add("  -wfc|--wfrmclass   Colon-delimited CSS classes wrapping the Form object.");
                     helptext.Add("  -wfs|--wfrmsub     Colon-delimited CSS classes wrapping all objects inside the Form object.");
+                    helptext.Add("  -wfb|--wfrmbtncss  Specify the CSS class to wrap all Form buttons.");
+
+
+                    helptext.Add("  -wjl|--wscrlist    Colon-delimited list of .js files linked on this view.");
+                    helptext.Add("  -wjn|--wscrsection Name of the @section for scripts called in this view.");
+
+
+
                     helptext.Add("  -wpc|--wpageclass  Specifies the CSS class wrapping the Info and Form sections.");
                     helptext.Add("  -wic|--winfoclass  Colon-delimited CSS classes wrapping the Info section above form fields.");
                     helptext.Add("  -wih|--winfohclass CSS class of the heading in the Info section.");
@@ -878,6 +896,109 @@ namespace Seamlex.Utilities
                     helptext.Add("  -wlf|--wlayfiles   Colon-separated list of Layout cshtml files associated with --laynames.");
                     helptext.Add("  -wln|--wlaynames   Colon-separated list of @section names.");
                     helptext.Add("  -wlm|--wlayout     Name of the primary Layout.cshtml file.");
+
+
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--wbtnname",
+                        synonym = "-wbn",
+                        description = "List of button names on the form",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -wbn btnnames",
+                            "",
+                            "Specify a colon-separated list of button names in the form."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CssName,
+                        nextparaseparator = ":"
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--wbtntype",
+                        synonym = "-wby",
+                        description = "List of form button types",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -wby btntypes",
+                            "",
+                            "Specify a colon-separated list of form button types.",
+                            "",
+                            "Only the values 'submit' and 'reset' are valid."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CssName,
+                        nextparaseparator = ":"
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--wbtntext",
+                        synonym = "-wbt",
+                        description = "List of text for form buttons",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -wbt btntext",
+                            "",
+                            "Specify a colon-separated list of text for form buttons."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.Any,
+                        nextparaseparator = ":"
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--wbtnclass",
+                        synonym = "-wbc",
+                        description = "List of CSS classes for form buttons",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -wbc btnclassnames",
+                            "",
+                            "Specify a colon-separated list of form button CSS classes."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CssName,
+                        nextparaseparator = ":"
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--wbtndclass",
+                        synonym = "-wbd",
+                        description = "List of CSS classes wrapping form buttons",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -wbd dclassnames",
+                            "",
+                            "Specify a colon-separated list of CSS classes for <div> tags to wrap form buttons."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CssName,
+                        nextparaseparator = ":"
+                    });
+
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--wbtniclass",
+                        synonym = "-wbi",
+                        description = "List of CSS classes for button embedded <i> tags",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -wbi iclassnames",
+                            "",
+                            "Specify a colon-separated list of form button embedded <i> tag CSS classes."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CssName,
+                        nextparaseparator = ":"
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--wbtnonclick",
+                        synonym = "-wbo",
+                        description = "List of JS code for form button click events",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -wbo onclickcode",
+                            "",
+                            "Specify a colon-separated list of JavaScript code to populate the onclick methods."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.Any,
+                        nextparaseparator = ":"
+                    });
 
                      load.Add(new ParameterSetting(){
                         category = category,
@@ -991,7 +1112,7 @@ namespace Seamlex.Utilities
                         nextparatype = ParameterType.CssName,
                         nextparaseparator = ":"
                     });
-                     load.Add(new ParameterSetting(){
+                    load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--wfrmaction",
                         synonym = "-wfa",
@@ -999,11 +1120,27 @@ namespace Seamlex.Utilities
                         helptext = new List<string>(){
                             $"Usage: csgen {category} -wfa formaction",
                             "",
-                            "Specify the Form action."
+                            "Specify the Form action.",
+                            "",
+                            "This is the URI that the page will send data to."
                         },
                         paratype = ParameterType.Input,
-                        nextparatype = ParameterType.CssName,
-                        nextparaseparator = ":"
+                        nextparatype = ParameterType.Any
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--wfrmmethod",
+                        synonym = "-wfm",
+                        description = "Specifies the Form method",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -wfm formmethod",
+                            "",
+                            "Specify the Form method (GET or POST).",
+                            "",
+                            "Default is 'POST'."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.Any
                     });
                      load.Add(new ParameterSetting(){
                         category = category,
@@ -1033,6 +1170,53 @@ namespace Seamlex.Utilities
                         nextparatype = ParameterType.CssName,
                         nextparaseparator = ":"
                     });
+
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--wfrmbtncss",
+                        synonym = "-wfb",
+                        description = "CSS class to wrap all Form buttons",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -wfb btncss",
+                            "",
+                            "Specify a CSS class to wrap all Form buttons."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CssName
+                    });
+
+
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--wscrlist",
+                        synonym = "-wjl",
+                        description = "Colon-delimited list of .js files linked on this view",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -wjl jsfiles",
+                            "",
+                            "Colon-delimited list of .js files linked on this view"
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.Any,
+                        nextparaseparator = ":"
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--wscrsection",
+                        synonym = "-wjn",
+                        description = "Name of the @section for scripts called in this view",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -wjn sectionname",
+                            "",
+                            "Name of the @section for scripts called in this view."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CsClassName
+                    });
+
+
+
+                    
                      load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--wpageclass",

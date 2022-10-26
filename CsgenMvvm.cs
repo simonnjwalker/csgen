@@ -630,6 +630,18 @@ namespace Seamlex.Utilities
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
             int enddiv = 0;
+            string formaction = "/";
+            string formmethod = "POST";
+            if(source.wfrmaction != "")
+                formaction = source.wfrmaction;
+            if(source.wfrmmethod.ToUpper().Contains("G"))
+                formmethod = "GET";
+            string formstart = $@"<form action=""{formaction}"" method=""{formmethod}"">";
+            string formend = "</form>";
+            string btntext = this.GetViewFormButtonText(source);
+            if(source.wsubaction.ToUpper().Contains("G"))
+                formmethod = "GET";
+
             string[] formclasses = source.wfrmclass.Split(':',StringSplitOptions.None);
             for (int i = 0; i < formclasses.Length; i++)
             {
@@ -639,12 +651,149 @@ namespace Seamlex.Utilities
                     sb.AppendLine($"<div class=\"{formclasses[i]}\">");
                 }
             }
+            sb.AppendLine(formstart);
+
+            if(source.wfrmsub.Trim() != "")
+                sb.AppendLine($"<div class=\"{source.wfrmsub}\">");
+
             sb.AppendLine(innertext);
+
+            if(source.wfrmsub.Trim() != "")
+                sb.AppendLine("</div>");
+
+            if(source.wfrmbtncss.Trim() != "")
+                sb.AppendLine($"<div class=\"{source.wfrmbtncss.Trim()}\">");
+            sb.AppendLine(btntext);
+            if(source.wfrmbtncss.Trim() != "")
+                sb.AppendLine($"</div>");
+
+            sb.AppendLine(formend);
+
             for (int i = 0; i < enddiv; i++)
                 sb.AppendLine($"</div>");
+
+
+
+
+
+            // include the form object here
+            // <form action="/Election/Create" method="POST">
+
             return sb.ToString();
         }
 
+        public string GetViewFormButtonText(mvvm source)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            foreach(var item in this.GetViewFormButtons(source))
+            {
+/*
+<div class="form-button">
+<button type="submit" class="button"> <i class="lni lni-telegram-original"></i> Submit</button>
+</div>
+*/
+                if(item.btndclass != "")
+                    sb.AppendLine($"<div class=\"{item.btndclass}\">");
+                
+                string typetext = " type=\"button\"";
+                if(item.btntype == "submit" || item.btntype == "reset")
+                    typetext = $" type=\"{item.btntype}\"";
+
+                string classtext = item.btnclass;
+                if(classtext != "")
+                    classtext = $" class=\"{classtext}\"";
+
+                string onclicktext = "";
+                if(item.btnonclick != "")
+                    onclicktext = $" onclick=\"{item.btnonclick}\"";
+
+                string itext = "";
+                if(item.btniclass != "")
+                    itext = $" <i class=\"{item.btniclass}\"></i> ";
+
+                sb.AppendLine($"<button{typetext}{classtext}{onclicktext}>{itext}{item.btntext}</button>");
+
+                if(item.btndclass != "")
+                    sb.AppendLine("</div>");
+            }
+
+            return sb.ToString();
+        }
+
+        public List<frmbutton> GetViewFormButtons(mvvm source)
+        {
+            var output = new List<frmbutton>();
+            string[] btnnames = source.wbtnname.Split(':',StringSplitOptions.None);
+            string[] btntypes = source.wbtntype.Split(':',StringSplitOptions.None);
+            string[] btntexts = source.wbtntext.Split(':',StringSplitOptions.None);
+            string[] btnclasses = source.wbtnclass.Split(':',StringSplitOptions.None);
+            string[] btndclasses = source.wbtndclass.Split(':',StringSplitOptions.None);
+            string[] btniclasses = source.wbtniclass.Split(':',StringSplitOptions.None);
+            string[] btnonclicks = source.wbtnonclick.Split(':',StringSplitOptions.None);
+            for (int i = 0; i < btnnames.Length; i++)
+            {
+                var item = new frmbutton();
+
+                // names must be unique
+                item.btnname = btnnames[i].Trim();
+                if(item.btnname == "" || ( output.Exists(x => x.btnname.Equals(item.btnname))))
+                    item.btnname = "btn"+System.Guid.NewGuid().ToString().Replace(" ","").ToLower();
+                
+                item.btntype = "default";
+                if(btntypes.Length>i)
+                {
+                    if(btntypes[i].ToLower().Trim() == "submit" && !output.Exists(x => x.btntype.Equals("submit")))
+                    {
+                        item.btntype = "submit";
+                    }
+                    else if(btntypes[i].ToLower().Trim() == "reset")
+                    {
+                        item.btntype = "reset";
+                    }
+                }
+
+                item.btntext = "";
+                if(btntexts.Length == 1 && btntexts[0] == "")
+                {
+                    // default the text to the name
+                    if(!(item.btnname.StartsWith("btn")))
+                    {
+                        item.btntext = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(item.btnname.Replace("."," ").Replace("_"," ").Replace("-"," "));
+                    }
+                    else
+                    {
+                        if(item.btnname.Length > 3 || item.btnname.Length < 35)
+                            item.btntext = item.btnname.Substring(2,item.btnname.Length-3);
+                    }
+                }
+                else
+                {
+                    if(btntexts.Length>i)
+                        item.btntext = btntexts[i];  // no trimming
+                }
+                
+                item.btnclass = "";
+                if(btnclasses.Length>i)
+                    item.btnclass = btnclasses[i].Trim();
+
+                item.btndclass = "";
+                if(btndclasses.Length>i)
+                    item.btndclass = btndclasses[i].Trim();
+
+                item.btniclass = "";
+                if(btniclasses.Length>i)
+                    item.btniclass = btniclasses[i].Trim();
+
+                item.btnonclick = "";
+                if(btnonclicks.Length>i)
+                    item.btnonclick = btnonclicks[i].Trim();
+               
+                output.Add(item);
+            }
+
+            return output;
+        }
+        
         public string GetViewSingleFieldText(mvvmfield genfield)
         {
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
@@ -810,6 +959,27 @@ namespace Seamlex.Utilities
             if(source.wpageclass != "")
                 sb.AppendLine("</div>");
 
+
+            // 2022-10-26 SNJW add scripts here that are called
+            // note that if no class name for section is included, add them manually
+            if(source.wscrsection != "")
+                sb.AppendLine("@section " + source.wscrsection+ " {");
+            if(source.wscrlist != "")
+            {
+                // add these manually
+                foreach(var script in source.wscrlist.Split(':',StringSplitOptions.None))
+                    sb.AppendLine(@$"<script src=""{script}""></script>");
+            }
+            if(source.wscrsection != "")
+                sb.AppendLine("}");
+
+                    // helptext.Add("  -wjl|--wscrlist    Colon-delimited list of .js files linked on this view.");
+                    // helptext.Add("  -wjn|--wscrsection Name of the @section for scripts called in this view.");
+
+
+            // 2022-09-26 SNJW this is manifestly wrong - remove for now
+            /*
+
             string[] sections = source.wlaynames.Split(':',StringSplitOptions.None);
             string[] sectionfiles = source.wlayfiles.Split(':',StringSplitOptions.None);
             for (int i = 0; i < sections.Length; i++)
@@ -825,6 +995,8 @@ namespace Seamlex.Utilities
                     }
                 }
             }
+
+            */
 
             return sb.ToString();
         }
@@ -1157,16 +1329,38 @@ namespace Seamlex.Utilities
             bool nodbsave = source.cnodbsave;
             bool noasync = source.cnoasync;
             string controllername = "";
-            string dbpropname = "db";
+            string dbpropname = source.cdpropname.Trim();
+            if(dbpropname=="")
+                dbpropname = "db";
+            string idpropname = source.cactionparameter;
             string routename = "";
             string actionname = "Index";
             string actiontype= action.cacttype;
             string actionhttp = "GET";
+            string vmname = action.cvname;
+            string modelname = action.cmname;
+            string identitytable = source.identitytable;
+            string identitytableid = source.identitytableid;
             string useranonname = source.useranonname;
             string useranonval = source.useranonval;
             string objectmodel = source.objectmodel;
             string objectvm = source.objectvm;
+            string objectvmuserid = source.objectvm + '.' + action.cvukey;
+            string objectvmpkey = source.objectvm + '.' + action.cvpkey;
+            string objectvmfkey = source.objectvm + '.' + action.cvfkey;
+            string parentmodel = action.cmparent;
+            string parentpkey = action.cmparkey;
+            string foreignkey = action.cmfkey;
 
+
+                // // note that this is a parameter but it's a bit wild at this stage
+                // string ukeyparameter = "";
+                // string ukeyfieldname = "";
+                // if(!noidentity)
+                // {
+                //     ukeyparameter = "id";
+                //     ukeyfieldname = "Id";
+                // }
 
             if(source.croute.Trim() != "" && source.cname.Trim() == "")
                 controllername = source.croute.Trim() + "Controller";
@@ -1229,33 +1423,21 @@ namespace Seamlex.Utilities
                 {
                     entryline = new string(' ', nsindent+indent) + $"public IActionResult {actionname}(";
                 }
-/*
 
 
-        // POST: Election/Create
-        // The id and userid fields should NOT be bound here
-        // but any foreign key WOULD be bound
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("code,name,desc")] vmelection vmelection)
-        {
-            vmelection.id = "";
-            var username = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Subject!.Name;
-            vmelection.userid = (_context.Users.First(x => x.UserName.Equals(username ?? ""))!.Id ?? "").ToLower().Replace("-","");
-            if (ModelState.IsValid)
-            {
-
-              //  var userId =  User.Claims.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) // will give the user's userId                
-                _context.Add(vmelection);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-             
-            return View(vmelection);
-        }
-
-*/
-
+                // some action-httptype combinations need the parameter to be passed-in
+                // other times it will just be 'vm'
+                string thisobjectvm = objectvm;
+                string thisobjectvmuserid = objectvmuserid;
+                string thisobjectvmpkey = objectvmpkey;
+                string thisobjectvmfkey = objectvmfkey;
+                if(this.ActionHasVmParameter(actiontype, thisactionhttp, vmname))
+                {
+                    thisobjectvm = vmname;
+                    thisobjectvmuserid = vmname + '.' + action.cvukey;
+                    thisobjectvmpkey = vmname + '.' + action.cvpkey;
+                    thisobjectvmfkey = vmname + '.' + action.cvfkey;
+                }
 
                 entryline += this.GetControllerActionParameterText(source, action, thisactionhttp);
 
@@ -1267,20 +1449,21 @@ namespace Seamlex.Utilities
                 // TO DO: if this scaffolding is to be 'true' to MVVM principles then the datacontext and indeed all of the model 
                 // 'stuff' would be send to the ViewModel.  I don't think this is necessary - it's more a philosophical debate
                 // I personally like 'light' ViewModels and 'thin' controllers with the Facade doing the heavy thinking
-                if(actiontype !=  "Index" && thisactionhttp == "GET" && action.cvname != "")
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {action.cvname} = new {action.cvname}();");
+                if(actiontype=="Create" && thisactionhttp == "POST")
+                    actiontype = actiontype + "";
 
+                if(this.ActionNeedsVmCreation(actiontype, thisactionhttp, vmname))
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {thisobjectvm} = new {vmname}();");
 
                 if(!noidentity && action.cvukey.Trim() != "")
-                    sb.AppendLine(this.IndentText(this.GetSetVmUserIdControllerText(source,action),nsindent+indent+indent));
-
+                    sb.AppendLine(this.IndentText(this.GetSetVmUserIdControllerText(source,action,thisobjectvm),nsindent+indent+indent));
 
                 // there are 2^6 combinations (identity,facade,binding,vm/model,a/synch,raw/dbcontext)
                 // this gets out of hand quickly so dismiss the easy ones first
                 if(thisactionhttp == "POST" && ( actiontype == "Create" || actiontype == "Edit" ) && action.cvname != "")
                 {
                     sb.AppendLine(new string(' ', nsindent+indent+indent) + $"if(!ModelState.IsValid)");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"return View({action.cvname});");
+                    sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"return View({thisobjectvm});");
                 }
 
 
@@ -1312,14 +1495,6 @@ namespace Seamlex.Utilities
                     }
                 }
 
-                // note that this is a parameter but it's a bit wild at this stage
-                string ukeyparameter = "";
-                string ukeyfieldname = "";
-                if(!noidentity)
-                {
-                    ukeyparameter = "id";
-                    ukeyfieldname = "Id";
-                }
                                 
                 if(thisactionhttp == "GET")
                 {
@@ -1333,7 +1508,13 @@ namespace Seamlex.Utilities
 
                         if(actiontype == "Create")
                         {
-                            sb.AppendLine( 
+                            // Create:GET
+                            // in the corner case that this is a GET + Create + its parent is the Identity table
+                            // then it will not have an id passed-in
+                            if(parentmodel == identitytable )
+                                sb.Append(this.IndentText($"string {idpropname} = {thisobjectvm}.{action.cvukey.Trim()};",nsindent+indent+indent));
+
+                             sb.AppendLine( 
                                 this.IndentText(
                                     this.GetSelectOneQueryText(
                                         action.cmname,
@@ -1343,14 +1524,29 @@ namespace Seamlex.Utilities
                                         "",
                                         "",
                                         action.cmfkey,
-                                        "id",
-                                        ukeyfieldname, 
-                                        ukeyparameter, 
-                                        indent)
+                                        idpropname,
+                                        identitytableid, 
+                                        thisobjectvmuserid,
+                                        indent,
+                                        objectmodel,
+                                        noasync)
                                     ,nsindent+indent+indent));
+
+                            sb.Append(this.IndentText($"if({objectmodel}==null)",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
+                            // if(action.cvfkey.Trim() != "")
+                            //     sb.Append(this.IndentText($"{objectvm}.{action.cvfkey.Trim()} = {idpropname};",nsindent+indent+indent+indent));
+                            sb.Append(this.IndentText(this.GetModelVmDefaultValueText(source, vmname, "vm", objectmodel, objectvm, action.cvpkey.Trim() + ',' + action.cvfkey.Trim()+',' + action.cvukey.Trim()),nsindent+indent+indent+indent));
+                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "else",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "// handle an item that already exists",nsindent+indent+indent+indent));
+                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
+
                         }
                         else if(actiontype == "Index")
                         {
+                            // Index:GET
                             // sb.AppendLine( 
                             //     this.IndentText(
                             //         this.GetSelectOneQueryText(
@@ -1368,6 +1564,7 @@ namespace Seamlex.Utilities
                         }
                         else
                         {
+                            // Details/Edit/Delete:GET
                             sb.AppendLine( 
                                 this.IndentText(
                                     this.GetSelectOneQueryText(
@@ -1376,13 +1573,36 @@ namespace Seamlex.Utilities
                                         action.cmparent,
                                         action.cmparkey,
                                         action.cmpkey,
-                                        "id",
+                                        idpropname,
                                         "",
                                         "",
-                                        ukeyfieldname, 
-                                        ukeyparameter, 
-                                        indent)
+                                        identitytableid, 
+                                        thisobjectvmuserid,
+                                        indent,
+                                        objectmodel,
+                                        noasync)
                                     ,nsindent+indent+indent));
+
+                            sb.Append(this.IndentText($"if({objectmodel}!=null)",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
+                            sb.Append(
+                                this.IndentText(
+                                    this.GetModelToVmMappingText(
+                                        source,
+                                        action.cmname,
+                                        action.cvname,
+                                        "vm",
+                                        objectmodel,
+                                        thisobjectvm,
+                                        action.cvpkey.Trim() + ',' + action.cvfkey.Trim() + ',' + action.cvukey.Trim())
+                                    ,nsindent+indent+indent+indent)
+                                );
+                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "else",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "// handle an item that cannot be found",nsindent+indent+indent+indent));
+                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
+
                         }
                     }
                     else
@@ -1400,8 +1620,8 @@ namespace Seamlex.Utilities
 
                         // if this is a GET, the userid and/or fkey and/or id fields will already be populated
                         // also note that if there is a message field then this can have the relevant error
-                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"if(!facade.Pull({action.cvname}))");
-                        sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"return View({action.cvname});");
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"if(!facade.Pull({thisobjectvm}))");
+                        sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"return View({thisobjectvm});");
                         //
                     }
                 }
@@ -1423,6 +1643,10 @@ namespace Seamlex.Utilities
                         // however we only specify the parent on 
                         if(actiontype == "Create")
                         {
+                            // Create:POST
+                            if(parentmodel == identitytable )
+                                sb.Append(this.IndentText($"string {idpropname} = {thisobjectvm}.{action.cvukey.Trim()};",nsindent+indent+indent));
+
                             sb.AppendLine( 
                                 this.IndentText(
                                     this.GetSelectOneQueryText(
@@ -1433,14 +1657,51 @@ namespace Seamlex.Utilities
                                         "",
                                         "",
                                         action.cmfkey,
-                                        "id",
-                                        ukeyfieldname, 
-                                        ukeyparameter, 
-                                        indent)
+                                        idpropname,
+                                        identitytableid, 
+                                        thisobjectvmuserid,
+                                        indent,
+                                        objectmodel,
+                                        noasync
+                                        )
                                     ,nsindent+indent+indent));
+
+                            sb.Append(this.IndentText($"if({objectmodel}==null)",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
+
+
+                            sb.Append( 
+                                this.IndentText(
+                                    this.GetSelectOneQueryText(
+                                        action.cmname,
+                                        "",
+                                        action.cmparent,
+                                        action.cmparkey,
+                                        action.cmpkey,
+                                        "System.Guid.NewGuid()",
+                                        action.cmfkey,
+                                        idpropname,
+                                        identitytableid, 
+                                        thisobjectvmuserid,
+                                        indent,
+                                        objectmodel,
+                                        noasync, 
+                                        true
+                                        )
+                                    ,nsindent+indent+indent+indent));
+                            sb.Append(this.IndentText( "// see above",nsindent+indent+indent));
+                            sb.Append(this.IndentText(this.GetModelToVmMappingText(source,action.cmname,action.cvname,"model",objectmodel,thisobjectvm,action.cvpkey.Trim() + ',' + action.cvfkey.Trim() + ',' + action.cvukey.Trim()),nsindent+indent+indent+indent));
+                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "else",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "// handle an item that already exists",nsindent+indent+indent+indent));
+                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
+
+
                         }
                         else if(actiontype == "Index")
                         {
+                            // Index:POST
                             // sb.AppendLine( 
                             //     this.IndentText(
                             //         this.GetSelectOneQueryText(
@@ -1458,6 +1719,7 @@ namespace Seamlex.Utilities
                         }
                         else
                         {
+                            // Details/Edit/Delete:POST
                             sb.AppendLine( 
                                 this.IndentText(
                                     this.GetSelectOneQueryText(
@@ -1466,15 +1728,28 @@ namespace Seamlex.Utilities
                                         action.cmparent,
                                         action.cmparkey,
                                         action.cmpkey,
-                                        "id",
+                                        idpropname,
                                         "",
                                         "",
-                                        ukeyfieldname, 
-                                        ukeyparameter, 
-                                        indent)
+                                        identitytableid, 
+                                        thisobjectvmuserid,
+                                        indent,
+                                        objectmodel,
+                                        noasync)
                                     ,nsindent+indent+indent));
+
+                            sb.Append(this.IndentText($"if({objectmodel}!=null)",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
+
+                            sb.Append(this.IndentText(this.GetModelToVmMappingText(source,action.cmname,action.cvname,"model",objectmodel,thisobjectvm,""),nsindent+indent+indent+indent));
+                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "else",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
+                            sb.Append(this.IndentText( "// handle an item that cannot be found",nsindent+indent+indent+indent));
+                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
+
+
                         }
-                        sb.AppendLine(this.IndentText(this.GetModelToVmMappingText(source,action.cmname,action.cvname,"vm"),nsindent+indent+indent));
                     }
                     else
                     {
@@ -1489,8 +1764,8 @@ namespace Seamlex.Utilities
 
                         // if this is a GET, the userid and/or fkey and/or id fields will already be populated
                         // also note that if there is a message field then this can have the relevant error
-                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"if(!facade.Push({action.cvname}))");
-                        sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"return View({action.cvname});");
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"if(!facade.Push({thisobjectvm}))");
+                        sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"return View({thisobjectvm});");
                     }
 
                     if(!nodbsave)
@@ -1511,20 +1786,20 @@ namespace Seamlex.Utilities
 
                 // This is complex and really requires integration testing
                 // TO DO: fill this in!
-                sb.AppendLine(new string(' ', nsindent+indent+indent) + $"return View({action.cvname});");
+                sb.AppendLine(new string(' ', nsindent+indent+indent) + $"return View({thisobjectvm});");
 
-                // if the model and viewmodel are the same
-                if(source.cnouser && source.cnofacade && false)
-                //  && source.cnoasync && action.cactview.Trim() == "")
-                {
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var model = db.Subject.Include(s => s.SubjectModel);");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + "return View(await model.ToListAsync());");
-                }
-                if(!source.cnouser && source.cnofacade && false)
-                {
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + "var lmdbContext = db.Subject.Include(s => s.SubjectModel);");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + "return View(await lmdbContext.ToListAsync());");
-                }
+                // // if the model and viewmodel are the same
+                // if(source.cnouser && source.cnofacade && false)
+                // //  && source.cnoasync && action.cactview.Trim() == "")
+                // {
+                //     sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var model = db.Subject.Include(s => s.SubjectModel);");
+                //     sb.AppendLine(new string(' ', nsindent+indent+indent) + "return View(await model.ToListAsync());");
+                // }
+                // if(!source.cnouser && source.cnofacade && false)
+                // {
+                //     sb.AppendLine(new string(' ', nsindent+indent+indent) + "var lmdbContext = db.Subject.Include(s => s.SubjectModel);");
+                //     sb.AppendLine(new string(' ', nsindent+indent+indent) + "return View(await lmdbContext.ToListAsync());");
+                // }
 
 
                 sb.AppendLine(new string(' ', nsindent+indent) + "}");
@@ -1546,13 +1821,26 @@ namespace Seamlex.Utilities
             string ukeyfieldname = "", 
             string ukeyparameter = "", 
             int indent = 4,
-            string objectmodel = ""
+            string objectmodel = "", 
+            bool noasync = true,
+            bool novar = false
         )
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
             char separator = '.';
             string[] parentitems = parents.Trim().Split(separator,StringSplitOptions.None);
             string[] parentidfields = parentkeyfieldname.Trim().Split(separator,StringSplitOptions.None);
+            string firstmethod = "First";
+            string awaittext = " ";
+            string vartext = "var ";
+            if(!noasync)
+            {
+                firstmethod = "FirstAsync";
+                awaittext = " await ";
+            }
+            if(novar)
+                vartext = "";
+
             if(objectmodel == "")
                 objectmodel = table;
 
@@ -1563,7 +1851,7 @@ namespace Seamlex.Utilities
             else if(context == "")
             {
                 // there is no parent table, just grab the data
-                sb.AppendLine($"var {objectmodel} = new {table}();");
+                sb.AppendLine($"{vartext}{objectmodel} = new {table}();");
                 if(pkeyparameter != "" && pkeyfieldname != "")
                     sb.AppendLine($"{objectmodel}.{pkeyfieldname} = {pkeyparameter};");
                 if(fkeyparameter != "" && fkeyfieldname != "")
@@ -1572,34 +1860,36 @@ namespace Seamlex.Utilities
             else if(parentitems[0] == "" && pkeyfieldname != "" && pkeyparameter != "")
             {
                 // there is no parent table, just grab the data
-                sb.AppendLine($"var {objectmodel} = {context}.{table}.First(x => x.{pkeyfieldname}.Equals({pkeyparameter});");
+                sb.AppendLine($"{vartext}{objectmodel} ={awaittext}{context}.{table}.{firstmethod}(x => x.{pkeyfieldname}.Equals({pkeyparameter});");
             }
             else if(parentitems.Length == 1 && pkeyfieldname != "" && pkeyparameter != "" && fkeyfieldname != "" && fkeyparameter != "" && ukeyparameter == "" && ukeyfieldname == "")
             {
                 // there is exactly one parent table and no Identity.
                 // we need to check that this both exists and is owned by the correct foreign key
-                sb.AppendLine($"var {objectmodel} = {context}.{table}.Include(x => x.{parentitems[0]}).First(y => y.{pkeyfieldname}.Equals({pkeyparameter}) && y.{parentitems[0]}.{parentidfields[0]}.Equals({fkeyparameter}));");
+                sb.AppendLine($"{vartext}{objectmodel} ={awaittext}{context}.{table}.Include(x => x.{parentitems[0]}).{firstmethod}(y => y.{pkeyfieldname}.Equals({pkeyparameter}) && y.{parentitems[0]}.{parentidfields[0]}.Equals({fkeyparameter}));");
             }
             else if(parentitems.Length == 1 && pkeyfieldname != "" && pkeyparameter != "" && fkeyfieldname != "" && fkeyparameter == ukeyparameter && ukeyfieldname == parentidfields[0])
             {
                 // there is exactly one parent table and this uses Identity.
                 // The table must be the AspNetUsers table.
                 // we need to check that this both exists and is owned by the correct foreign key
-                sb.AppendLine($"var {objectmodel} = {context}.{table}.Include(x => x.{parentitems[0]}).First(y => y.{pkeyfieldname}.Equals({pkeyparameter}) && y.{parentitems[0]}.{parentidfields[0]}.Equals({fkeyparameter}));");
+                sb.AppendLine($"{vartext}{objectmodel} ={awaittext}{context}.{table}.Include(x => x.{parentitems[0]}).{firstmethod}(y => y.{pkeyfieldname}.Equals({pkeyparameter}) && y.{parentitems[0]}.{parentidfields[0]}.Equals({fkeyparameter}));");
             }
-            else if(parentitems.Length > 1 && pkeyfieldname != "" && pkeyparameter != "" && ukeyparameter != "" && ukeyfieldname != "")
+            else if(pkeyfieldname != "" && pkeyparameter != "" && ukeyparameter != "" && ukeyfieldname != "")
             {
+                // parentitems.Length > 1 && 
+
                 // this is the main Edit/Details/Delete query where there are grandparents and this uses Identity.
                 // The very top table must be the AspNetUsers table.
                 // we need to check that this both exists and is owned by the correct foreign key
-                sb.AppendLine($"var {objectmodel} = {context}.{table}");
+                sb.AppendLine($"{vartext}{objectmodel} ={awaittext}{context}.{table}");
                 string modelchain = "";
                 for(int i = 0; i < parentitems.Length;i++)
                 {
                     modelchain += parentitems[i] + '.';
                     sb.AppendLine(new string(' ', indent) + $".Include(x => x.{modelchain.TrimEnd('.')})");
                 }
-                sb.AppendLine(new string(' ', indent) + $".First(y => y.{pkeyfieldname}.Equals({pkeyparameter})");
+                sb.AppendLine(new string(' ', indent) + $".{firstmethod}(y => y.{pkeyfieldname}.Equals({pkeyparameter})");
                 if(fkeyfieldname != "" && fkeyparameter != "")
                     sb.AppendLine(new string(' ', indent + indent) + $"&& y.{parentitems[0]}.{parentidfields[0]}.Equals({fkeyparameter})");
                 sb.AppendLine(new string(' ', indent + indent) + $"&& y.{modelchain}{ukeyfieldname}.Equals({ukeyparameter}));");
@@ -1609,10 +1899,10 @@ namespace Seamlex.Utilities
                 // this is the main Create query where we need to check ownership by a parent and possibly ownership in the Identity table.
                 // The very top table must be the AspNetUsers table.
                 // we need to check that this both exists and is owned by the correct foreign key
-                sb.AppendLine($"var {objectmodel} = {context}.{table}");
+                sb.AppendLine($"{vartext}{objectmodel} ={awaittext}{context}.{table}");
                 if(ukeyparameter == "" && ukeyfieldname == "")
                 {
-                    sb.AppendLine(new string(' ', indent) + $".First(y => y.{fkeyfieldname}.Equals({fkeyparameter})");
+                    sb.AppendLine(new string(' ', indent) + $".{firstmethod}(y => y.{fkeyfieldname}.Equals({fkeyparameter})");
                 }
                 else
                 {
@@ -1622,7 +1912,7 @@ namespace Seamlex.Utilities
                         modelchain += parentitems[i] + '.';
                         sb.AppendLine(new string(' ', indent) + $".Include(x => x.{modelchain.TrimEnd('.')})");
                     }
-                    sb.AppendLine(new string(' ', indent) + $".First(y => y.{fkeyfieldname}.Equals({fkeyparameter})");
+                    sb.AppendLine(new string(' ', indent) + $".{firstmethod}(y => y.{fkeyfieldname}.Equals({fkeyparameter})");
                     sb.AppendLine(new string(' ', indent + indent) + $"&& y.{modelchain}{ukeyfieldname}.Equals({ukeyparameter}));");
                 }
             }
@@ -1631,18 +1921,20 @@ namespace Seamlex.Utilities
         }
 
 
-        public string GetSetVmUserIdControllerText(mvvm source, controlleraction action)
+        public string GetSetVmUserIdControllerText(mvvm source, controlleraction action, string objectvm = "")
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
             string useranonname = source.useranonname;
             string useranonval = source.useranonval;
-            string objectmodel = source.objectmodel;
-            string objectvm = source.objectvm;
+            string thisobjectvm = source.objectvm;
+            if(objectvm != "")
+                thisobjectvm = objectvm;
+
 
 // this is very hacky-y in the most recent version of EF and Identity
 //            var username = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Subject!.Name;
 //            vmelection.userid = (_context.Users.First(x => x.UserName.Equals(username ?? ""))!.Id ?? "").ToLower().Replace("-","");
-            sb.AppendLine($"{action.cvname}.{action.cvukey} = \"\";");
+            sb.AppendLine($"{thisobjectvm}.{action.cvukey} = \"\";");
             sb.AppendLine($"System.Security.Claims.Claim claim = this.User.Claims.Where(x => x.Type.Contains(\"nameidentifier\")).FirstOrDefault(new System.Security.Claims.Claim(\"{useranonname}\",\"{useranonval}\"));");
             sb.AppendLine($"if(claim.Type!=\"{useranonname}\")");
             sb.AppendLine("{");
@@ -1655,16 +1947,16 @@ namespace Seamlex.Utilities
                     return "";
                 if(genfield.vftype.ToLower().Contains("string") && genfield.vfsize.Equals(32))
                 {
-                    sb.AppendLine(new string(' ', source.indent) + $"{genfield.vname}.{genfield.vfname} = claim.Value.ToLower().Replace(\"-\",\"\");");
+                    sb.AppendLine(new string(' ', source.indent) + $"{thisobjectvm}.{genfield.vfname} = claim.Value.ToLower().Replace(\"-\",\"\");");
                 }
                 else if(genfield.vftype.ToLower().Contains("guid"))
                 {
-                    sb.AppendLine(new string(' ', source.indent) + $"{genfield.vname}.{genfield.vfname} = new System.Guid(thisclaim.Value);");
+                    sb.AppendLine(new string(' ', source.indent) + $"{thisobjectvm}.{genfield.vfname} = new System.Guid(thisclaim.Value);");
                 }
                 else
                 {
                 // if(genfield.vftype.ToLower().Contains("string") && ( genfield.vfsize.Equals(36) || genfield.vfsize.Equals(0)) )
-                    sb.AppendLine(new string(' ', source.indent) + $"{genfield.vname}.{genfield.vfname} = claim.Value;");
+                    sb.AppendLine(new string(' ', source.indent) + $"{thisobjectvm}.{genfield.vfname} = claim.Value;");
                 }
             }
         
@@ -1683,35 +1975,25 @@ namespace Seamlex.Utilities
         }
 
 
-        public string GetControllerActionParameterText(mvvm source, controlleraction action, string http)
+        public bool ActionHasIdParameter(string actiontype, string http, string modelfkey, string modelparent, string identitytable)
         {
-            // some of the actions will have id fields
-            // this will be either the pkey (edit, details, delete) or fkey (create, index)
-            // 
-            bool hasid = false;
-            bool hasvm = false;
-            string identitytable = source.identitytable;
-
-            string actiontype = action.cacttype.Trim().ToLower();
-            if(actiontype == "")
-                actiontype = "none";
 
             // check for whether this action has an id field
-            if((actiontype == "edit" || actiontype == "details" || actiontype == "delete") && action.cmfkey!="" && action.cmparent!="")
+            if((actiontype == "edit" || actiontype == "details" || actiontype == "delete") && modelfkey != "" && modelparent != "" )
             {
-                hasid = true;
+                return true;
             }
             else if(actiontype == "create")
             {
                 // if the create action has no parent OR the parent is the user table
                 //    then this has no id
-                if(action.cmfkey=="" || action.cmparent=="" || action.cmparent==identitytable )
+                if(modelfkey=="" || modelparent =="" || modelparent == identitytable )
                 {
 
                 }
                 else
                 {
-                    hasid = true;
+                    return true;
                 }
 
             }
@@ -1719,33 +2001,79 @@ namespace Seamlex.Utilities
             {
                 // if the index action has no parent OR the parent is the user table
                 //    then this has no id
-                if(action.cmfkey=="" || action.cmparent=="" || action.cmparent==identitytable )
+                if(modelfkey == "" || modelparent == "" || modelparent == identitytable )
                 {
 
                 }
                 else
                 {
-                    hasid = true;
+                    return true;
                 }
-            }
+            }            
+            return false;
+        }
+        public bool ActionHasVmParameter(string actiontype, string http, string vmname)
+        {
+            actiontype = actiontype.Trim().ToLower();
+            if((actiontype == "edit" || actiontype == "create" || actiontype == "delete" || actiontype == "details") && vmname !="" && http == "POST")
+                return true;            
+            return false;
+        }
+        public bool ActionNeedsVmCreation(string actiontype, string http, string vmname)
+        {
+            actiontype = actiontype.Trim().ToLower();
+            if(vmname =="")
+                return false;
+            if((actiontype == "edit" || actiontype == "create" || actiontype == "delete" || actiontype == "details") && http == "POST")
+                return false;
+            return true;
+        }
+
+        public string GetControllerActionParameterText(mvvm source, controlleraction action, string http)
+        {
+            // some of the actions will have id fields
+            // this will be either the pkey (edit, details, delete) or fkey (create, index)
+            // 
+            bool hasidparameter = false;
+            bool hasvmparameter = false;
+
+            string idpropname = source.cactionparameter;
+            string actiontype = action.cacttype.Trim().ToLower();
+            string vmname = action.cvname;
+            string identitytable = source.identitytable;
+            string identitytableid = source.identitytableid;
+            string useranonname = source.useranonname;
+            string useranonval = source.useranonval;
+            string objectmodel = source.objectmodel;
+            string objectvm = source.objectvm;
+            string modelparent = action.cmparent;
+            string modelparentpkey = action.cmparkey;
+            string modelfkey = action.cmfkey;
+
+
+            if(actiontype == "")
+                actiontype = "none";
+
+            hasidparameter = this.ActionHasIdParameter(actiontype, http, modelfkey, modelparent, identitytable);
+            hasvmparameter = this.ActionHasVmParameter(actiontype, http, vmname);
+
 
             // check whether there is a vm
             // note that this is only for POST methods
-            if((actiontype == "edit" || actiontype == "create") && action.cvname !="" && http == "POST")
-                hasvm = true;
+
 
             // if there is an id, this is first
             string idtext = "";
             string bindtext = "";
-            if(hasid)
-                idtext = "string id";
+            if(hasidparameter)
+                idtext = "string " + idpropname;
 
-            if(hasvm)
+            if(hasvmparameter)
             {
-                string bindfields = string.Join(",", (from vfield in source.genfields where vfield.vname == action.cvname select vfield.vfname).ToList());
+                string bindfields = string.Join(",", (from vfield in source.genfields where vfield.vname == vmname select vfield.vfname).ToList());
                 if(bindfields != "")
                 {
-                    bindtext = $"[Bind(\"{bindfields}\")] {action.cvname} {action.cvname}";
+                    bindtext = $"[Bind(\"{bindfields}\")] {vmname} {vmname}";
                 }
             }
             if(bindtext != "" && idtext != "")
@@ -1905,7 +2233,9 @@ namespace Seamlex.Utilities
                                 objectvm + "." + vmfkey,
                                 identitytableid,
                                 objectvm + "." + vmukey,
-                                indent)
+                                indent,
+                                objectmodel,
+                                noasync)
                             ,nsindent+indent+indent+asyncindent));
 
                     sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
@@ -1920,7 +2250,7 @@ namespace Seamlex.Utilities
                         sb.Append(this.IndentText( "return false;",nsindent+indent+indent+indent+asyncindent));
                         sb.Append(this.IndentText( "}",nsindent+indent+indent+asyncindent));
                     }
-                    sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "vm","",objectvm),nsindent+indent+indent+asyncindent));
+                    sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "vm","",objectvm,vmpkey + ',' + vmfkey + ',' + vmukey),nsindent+indent+indent+asyncindent));
 
             // string table,
             // string context = "", 
@@ -1974,7 +2304,9 @@ namespace Seamlex.Utilities
                                     objectvm + "." + vmfkey,
                                     identitytableid,
                                     objectvm + "." + vmukey,
-                                    indent)
+                                    indent,
+                                    objectmodel,
+                                    noasync)
                                 ,nsindent+indent+indent+asyncindent));
                         sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
 
@@ -1993,7 +2325,7 @@ namespace Seamlex.Utilities
                         if(facadetype == "update" )
                         {
                             // map the update fields here
-                            sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "model","",objectvm),nsindent+indent+indent+asyncindent));
+                            sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "model","",objectvm,modelpkey+','+modelfkey),nsindent+indent+indent+asyncindent));
                             sb.Append(this.IndentText(dbpropname + ".Update(" + modelname + ");",nsindent+indent+indent+asyncindent));
                         }
                         else
@@ -2063,7 +2395,9 @@ namespace Seamlex.Utilities
                                         "",
                                         "",
                                         "",
-                                        indent)
+                                        indent,
+                                        objectmodel,
+                                        noasync)
                                     ,nsindent+indent+indent+asyncindent));
                             sb.Append(this.IndentText($"if({modelname} != null)",nsindent+indent+indent+asyncindent));
                             if(vmmsg == "")
@@ -2095,7 +2429,9 @@ namespace Seamlex.Utilities
                                         objectvm + "." + vmfkey,
                                         "",
                                         "",
-                                        indent)
+                                        indent,
+                                        objectmodel,
+                                        noasync)
                                     ,nsindent+indent+indent+asyncindent));
                             sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
                             if(vmmsg == "")
@@ -2127,7 +2463,9 @@ namespace Seamlex.Utilities
                                         objectvm + "."+ vmfkey,
                                         identitytableid,
                                         objectvm + "."+ vmukey,
-                                        indent)
+                                        indent,
+                                        objectmodel,
+                                        noasync)
                                     ,nsindent+indent+indent+asyncindent));
                             sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
                             if(vmmsg == "")
@@ -2144,7 +2482,7 @@ namespace Seamlex.Utilities
                         }
 
                         // map the create fields here
-                        sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "model","",objectvm),nsindent+indent+indent+asyncindent));
+                        sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "model","",objectvm,modelpkey+','+modelfkey),nsindent+indent+indent+asyncindent));
 
 
                         // try to save the newly-created record
@@ -2254,16 +2592,24 @@ namespace Seamlex.Utilities
             return longtype;
         } 
 
-        public string GetModelToVmMappingText(mvvm source, string modelname, string vmname, string lhs = "model", string modelobject = "", string vmobject = "")
+        public string GetModelToVmMappingText(mvvm source, string modelname, string vmname, string lhs = "model", string modelobject = "", string vmobject = "", string skipfields = "")
         {
             // ignore indents (these can be fixed later)
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
             if(lhs == "")
                 lhs = "vm";
+            skipfields = skipfields.TrimStart(',').TrimEnd(',');
+            if(skipfields != "")
+                skipfields = ','+skipfields+',';
 
             // fields that have a one-to-one mapping are listed here
             foreach(var genfield in source.genfields.Where(x => x.mname.Equals(modelname) && x.vname.Equals(vmname) && x.mfname != "" && x.vfname!= ""))
             {
+                // bool skippkey = false, bool skipfkey = false, bool skipukey = false
+                if( (lhs == "model" && skipfields.Contains(','+genfield.mfname.Trim()+',') || 
+                    (lhs == "vm" && skipfields.Contains(','+genfield.vfname.Trim()+','))) )
+                    continue;
+
                 string mtype = genfield.mftype.ToLower().Trim();
                 string vtype = genfield.vftype.ToLower().Trim();
                 if(mtype=="")
@@ -2295,6 +2641,8 @@ namespace Seamlex.Utilities
                     lhsfname = genfield.vfname;
                     rhsfname = genfield.mfname;
                 }
+
+                //WrapProperty
 
                 if(lhstype.Contains("string") && rhstype.Contains("string"))
                 {
@@ -2340,9 +2688,13 @@ namespace Seamlex.Utilities
                 {
                     sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname} ?? System.Guid.NewGuid();");
                 }
-                else if(lhstype.Contains("date") && rhstype.Contains("date"))
+                else if(lhstype.Contains("date") && ( rhstype.Contains("date?") || rhstype.Contains("datetime?") ) )
                 {
                     sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname} ?? System.DateTime.Now;");
+                }
+                else if(lhstype.Contains("date") && rhstype.Contains("date"))
+                {
+                    sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname};");
                 }
 
             }
@@ -2357,16 +2709,23 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
             return sb.ToString();
         }
 
-        public string GetModelVmDefaultValueText(mvvm source, string name, string lhs = "model", string modelobject = "", string vmobject = "")
+        public string GetModelVmDefaultValueText(mvvm source, string name, string lhs = "model", string modelobject = "", string vmobject = "", string skipfields = "")
         {
             // ignore indents (these can be fixed later)
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
             if(lhs == "")
                 lhs = "vm";
+            skipfields = skipfields.TrimStart(',').TrimEnd(',');
+            if(skipfields != "")
+                skipfields = ','+skipfields+',';
 
             // fields that have a one-to-one mapping are listed here
             foreach(var genfield in source.genfields.Where(x => (lhs == "model" && x.mname.Equals(name) && x.mfname != "") || (lhs == "vm" && x.vname.Equals(name) && x.vfname != "") ))
             {
+                if( (lhs == "model" && skipfields.Contains(','+genfield.mfname.Trim()+',') || 
+                    (lhs == "vm" && skipfields.Contains(','+genfield.vfname.Trim()+','))) )
+                    continue;
+
                 string lhstype = genfield.mftype.ToLower().Trim();
                 if(lhs == "model")
                     lhstype = genfield.vftype.ToLower().Trim();
@@ -2434,6 +2793,30 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
             }
             return sb.ToString();
         }
+
+        public string WrapProperty(string property, string rhstype, string lhstype = "string", int rhssize = 0, int lhssize = 0)
+        {
+            rhstype = rhstype.ToLower().Trim();
+            lhstype = lhstype.ToLower().Trim();
+            if(rhstype == "")
+                rhstype = "string";
+            if(lhstype == "")
+                lhstype = "string";
+            
+            if(lhstype == "string" && lhssize == 32 && rhstype == "guid")
+                return property+".ToString().ToLower().Replace(\"-\",\"\")";
+            if(lhstype == "guid" && ( rhssize == 32 || rhssize == 36 ) && rhstype == "string")
+                return "Guid.Parse("+property+")";
+            if(lhstype == "string" && ( lhssize == 32 && ( rhssize == 32 || rhssize == 36 ) ) && rhstype == "string")
+                return "Guid.Parse("+property+").ToString().ToLower().Replace(\"-\",\"\")";
+            if(lhstype == "string" && rhstype.Contains("date"))
+                return property+".ToString(\"yyyy-MM-dd\")";
+            if(lhstype == "string" && rhstype != "string")
+                return property+".ToString()";
+
+            return property;
+        }
+
 
         public string IndentText(string text, int indent)
         {
@@ -2686,6 +3069,18 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
 
 #region parameter-helper-classes
 
+
+    public class frmbutton
+    {
+        public string btnname = "";
+        public string btntext = "";
+        public string btntype = "";
+        public string btnclass = "";
+        public string btndclass = "";
+        public string btniclass = "";
+        public string btnonclick = "";
+    }
+
     public class commafield
     {
         public string singlename = "";
@@ -2696,7 +3091,6 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
         public bool isctrlaction = false;
         public bool ismvvmfield = false;
         public bool isunique = false;
-
     }
 
     public class mvvmfield
@@ -2802,6 +3196,16 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
         public string vuserkey {get;set;} = "";  // Specifies the userid field in the ViewModel.
         public string vmessage {get;set;} = "";  // Specifies a field in the ViewModel to relay messages.
 
+
+        public string wbtnname {get;set;} = "";  // Colon-separated list of button names on the form.
+        public string wbtntype {get;set;} = "";  // Colon-separated list of button types on the form.
+        public string wbtntext {get;set;} = "";  // Colon-separated list of form button text.
+        public string wbtnclass {get;set;} = "";  // Colon-separated list of form button CSS classes.
+        public string wbtndclass {get;set;} = "";  // Colon-separated list of div classes to wrap the form button.
+        public string wbtniclass {get;set;} = "";  // Colon-separated list of form button embedded <i> tags.
+        public string wbtnonclick {get;set;} = "";  // Colon-separated list of JS code for form buttons.
+
+
         public string wsubmit {get;set;} = "";  // Type of Submit object on the form.
         public string wsubaction {get;set;} = "";  // Specifies the Submit action.
         public string wsubdclass {get;set;} = "";  // Colon-delimited CSS classes for the Submit object.
@@ -2810,9 +3214,18 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
         public string wretaction {get;set;} = "";  // Specifies the Return action.
         public string wretdclass {get;set;} = "";  // Colon-delimited CSS classes for the Return object.
         public string wreticlass {get;set;} = "";  // CSS class for an embedded <i> tag for the Return object.
-        public string wfrmaction {get;set;} = "";  // Specifies the Form action.
+
+        public string wscrlist {get;set;} = "";  // Colon-delimited list of .js files linked on this view
+        public string wscrsection {get;set;} = "";  // name of the @section for scripts called in this view
+
+
+
+        public string wfrmaction {get;set;} = "";  // Specifies the Form action (target URI).
+        public string wfrmmethod {get;set;} = "";  // Specifies the Form method (GET/POST).
         public string wfrmclass {get;set;} = "";  // Colon-delimited CSS classes wrapping the Form object.
         public string wfrmsub {get;set;} = "";  // Colon-delimited CSS classes wrapping all objects inside the Form object.
+        public string wfrmbtncss {get;set;} = "";  // Specifies CSS class to wrap all Form buttons.
+
         public string wpageclass {get;set;} = "";  // Specifies the CSS class wrapping the Info and Form sections.
         public string winfoclass {get;set;} = "";  // Colon-delimited CSS classes wrapping the Info section above form fields.
         public string winfohclass {get;set;} = "";  // CSS class of the heading in the Info section.
@@ -2865,6 +3278,7 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
         public string useranonval {get;set;} = "00000000-0000-0000-0000-000000000000";  // ID when not logged-in
         public string objectmodel {get;set;} = "Item";  // variable name for a Model retrieved in the Facade/Controller
         public string objectvm {get;set;} = "vm";  // variable name for vm in Facade/Controller.  NOTE: the ACTUAL PARAMETER NAME in a Controller MUST MAKE THE NAME IN THE VIEW IN MVC!
+        public string cactionparameter {get;set;} = "id";  // variable name for vm in Facade/Controller.  NOTE: the ACTUAL PARAMETER NAME in a Controller MUST MAKE THE NAME IN THE VIEW IN MVC!
 
 
 

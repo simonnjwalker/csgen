@@ -24,6 +24,213 @@ namespace Seamlex.Utilities
             bool testvm = false;
 
 
+            if(testview)
+            {
+                string output = @"c:\SNJW\code\xp\Areas\Election\Views\Create.cshtml";
+                cg.parameters.Clear();
+                cg.parameters.Add("view");
+                cg.parameters.Add("--wname");
+                cg.parameters.Add("Election List");
+                cg.parameters.Add("--vname");
+                cg.parameters.Add("election");
+                cg.parameters.Add("--vnamespace");
+                cg.parameters.Add("Seamlex.MyEdApps");
+                cg.parameters.Add("--output");
+                cg.parameters.Add(output);
+                // cg.parameters.Add("--source");
+                // cg.parameters.Add("c:\\temp\\sourcefile.csv");
+                cg.parameters.Add("--vfnames");
+                cg.parameters.Add("id,userid,code,name,desc,start,message");
+                cg.parameters.Add("--vftypes");
+                cg.parameters.Add("string,string,string,string,string,DateTime,string");
+                cg.parameters.Add("--vfsizes");
+                cg.parameters.Add("32,32,10,0,0,0,100");
+                cg.parameters.Add("--vfdescs");
+                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
+                cg.parameters.Add("--vfcaps");
+                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
+                cg.parameters.Add("--vpkey");
+                cg.parameters.Add("id");
+                cg.parameters.Add("--vuserkey");
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--vmessage");
+                cg.parameters.Add("message");
+
+                cg.parameters.Add("--wftypes");
+                cg.parameters.Add("hidden,hidden,text,text,textarea,date,hidden");
+
+                cg.parameters.Add("--wfdclasses");
+                cg.parameters.Add("col-md-6:single-input,col-md-6:single-input,col-md-6:single-input,col-md-6:single-input,col-md-12:single-input,col-md-6:single-input,col-md-6:single-input");
+                cg.parameters.Add("--wficlasses");
+                cg.parameters.Add(",,lni lni-user,lni lni-phone,lni lni-format,lni lni-comments-alt,lni lni-envelope");
+                cg.parameters.Add("--wfclasses");
+                cg.parameters.Add("form-input,form-input,form-input,form-input,form-input,form-input,form-input");
+
+
+                // cg.parameters.Add("--vfkey");
+                // cg.parameters.Add("parentid");
+                // cg.parameters.Add("--vftable");
+                // cg.parameters.Add("parenttable");
+                //cg.parameters.Add("--help");
+
+
+//c:\SNJW\code\xp>c:\SNJW\code\shared\csgen.exe view --wname "Create Model" --waction "Create" --source "C:\SNJW\code\scriptloader\scriptloader-small.csv" --output outputfile --vname "model" --vfnames "id,code,name,desc,message" --vftypes "string" --vpkey "id" --vfkey "userid" --vftable "AspNetUsers" --vuserkey "userid" --vmessage "message" --wsubmit "Submit" --wsubaction "Create" --wreturn "Index" --wfrmaction "Submit" --winfohead "Create a new Model" --winfotext "Enter the new model details below and click 'Create'" --wlayfiles "_MainHeadPartial.cshtml:_MainStylesPartial.cshtml:_MainPreloadPartial.cshtml:_MainHeaderPartial.cshtml:_MainClientPartial.cshtml:_MainFooterPartial.cshtml:_MainScriptsPartial.cshtml" --wlaynames "Head:Styles:Preload:Header:Client:Footer:Scripts" --wlayout "Layout" --wfdclasses "col-md-6:single-input" --wficlasses ",,lni lni-user,lni lni-phone,lni lni-format,lni lni-comments-alt,lni lni-envelope" --wfclasses "form-input" --fillempty
+
+                cg.parameters.Add("--wsubmit");
+                cg.parameters.Add("button");
+                cg.parameters.Add("--wsubaction");
+                cg.parameters.Add("post");
+                cg.parameters.Add("--wsubdclass");
+                cg.parameters.Add("col-md-12:form-button");
+                cg.parameters.Add("--wsubiclass");
+                cg.parameters.Add("lni lni-telegram-original");
+
+                cg.parameters.Add("--wreturn");
+                cg.parameters.Add("a");
+                cg.parameters.Add("--wretaction");
+                cg.parameters.Add("link");
+                cg.parameters.Add("--wretdclass");
+                cg.parameters.Add("col-md-12:form-button");
+                cg.parameters.Add("--wreticlass");
+                cg.parameters.Add("lni lni-telegram-original");
+
+                cg.parameters.Add("--wfrmaction");
+                cg.parameters.Add("ed/Election/Create");
+                cg.parameters.Add("--wfrmmethod");
+                cg.parameters.Add("POST");
+                cg.parameters.Add("--wfrmclass");
+                cg.parameters.Add("row:col-lg-8:contact-form-wrapper");
+                cg.parameters.Add("--wfrmsub");
+                cg.parameters.Add("row");
+
+
+                cg.parameters.Add("--wfrmbtncss");
+                cg.parameters.Add("col-md-12 text-center");
+                cg.parameters.Add("--wbtnname");
+                cg.parameters.Add("submit:reset:back");
+                cg.parameters.Add("--wbtntype");
+                cg.parameters.Add("submit:reset:default");
+                // cg.parameters.Add("--wbtntext");
+                // cg.parameters.Add("Save:Clear Form:Go Back");
+
+//<div class="col-md-12 text-center">
+
+                cg.parameters.Add("--wbtnclass");
+                cg.parameters.Add("btn btn-primary btn-lg:btn btn-primary btn-lg:btn btn-primary btn-lg");
+                // cg.parameters.Add("--wbtndclass");
+                // cg.parameters.Add("btn btn-primary btn-lg:btn btn-primary btn-lg:btn btn-primary btn-lg");
+                cg.parameters.Add("--wbtniclass");
+                cg.parameters.Add("lni lni-save:lni lni-eraser:lni lni-exit-up");
+                cg.parameters.Add("--wbtnonclick");
+                cg.parameters.Add("::alert('This button does nothing.')");
+
+                cg.parameters.Add("--wscrlist");
+                cg.parameters.Add("/assets/js/bootstrap.min.js:/assets/js/tiny-slider.js:/assets/js/contact-form.js:/assets/js/wow.min.js:/assets/js/_layout.js:/assets/js/_forms.js");
+                cg.parameters.Add("--wscrsection");
+                cg.parameters.Add("Scripts");
+
+
+                cg.parameters.Add("--wpageclass");
+                cg.parameters.Add("container");
+                cg.parameters.Add("--winfoclass");
+                cg.parameters.Add("row justify-content-center:col-xxl-5 col-xl-5 col-lg-7 col-md-10:section-title text-center mb-50");
+                cg.parameters.Add("--winfohclass");
+                cg.parameters.Add("mb-15");
+                cg.parameters.Add("--winfohead");
+                cg.parameters.Add("Manage Elections");
+                cg.parameters.Add("--winfotext");
+                cg.parameters.Add("Below is a list of all elections that you manage");
+
+                cg.parameters.Add("--wlayfiles");
+                cg.parameters.Add("_MainHeadPartial.cshtml:_MainStylesPartial.cshtml:_MainPreloadPartial.cshtml:_MainHeaderPartial.cshtml:_MainClientPartial.cshtml:_MainFooterPartial.cshtml:_MainScriptsPartial.cshtml");
+                cg.parameters.Add("--wlaynames");
+                cg.parameters.Add("Head:Styles:Preload:Header:Client:Footer:Scripts");
+                cg.parameters.Add("--wlayout");
+                cg.parameters.Add("_Layout");
+
+                cg.parameters.Add("--waction");
+                cg.parameters.Add("create");
+
+                cg.Run();
+                System.Diagnostics.Process.Start("notepad.exe",output);
+                return;   
+            }
+
+            if(testcontroller)
+            {
+
+                string output = @"c:\SNJW\code\xp\Areas\Election\Controllers\ElectionController.cs";
+
+                cg.parameters.Clear();
+                cg.parameters.Add("controller");
+                cg.parameters.Add("--cname");
+                cg.parameters.Add("ElectionController");
+                cg.parameters.Add("--cnamespace");
+                cg.parameters.Add("Seamlex.MyEdApps");
+                cg.parameters.Add("--cparent");
+                cg.parameters.Add("Controller");
+                cg.parameters.Add("--cdcontext");
+                cg.parameters.Add("xp.Data.ApplicationDbContext");
+                cg.parameters.Add("--careaname");
+                cg.parameters.Add("Election");
+
+                cg.parameters.Add("--cnobinding");
+
+                cg.parameters.Add("--source");
+                cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-election.csv");
+
+                cg.parameters.Add("--output");
+                cg.parameters.Add(output);
+
+                cg.parameters.Add("--cacthttps");
+                cg.parameters.Add("GET/POST:GET:GET/POST:GET/POST:GET");
+                cg.parameters.Add("--cactnames");
+                cg.parameters.Add("Create:Index:Edit:Delete:Details");
+                cg.parameters.Add("--cacttypes");
+                cg.parameters.Add("Create:Index:Edit:Delete:Details");
+
+
+                cg.parameters.Add("--vname");  //  Colon-delimited ViewModel names
+                cg.parameters.Add("election");
+
+                cg.parameters.Add("--cvnames");  //  Colon-delimited ViewModel names
+                cg.parameters.Add("election");
+                cg.parameters.Add("--cmnames");  // Colon-delimited Model names
+                cg.parameters.Add("Election");
+                cg.parameters.Add("--cwnames");  // Colon-delimited View names
+                cg.parameters.Add("Create Election");
+                cg.parameters.Add("--cvpkeys");  // Colon-delimited ViewModel primary key fields
+                cg.parameters.Add("id");
+                cg.parameters.Add("--cvfkeys");  // Colon-delimited ViewModel foreign key fields
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--cmpkeys");  // Colon-delimited Model primary key fields
+                cg.parameters.Add("ElectionId");
+                
+                cg.parameters.Add("--cmfkeys");  // Colon-delimited Model foreign key fields
+                cg.parameters.Add("ElectionAgentId");
+                cg.parameters.Add("--cmparkeys");  // Colon-delimited Model foreign key fields
+                cg.parameters.Add("Id");
+                cg.parameters.Add("--cmparents");  // Colon-delimited Model parent table names
+                cg.parameters.Add("User");
+                cg.parameters.Add("--cvukeys");  // Colon-delimited action ViewModel user key fields
+                cg.parameters.Add("userid");
+                cg.parameters.Add("--cvmsgs");  // Colon-delimited action ViewModel message fields
+                cg.parameters.Add("message");
+
+                cg.parameters.Add("--cfnames");  // Colon-delimited Facade names
+                cg.parameters.Add("enfacade");
+
+                cg.parameters.Add("--fillempty");
+
+                cg.parameters.Add("--cnofacade");
+
+
+                cg.Run();
+                System.Diagnostics.Process.Start("notepad.exe",output);
+                return;                
+            }
+
+
             if(testfparameters)
             {
 
@@ -312,108 +519,6 @@ c:\SNJW\code\shared\csgen.exe view --wname "Create Model" --sourcefile xoload-sm
 
 */
 
-            if(testcontroller)
-            {
-
-                string output = @"c:\SNJW\code\xp\Areas\Election\Controllers\ElectionController.cs";
-
-                cg.parameters.Clear();
-                cg.parameters.Add("controller");
-                cg.parameters.Add("--cname");
-                cg.parameters.Add("ElectionController");
-                cg.parameters.Add("--cnamespace");
-                cg.parameters.Add("Seamlex.MyEdApps");
-                cg.parameters.Add("--cparent");
-                cg.parameters.Add("Controller");
-                cg.parameters.Add("--cdcontext");
-                cg.parameters.Add("xp.Data.ApplicationDbContext");
-                cg.parameters.Add("--careaname");
-                cg.parameters.Add("Election");
-
-                cg.parameters.Add("--cnobinding");
-
-                cg.parameters.Add("--source");
-                cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-election.csv");
-
-                cg.parameters.Add("--output");
-                cg.parameters.Add(output);
-
-                cg.parameters.Add("--cacthttps");
-                cg.parameters.Add("GET/POST:GET:GET/POST:GET/POST:GET");
-                cg.parameters.Add("--cactnames");
-                cg.parameters.Add("Create:Index:Edit:Delete:Details");
-                cg.parameters.Add("--cacttypes");
-                cg.parameters.Add("Create:Index:Edit:Delete:Details");
-
-
-                cg.parameters.Add("--vname");  //  Colon-delimited ViewModel names
-                cg.parameters.Add("election");
-
-                cg.parameters.Add("--cvnames");  //  Colon-delimited ViewModel names
-                cg.parameters.Add("election");
-                cg.parameters.Add("--cmnames");  // Colon-delimited Model names
-                cg.parameters.Add("Election");
-                cg.parameters.Add("--cwnames");  // Colon-delimited View names
-                cg.parameters.Add("Create Election");
-                cg.parameters.Add("--cvpkeys");  // Colon-delimited ViewModel primary key fields
-                cg.parameters.Add("id");
-                cg.parameters.Add("--cvfkeys");  // Colon-delimited ViewModel foreign key fields
-                cg.parameters.Add("userid");
-                cg.parameters.Add("--cmpkeys");  // Colon-delimited Model primary key fields
-                cg.parameters.Add("Id");
-                cg.parameters.Add("--cmfkeys");  // Colon-delimited Model foreign key fields
-                cg.parameters.Add("ElectionUserId");
-                cg.parameters.Add("--cmparents");  // Colon-delimited Model parent table names
-                cg.parameters.Add("User");
-                cg.parameters.Add("--cvukeys");  // Colon-delimited action ViewModel user key fields
-                cg.parameters.Add("userid");
-                cg.parameters.Add("--cvmsgs");  // Colon-delimited action ViewModel message fields
-                cg.parameters.Add("message");
-
-                cg.parameters.Add("--cfnames");  // Colon-delimited Facade names
-                cg.parameters.Add("enfacade");
-
-                cg.parameters.Add("--fillempty");
-
-//                cg.parameters.Add("--cnofacade");
-
-/*
-
-                // cg.parameters.Add("--source");
-                // cg.parameters.Add("c:\\temp\\sourcefile.csv");
-                cg.parameters.Add("--vfnames");
-                cg.parameters.Add("id,userid,code,name,desc,start,message");
-                cg.parameters.Add("--vftypes");
-                cg.parameters.Add("string,string,string,string,string,DateTime,string");
-                cg.parameters.Add("--vfsizes");
-                cg.parameters.Add("32,32,10,0,0,0,100");
-                cg.parameters.Add("--vfdescs");
-                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
-                cg.parameters.Add("--vfcaps");
-                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
-                cg.parameters.Add("--vpkey");
-                cg.parameters.Add("id");
-                cg.parameters.Add("--vuserkey");
-                cg.parameters.Add("userid");
-                cg.parameters.Add("--vmessage");
-                cg.parameters.Add("message");
-
-                cg.parameters.Add("--mfnames");
-                cg.parameters.Add("Id,foreigntableId,Code,Name,Desc,Start,Message");
-                cg.parameters.Add("--mftypes");
-                cg.parameters.Add("Guid,Guid,string,string,string,DateTime,string");
-                // cg.parameters.Add("--mfsizes");
-                // cg.parameters.Add("0,0,10,0,0,0,100");
-                // cg.parameters.Add("--mfsizes");
-                // cg.parameters.Add("string,string,string,string,string,DateTime,string");
-
-                */
-
-                cg.Run();
-                System.Diagnostics.Process.Start("notepad.exe",output);
-                return;                
-            }
-
 
 /*
 
@@ -447,105 +552,8 @@ namespace lm.Controllers
         {
 
 */
-            if(testview)
-            {
-                cg.parameters.Clear();
-                cg.parameters.Add("view");
-                cg.parameters.Add("--wname");
-                cg.parameters.Add("Election List");
-                cg.parameters.Add("--vname");
-                cg.parameters.Add("election");
-                cg.parameters.Add("--vnamespace");
-                cg.parameters.Add("Seamlex.MyEdApps");
-                cg.parameters.Add("--output");
-                cg.parameters.Add("c:\\temp\\list.cshtml");
-                // cg.parameters.Add("--source");
-                // cg.parameters.Add("c:\\temp\\sourcefile.csv");
-                cg.parameters.Add("--vfnames");
-                cg.parameters.Add("id,userid,code,name,desc,start,message");
-                cg.parameters.Add("--vftypes");
-                cg.parameters.Add("string,string,string,string,string,DateTime,string");
-                cg.parameters.Add("--vfsizes");
-                cg.parameters.Add("32,32,10,0,0,0,100");
-                cg.parameters.Add("--vfdescs");
-                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
-                cg.parameters.Add("--vfcaps");
-                cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
-                cg.parameters.Add("--vpkey");
-                cg.parameters.Add("id");
-                cg.parameters.Add("--vuserkey");
-                cg.parameters.Add("userid");
-                cg.parameters.Add("--vmessage");
-                cg.parameters.Add("message");
-
-                cg.parameters.Add("--wftypes");
-                cg.parameters.Add("hidden,hidden,text,text,textarea,date,hidden");
-
-                cg.parameters.Add("--wfdclasses");
-                cg.parameters.Add("col-md-6:single-input,col-md-6:single-input,col-md-6:single-input,col-md-6:single-input,col-md-12:single-input,col-md-6:single-input,col-md-6:single-input");
-                cg.parameters.Add("--wficlasses");
-                cg.parameters.Add(",,lni lni-user,lni lni-phone,lni lni-format,lni lni-comments-alt,lni lni-envelope");
-                cg.parameters.Add("--wfclasses");
-                cg.parameters.Add("form-input,form-input,form-input,form-input,form-input,form-input,form-input");
 
 
-                // cg.parameters.Add("--vfkey");
-                // cg.parameters.Add("parentid");
-                // cg.parameters.Add("--vftable");
-                // cg.parameters.Add("parenttable");
-                //cg.parameters.Add("--help");
-
-                cg.parameters.Add("--wsubmit");
-                cg.parameters.Add("button");
-                cg.parameters.Add("--wsubaction");
-                cg.parameters.Add("post");
-                cg.parameters.Add("--wsubdclass");
-                cg.parameters.Add("col-md-12:form-button");
-                cg.parameters.Add("--wsubiclass");
-                cg.parameters.Add("lni lni-telegram-original");
-
-                cg.parameters.Add("--wreturn");
-                cg.parameters.Add("a");
-                cg.parameters.Add("--wretaction");
-                cg.parameters.Add("link");
-                cg.parameters.Add("--wretdclass");
-                cg.parameters.Add("col-md-12:form-button");
-                cg.parameters.Add("--wreticlass");
-                cg.parameters.Add("lni lni-telegram-original");
-
-                cg.parameters.Add("--wfrmaction");
-                cg.parameters.Add("Create");
-                cg.parameters.Add("--wfrmclass");
-                cg.parameters.Add("row:col-lg-8:contact-form-wrapper");
-                cg.parameters.Add("--wfrmsub");
-                cg.parameters.Add("row");
-
-
-                cg.parameters.Add("--wpageclass");
-                cg.parameters.Add("container");
-                cg.parameters.Add("--winfoclass");
-                cg.parameters.Add("row justify-content-center:col-xxl-5 col-xl-5 col-lg-7 col-md-10:section-title text-center mb-50");
-                cg.parameters.Add("--winfohclass");
-                cg.parameters.Add("mb-15");
-                cg.parameters.Add("--winfohead");
-                cg.parameters.Add("Manage Elections");
-                cg.parameters.Add("--winfotext");
-                cg.parameters.Add("Below is a list of all elections that you manage");
-
-                cg.parameters.Add("--wlayfiles");
-                cg.parameters.Add("_MainHeadPartial.cshtml:_MainStylesPartial.cshtml:_MainPreloadPartial.cshtml:_MainHeaderPartial.cshtml:_MainClientPartial.cshtml:_MainFooterPartial.cshtml:_MainScriptsPartial.cshtml");
-                cg.parameters.Add("--wlaynames");
-                cg.parameters.Add("Head:Styles:Preload:Header:Client:Footer:Scripts");
-                cg.parameters.Add("--wlayout");
-                cg.parameters.Add("_Main");
-
-                cg.parameters.Add("--waction");
-                cg.parameters.Add("create");
-
-                cg.Run();
-                System.Diagnostics.Process.Start("notepad.exe","c:\\temp\\list.cshtml");
-                return;   
-            }
 
             if(testmodel)
             {
