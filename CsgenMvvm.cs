@@ -931,17 +931,25 @@ namespace Seamlex.Utilities
             }
             if(source.wlayout != "")
                 sb.AppendLine("@{Layout = \"" + source.wlayout +"\";}");
-            if(source.wpageclass != "")
-                sb.AppendLine($"<div class=\"{source.wpageclass}\">");
+            int endpagediv = 0;
+            string[] pageclasses = source.wpageclass.Split(':',StringSplitOptions.None);
+            for (int i = 0; i < pageclasses.Length; i++)
+            {
+                if(pageclasses[i].Trim() != "")
+                {
+                    endpagediv++;
+                    sb.AppendLine($"<div class=\"{pageclasses[i]}\">");
+                }
+            }
 
 
-            int enddiv = 0;
+            int endinfodiv = 0;
             string[] infoclasses = source.winfoclass.Split(':',StringSplitOptions.None);
             for (int i = 0; i < infoclasses.Length; i++)
             {
                 if(infoclasses[i].Trim() != "")
                 {
-                    enddiv++;
+                    endinfodiv++;
                     sb.AppendLine($"<div class=\"{infoclasses[i]}\">");
                 }
             }
@@ -949,16 +957,14 @@ namespace Seamlex.Utilities
                 sb.AppendLine($"<h3 class=\"{source.winfohclass}\">{source.winfohead}</h3>");
             if(source.winfotext != "")
                 sb.AppendLine($"<p>{source.winfotext}</p>");
-            for (int i = 0; i < enddiv; i++)
+            for (int i = 0; i < endinfodiv; i++)
                 sb.AppendLine($"</div>");
 
             sb.AppendLine(formtext);
 
 
-
-            if(source.wpageclass != "")
+            for (int i = 0; i < endpagediv; i++)
                 sb.AppendLine("</div>");
-
 
             // 2022-10-26 SNJW add scripts here that are called
             // note that if no class name for section is included, add them manually
@@ -1099,6 +1105,9 @@ namespace Seamlex.Utilities
                     classindent));
                 sb.AppendLine();
             }
+
+            // need to put children here also
+            //     public ICollection<Ballot> Ballots { get; set; }  
 
             return sb.ToString();
         }
@@ -1325,32 +1334,87 @@ namespace Seamlex.Utilities
                 nsindent = indent;
 
             bool noidentity = source.cnouser;
+            bool noanonymous = source.cnoanon;
+            bool noanonmanage = source.cnoanonmg;
+            bool nohelper = source.cnohelper;
             bool nofacade = source.cnofacade;
             bool nodbsave = source.cnodbsave;
             bool noasync = source.cnoasync;
+            string commentanoncheck = "// ";
+            string commentmodelstatecheck = "// ";
+
             string controllername = "";
             string dbpropname = source.cdpropname.Trim();
             if(dbpropname=="")
                 dbpropname = "db";
             string idpropname = source.cactionparameter;
+
+            // SNJW assume these defaults - go back and allow for others at a later stage
+            string useridpropname = "UserId";
+            // string useriddbtype = "String";
+            // int useriddblength = 36;
+            string parentidpropname = "ParentId";
+            // string parentiddbtype = "Guid";
+            // int parentiddblength = 36;
+            string objectidpropname = "ItemId";
+            // string vmparentiddbtype = "String";
+            // int vmparentiddblength = 32;
+            // string vmuseriddbtype = "String";
+            // int vmuseriddblength = 32;
+            
             string routename = "";
             string actionname = "Index";
-            string actiontype= action.cacttype;
+            string actiontype= this.ToProper(action.cacttype.Trim());
             string actionhttp = "GET";
             string vmname = action.cvname;
             string modelname = action.cmname;
+            string modelpkeyname = action.cmpkey;
             string identitytable = source.identitytable;
             string identitytableid = source.identitytableid;
             string useranonname = source.useranonname;
             string useranonval = source.useranonval;
             string objectmodel = source.objectmodel;
+            string objectparentmodel = "Parent";
             string objectvm = source.objectvm;
             string objectvmuserid = source.objectvm + '.' + action.cvukey;
             string objectvmpkey = source.objectvm + '.' + action.cvpkey;
             string objectvmfkey = source.objectvm + '.' + action.cvfkey;
             string parentmodel = action.cmparent;
             string parentpkey = action.cmparkey;
-            string foreignkey = action.cmfkey;
+
+
+            // SNJW note: for many-to-many relationships, this must be reworked with additional code
+            string[] parentmodels = parentmodel.Split('.',StringSplitOptions.None);
+            string[] parentpkeys = parentpkey.Split('.',StringSplitOptions.None);
+            bool noparent = (parentmodels[0] == "");
+            bool parentisidentity = (parentmodels[0] == identitytable);
+            bool identityistop = (parentmodels[parentmodels.Length-1] == identitytable);
+            string parentmodelname = parentmodels[0];
+            string parentpkeyname = parentpkeys[0];
+
+            // SNJW sometimes we are queryin to return the parent model - in those cases, we need the parents-of-those-parents
+            string grandparentmodel = "";
+            if(parentmodel.Contains('.'))
+            {
+                for (int i = 1; i < parentmodels.Length; i++)
+                {
+                    grandparentmodel += (parentmodels[i] + '.');
+                }
+                grandparentmodel = grandparentmodel.TrimEnd('.');
+            }
+            string grandparentpkey = "";
+            if(parentpkey.Contains('.'))
+            {
+                for (int i = 1; i < parentpkeys.Length; i++)
+                {
+                    grandparentpkey += (parentpkeys[i] + '.');
+                }
+                grandparentpkey = grandparentpkey.TrimEnd('.');
+            }
+
+
+
+            // string foreignkey = action.cmfkey;
 
 
                 // // note that this is a parameter but it's a bit wild at this stage
@@ -1408,7 +1472,7 @@ namespace Seamlex.Utilities
                 sb.AppendLine();
                 sb.AppendLine(new string(' ', nsindent+indent) + $"// {thisactionhttp}: {routename}/{actionname}");
                 sb.AppendLine(new string(' ', nsindent+indent) + $"[Http{thisactionhttp[0]}{thisactionhttp.Substring(1,thisactionhttp.Length-1).ToLower()}]");
-                if(!noidentity)
+                if(!noidentity && noanonymous)
                     sb.AppendLine(new string(' ', nsindent+indent) + $"[ValidateAntiForgeryToken]");
 
                 // note that Index call has no 'POST'
@@ -1431,7 +1495,16 @@ namespace Seamlex.Utilities
                 string thisobjectvmuserid = objectvmuserid;
                 string thisobjectvmpkey = objectvmpkey;
                 string thisobjectvmfkey = objectvmfkey;
-                if(this.ActionHasVmParameter(actiontype, thisactionhttp, vmname))
+                bool methodhasidparameter = true;
+                if( (noparent || parentisidentity) && !(actiontype == "Edit" || actiontype == "Details" || actiontype == "Delete"))
+                    methodhasidparameter = false;
+                bool methodhasvmparameter = this.MethodHasVmParameter(actiontype, thisactionhttp, vmname);
+                bool methodneedsvmcreation = this.MethodNeedsVmCreation(actiontype, thisactionhttp, vmname);
+                bool methodneeddbcheck = true;
+                if( !methodhasidparameter && actiontype == "Create" && thisactionhttp == "GET")
+                    methodneeddbcheck = false;
+
+                if(methodhasvmparameter)
                 {
                     thisobjectvm = vmname;
                     thisobjectvmuserid = vmname + '.' + action.cvukey;
@@ -1439,11 +1512,19 @@ namespace Seamlex.Utilities
                     thisobjectvmfkey = vmname + '.' + action.cvfkey;
                 }
 
-                entryline += this.GetControllerActionParameterText(source, action, thisactionhttp);
+                entryline += this.GetControllerActionParameterText(source, action, thisactionhttp,methodhasidparameter,methodhasvmparameter);
 
                 sb.AppendLine(entryline + ")");
 
                 sb.AppendLine(new string(' ', nsindent+indent) + "{");
+
+                // if there is no vm then we will just return a View()
+                if(vmname == "")
+                {
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + "return View();");
+                    sb.AppendLine(new string(' ', nsindent+indent) + "{");
+                }
+
 
                 // if this is a GET then we need to create the vm and set the userid (if using Identity) and perent tableid (if it has one)
                 // TO DO: if this scaffolding is to be 'true' to MVVM principles then the datacontext and indeed all of the model 
@@ -1452,473 +1533,816 @@ namespace Seamlex.Utilities
                 if(actiontype=="Create" && thisactionhttp == "POST")
                     actiontype = actiontype + "";
 
-                if(this.ActionNeedsVmCreation(actiontype, thisactionhttp, vmname))
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {thisobjectvm} = new {vmname}();");
-
-                if(!noidentity && action.cvukey.Trim() != "")
-                    sb.AppendLine(this.IndentText(this.GetSetVmUserIdControllerText(source,action,thisobjectvm),nsindent+indent+indent));
-
-                // there are 2^6 combinations (identity,facade,binding,vm/model,a/synch,raw/dbcontext)
-                // this gets out of hand quickly so dismiss the easy ones first
-                if(thisactionhttp == "POST" && ( actiontype == "Create" || actiontype == "Edit" ) && action.cvname != "")
+                // if anonymous access is managed in the action, do this here
+                // this can either be hard-coded or there could be a helper method
+                if(!noidentity && !noanonymous && !noanonmanage)
                 {
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"if(!ModelState.IsValid)");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"return View({thisobjectvm});");
-                }
-
-
-
-                if(nofacade)
-                {
-
-                    // if identity is used, we need to check whether this user 'owns' the relevant object
-                    //   (based on all parents leading back to AspNetUsers...)
-                    // if identity is not used, we only need to check whether it exists...
-
-                    // we will start with the GET
-                    if(thisactionhttp == "POST" && ( actiontype == "Create" || actiontype == "Edit" ) && action.cvname != "")
+                    // note that we can boilerplate these as comments too
+                    // if there are helper methods, use those
+                    if(!nohelper)
                     {
-                        // here we need to know the parent model access
-                        // TO DO - many to many relationships... not today
-
-
-                    }
-
-
-
-                    // if there is no facade, this is handled here
-                    if(thisactionhttp == "POST" && ( actiontype == "Create" || actiontype == "Edit" ) && action.cvname != "")
-                    {
-                        // here we need to know the parent model access
-                        // TO DO - many to many relationships... not today
-
-                    }
-                }
-
-                                
-                if(thisactionhttp == "GET")
-                {
-                    // if there is a facade, this will handle the defaults
-                    if(nofacade || action.cfname=="")
-                    {
-                        // if this is a Create, we need to check whether there is a parent
-                        // if this is Edit/Delete/Details, we need to retrieve the current record AND verify the parent
-                        // in either case, if there is Identity, we also need to check whether this user owns the relevant item
-                        // (checking parent tables to AspNetUsers)
-
-                        if(actiontype == "Create")
-                        {
-                            // Create:GET
-                            // in the corner case that this is a GET + Create + its parent is the Identity table
-                            // then it will not have an id passed-in
-                            if(parentmodel == identitytable )
-                                sb.Append(this.IndentText($"string {idpropname} = {thisobjectvm}.{action.cvukey.Trim()};",nsindent+indent+indent));
-
-                             sb.AppendLine( 
-                                this.IndentText(
-                                    this.GetSelectOneQueryText(
-                                        action.cmname,
-                                        dbpropname,
-                                        action.cmparent,
-                                        action.cmparkey,
-                                        "",
-                                        "",
-                                        action.cmfkey,
-                                        idpropname,
-                                        identitytableid, 
-                                        thisobjectvmuserid,
-                                        indent,
-                                        objectmodel,
-                                        noasync)
-                                    ,nsindent+indent+indent));
-
-                            sb.Append(this.IndentText($"if({objectmodel}==null)",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
-                            // if(action.cvfkey.Trim() != "")
-                            //     sb.Append(this.IndentText($"{objectvm}.{action.cvfkey.Trim()} = {idpropname};",nsindent+indent+indent+indent));
-                            sb.Append(this.IndentText(this.GetModelVmDefaultValueText(source, vmname, "vm", objectmodel, objectvm, action.cvpkey.Trim() + ',' + action.cvfkey.Trim()+',' + action.cvukey.Trim()),nsindent+indent+indent+indent));
-                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "else",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "// handle an item that already exists",nsindent+indent+indent+indent));
-                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
-
-                        }
-                        else if(actiontype == "Index")
-                        {
-                            // Index:GET
-                            // sb.AppendLine( 
-                            //     this.IndentText(
-                            //         this.GetSelectOneQueryText(
-                            //             action.cmname,
-                            //             dbpropname,
-                            //             action.cmparent,
-                            //             "",
-                            //             "",
-                            //             action.cmfkey,
-                            //             "id",
-                            //             ukeyparameter, 
-                            //             ukeyname, 
-                            //             indent)
-                            //         ,nsindent+indent+indent));
-                        }
-                        else
-                        {
-                            // Details/Edit/Delete:GET
-                            sb.AppendLine( 
-                                this.IndentText(
-                                    this.GetSelectOneQueryText(
-                                        action.cmname,
-                                        dbpropname,
-                                        action.cmparent,
-                                        action.cmparkey,
-                                        action.cmpkey,
-                                        idpropname,
-                                        "",
-                                        "",
-                                        identitytableid, 
-                                        thisobjectvmuserid,
-                                        indent,
-                                        objectmodel,
-                                        noasync)
-                                    ,nsindent+indent+indent));
-
-                            sb.Append(this.IndentText($"if({objectmodel}!=null)",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
-                            sb.Append(
-                                this.IndentText(
-                                    this.GetModelToVmMappingText(
-                                        source,
-                                        action.cmname,
-                                        action.cvname,
-                                        "vm",
-                                        objectmodel,
-                                        thisobjectvm,
-                                        action.cvpkey.Trim() + ',' + action.cvfkey.Trim() + ',' + action.cvukey.Trim())
-                                    ,nsindent+indent+indent+indent)
-                                );
-                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "else",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "// handle an item that cannot be found",nsindent+indent+indent+indent));
-                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
-
-                        }
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + commentanoncheck + "if(!AnonymousAllowed && IsAnonymous())");
                     }
                     else
                     {
-                        // there is a facade so we can rely on that to do the GET things
-                        if(source.cdcontext == "")
+                        // this is more convoluted
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + commentanoncheck + @"if(this.User.Claims.Where(x => x.Type.Contains(""nameidentifier"")).FirstOrDefault(new System.Security.Claims.Claim(""Anonymous"",""00000000-0000-0000-0000-000000000000"")).Type == ""Anonymous"")");
+                    }
+                    sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + commentanoncheck + @$"return ErrorPage(""Anonymous users cannot {actiontype.ToLower()} {controllername.ToLower()}s."");");
+                }
+
+                // there is a built-in binding check for form parameters in POST
+                // how this is managed depends on how error-handing is setup
+                if(thisactionhttp == "POST" && ( actiontype == "Create" || actiontype == "Edit" || actiontype == "Delete" ) )
+                {
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + commentmodelstatecheck + $"if(!ModelState.IsValid)");
+
+                    if(!nohelper)
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + commentmodelstatecheck + $"return View({thisobjectvm});");
+                    }
+                    else
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + commentmodelstatecheck + @"ErrorPage($""There were {ModelState.ErrorCount} errors in the data submitted to " + actionname + " in " + controllername + @"."");");
+                    }
+                }
+
+                // we need to validate the 'id' parameter passed-in.  
+                // note that this is used in preference to a parentid passed-in via the vm
+                if(methodhasidparameter)
+                {
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"if(({idpropname} ?? """") == """")");
+                    sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"{idpropname} = \"\";");
+                }
+
+                if(thisactionhttp == "GET" && ( actiontype == "Create" || actiontype == "Index" ) && methodneeddbcheck)
+                {
+                    // if there is an id parameter, set it blank if null
+                
+            // var ParentId = ToDbGuid(id);
+            // var UserId = ToDbId(GetUserId());
+                    if(!nohelper)
+                    {
+                        if(!noidentity)
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {useridpropname} = GetUserId();");
+                        if(!noparent && !parentisidentity)
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {parentidpropname} = ToDbGuid({idpropname});");
+                    }
+                    else
+                    {
+                        if(!noidentity)
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"var {useridpropname} = this.User.Claims.Where(x => x.Type.Contains(""nameidentifier"")).FirstOrDefault(Anonymous).Value;");
+                        if(!noparent && !parentisidentity)
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"var {parentidpropname} = {idpropname}.Replace(""-"","""").ToLower();");
+                    }
+                }
+
+
+                // if we are doing a get, we are checking the current record for edit/delete/details
+                // but the parent for create/index
+                if(thisactionhttp == "GET" && (actiontype == "Edit" || actiontype == "Delete" || actiontype == "Details") && methodneeddbcheck)
+                {
+                    // if we are doing a 'normal' edit/delete/details then we grab the record AND check identity at the same time
+                    if(!nohelper)
+                    {
+                        if(!noidentity)
                         {
-                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var facade = new {action.cfname}();");
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {useridpropname} = GetUserId();");
+                        }
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {objectidpropname} = ToDbGuid({idpropname});");
+                    }
+                    else
+                    {
+                        if(!noidentity)
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"var {useridpropname} = this.User.Claims.Where(x => x.Type.Contains(""nameidentifier"")).FirstOrDefault(Anonymous).Value;");
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"var {objectidpropname} = {idpropname}.Replace(""-"","""").ToLower();");
+                    }
+                }
+
+
+                if(false && thisactionhttp == "GET" && !noparent && methodneeddbcheck)
+                {
+                    // the parent is the user table, just set the variable to that
+                    // otherwise 
+                    if(!parentisidentity)
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"var {parentidpropname} = ToDbGuid({thisobjectvmuserid});");
+                    }
+                    else
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"var {parentidpropname} = {useridpropname};");
+                    }
+                }
+
+
+                if(thisactionhttp == "POST" && actiontype != "Index" && methodneeddbcheck)
+                {
+                    if(!nohelper)
+                    {
+                        if(!noidentity)
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"{thisobjectvmuserid} = GetUserId();");
+                        if(thisobjectvmuserid != thisobjectvmfkey)
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"{thisobjectvmfkey} = GetVmId({idpropname});");
+                    }
+                    else
+                    {
+                        if(!noidentity)
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"{thisobjectvmuserid} = this.User.Claims.Where(x => x.Type.Contains(""nameidentifier"")).FirstOrDefault(Anonymous).Value.Replace(""-"","""").ToLower();");
+                        if(thisobjectvmuserid != thisobjectvmfkey)
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"{thisobjectvmfkey} = ({idpropname} ?? """").Replace(""-"","""").ToLower();");
+                    }
+                }
+
+                if(thisactionhttp == "POST" && methodneeddbcheck)
+                {
+                    // if Identity is used, this needs to be checked also
+                    // if there is no parent record for the created item, then nothing needs to be checked - you just create a new one
+                    if(!noidentity && !noparent)
+                    {
+                        if(!nohelper)
+                        {
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"var {useridpropname} = ToDbId({thisobjectvmuserid});");
                         }
                         else
                         {
-//                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var facade = new {action.cfname}({action.cvname},{dbpropname}));");
-                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var facade = new {action.cfname}({dbpropname});");
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"var {useridpropname} = ({thisobjectvmuserid}.Substring(0,8)+'-'+{thisobjectvmuserid}.Substring(8,4)+'-'+{thisobjectvmuserid}.Substring(12,4)+'-'+{thisobjectvmuserid}.Substring(16,4)+'-'+{thisobjectvmuserid}.Substring(20,12)).ToUpper();");
                         }
-
-                        // if this is a GET, the userid and/or fkey and/or id fields will already be populated
-                        // also note that if there is a message field then this can have the relevant error
-                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"if(!facade.Pull({thisobjectvm}))");
-                        sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"return View({thisobjectvm});");
-                        //
                     }
+                }
+
+                if(thisactionhttp == "POST" && (actiontype == "Edit" || actiontype == "Delete" || actiontype == "Details") && methodneeddbcheck)
+                {
+                    // here we use 'ItemId' to refer to the current reord that we are retrieving - for create+index we need parents
+                    string idsource = idpropname;
+                    if(!methodhasidparameter)
+                        idsource = thisobjectvmpkey;
+                    if(!nohelper)
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {objectidpropname} = ToDbGuid({idsource});");
+                    }
+                    else
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"var {objectidpropname} = ({idsource}).Replace(""-"","""").ToLower();");
+                    }
+                }
+
+                if(thisactionhttp == "POST" && (actiontype == "Create") && methodneeddbcheck)
+                {
+                    // here we need to check the parent - need to define ParentId
+                    // note that the vm will exist already
+                    string idsource = idpropname;
+                    if(!methodhasidparameter)
+                        idsource = thisobjectvmpkey;
+                    if(!nohelper)
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {parentidpropname} = ToDbGuid({idsource});");
+                    }
+                    else
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"var {parentidpropname} = ({idsource}).Replace(""-"","""").ToLower();");
+                    }
+                }
+
+
+
+
+
+                // do the query here to cross-check the parameters
+
+                // if we are inside edit/delete/details then we need to grab the current record
+                // if we are inside a create action then it's the parent
+                // if we are inside an index action then we are grabbing many records
+                if(methodneeddbcheck)
+                {
+                    var querygen = new querygen();
+                    querygen.table = modelname; // "Election";
+                    querygen.context = dbpropname; // "db";
+                    querygen.parents = parentmodel; // "User";
+                    querygen.parentidfieldnames = parentpkey; // "Id";
+                    querygen.pkeyfieldname = parentpkey; // modelpkeyname; // "ElectionId";
+                    querygen.pkeyparameter = parentidpropname; // "ParentId";
+                    querygen.usertable = identitytable; // "User";
+                    querygen.ukeyfieldname = identitytableid; // "Id"; 
+                    querygen.ukeyparameter = useridpropname; // "UserId";
+                    querygen.objectname = "Item";
+                    querygen.noasync = noasync; // true;
+                    querygen.novar = false;
+                    querygen.firstonly = true;
+                    querygen.checkparent = false;
+
+
+                    if(actiontype == "Create")
+                    {
+                        // we want the PARENT of the current model (if there is one)
+                        if(parentmodel != "" && parentpkey != "")
+                        {
+                            querygen.table = parentmodelname; // "Election";
+                            querygen.parents = grandparentmodel; // "User";
+                            querygen.parentidfieldnames = grandparentpkey; // "Id";
+                            querygen.pkeyfieldname = parentpkeyname; // "ElectionId";
+                            querygen.pkeyparameter = parentidpropname; // "ParentId";
+                            querygen.objectname = objectparentmodel; // "Parent";
+                            // querygen.checkparent = true;
+                        }
+                    }
+                    else if(actiontype == "Edit" || actiontype == "Delete" || actiontype == "Details")
+                    {
+                        querygen.table = modelname; // "Ballot";
+                        querygen.parents = parentmodel; // "Election.User";
+                        querygen.parentidfieldnames = parentpkey; // "ElectionId.Id";
+                        querygen.pkeyfieldname = modelpkeyname; // "BallotId";
+                        querygen.pkeyparameter = objectidpropname; // "ItemId";
+                        querygen.objectname = objectmodel; // "Item"
+                    }
+                    else if(actiontype == "Index")
+                    {
+                        querygen.table = modelname; // "Ballot";
+                        querygen.parents = parentmodel; // "Election.User";
+                        querygen.parentidfieldnames = parentpkey; // "ElectionId.Id";
+                        querygen.pkeyfieldname = parentpkeyname; // "ElectionId";
+                        querygen.pkeyparameter = parentidpropname; // "ParentId";
+                        querygen.objectname = objectmodel + 's'; // "Items"
+                        querygen.firstonly = false;
+                        querygen.checkparent = true;
+                    }
+
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + querygen.GetQueryText());
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"if({querygen.objectname} == null)");
+
+                    if(!nohelper)
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + @"return ErrorPage(""Object not found in "+actionname+"->"+modelname+@""");");
+                    }
+                    else
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + @"return new ContentResult {Content = @$""<p>Object not found in "+actionname+"->"+modelname+@"</p>"""",ContentType = ""text/html""};");
+                    }
+                }
+
+                // some methods need a vm to be expressly created
+
+                if(thisactionhttp == "GET" && (actiontype == "Edit" || actiontype == "Delete" || actiontype == "Details" ) )
+                {
+                    // var vm = new ballot();
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {thisobjectvm} = new {vmname}();");
+                    if(methodhasidparameter)
+                    {
+                        if(!nohelper)
+                        {
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"{thisobjectvmpkey} = ToVmId({idpropname});");
+                        }
+                        else
+                        {
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + @$"{thisobjectvmpkey} = ({idpropname} ?? """").Replace(""-"","""").ToLower();");
+                        }
+                    }
+                    sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname,"vm",objectmodel,thisobjectvm,action.cvpkey.Trim() + ',' + action.cvfkey.Trim() + ',' + action.cvukey.Trim()),nsindent+indent+indent));
+                }
+                if(thisactionhttp == "GET" && actiontype == "Create" )
+                {
+                    // var vm = new ballot();
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {thisobjectvm} = new {vmname}();");
+                    sb.Append(this.IndentText(this.GetModelVmDefaultValueText(source, vmname, "vm", objectmodel, objectvm ),nsindent+indent+indent));
+                }
+                else if(thisactionhttp == "GET" && actiontype == "Index" )
+                {
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {thisobjectvm} = new List<{vmname}>();");
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"foreach({modelname} Item in {objectmodel}s)");
+                    sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"{thisobjectvm}.Add(new " + vmname+ "(){");
+                    sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname,"vm",objectmodel,thisobjectvm,action.cvpkey.Trim() + ',' + action.cvfkey.Trim() + ',' + action.cvukey.Trim(),nohelper,',',true),nsindent+indent+indent+indent+indent));
+                    sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + "});");
+                }
+
+                // in POST methods we are updating the Model
+                if(thisactionhttp == "POST" && actiontype == "Create")
+                {
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {objectmodel} = new {modelname}();");
+                    if(parentmodelname != "")
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"{objectmodel}.{parentmodelname} = {objectparentmodel};");
+                    sb.Append(this.IndentText(this.GetModelToVmMappingText(source,  modelname, vmname,"model",objectmodel,thisobjectvm,action.cvpkey.Trim() + ',' + action.cvfkey.Trim() + ',' + action.cvukey.Trim()),nsindent+indent+indent));
+                    if(dbpropname != "")
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"{dbpropname}.{modelname}.Add({objectmodel});");
+                }
+                else if(thisactionhttp == "POST" && actiontype == "Edit" )
+                {
+                    sb.Append(this.IndentText(this.GetModelToVmMappingText(source,  modelname, vmname,"model",objectmodel,thisobjectvm,action.cvpkey.Trim() + ',' + action.cvfkey.Trim() + ',' + action.cvukey.Trim()),nsindent+indent+indent));
+                    if(dbpropname != "")
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"{dbpropname}.{modelname}.Update({objectmodel});");
+                }
+                else if(thisactionhttp == "POST" && actiontype == "Delete" )
+                {
+                    if(dbpropname != "")
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"{dbpropname}.{modelname}.Remove({objectmodel});");
+                }
+
+                if(thisactionhttp == "POST" && ( actiontype == "Create" || actiontype == "Edit" || actiontype == "Delete" ) )
+                {
+                    if(!nodbsave)
+                    {
+                        if(!noasync)
+                        {
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"await db.SaveChangesAsync();");
+                        }
+                        else
+                        {
+                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"await db.SaveChanges();");
+                        }
+                    }
+                }
+
+                // now determine where the page should redirect to
+                if(thisactionhttp == "GET" )
+                {
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"return View(vm);");
                 }
                 else
                 {
-                    // this is an http POST action
-                    // by this point, the vm is passed-in, had the userid and/or fkey and/or id fields set, and is validated by the Controller
-                    // now we need to check:
-                    // existence of the parent object
-                    // ownership of the parent object
-                    // validation in the business model
-                    //
-                    // if there is no Identity, the ownership part can be skipped
-                    if(nofacade || action.cfname=="")
-                    {
-                        // get either the existing model
-                        // we need to know the parent-->grandparent-->greatgrandparent-->etc
-                        // 
-                        // however we only specify the parent on 
-                        if(actiontype == "Create")
-                        {
-                            // Create:POST
-                            if(parentmodel == identitytable )
-                                sb.Append(this.IndentText($"string {idpropname} = {thisobjectvm}.{action.cvukey.Trim()};",nsindent+indent+indent));
-
-                            sb.AppendLine( 
-                                this.IndentText(
-                                    this.GetSelectOneQueryText(
-                                        action.cmname,
-                                        dbpropname,
-                                        action.cmparent,
-                                        action.cmparkey,
-                                        "",
-                                        "",
-                                        action.cmfkey,
-                                        idpropname,
-                                        identitytableid, 
-                                        thisobjectvmuserid,
-                                        indent,
-                                        objectmodel,
-                                        noasync
-                                        )
-                                    ,nsindent+indent+indent));
-
-                            sb.Append(this.IndentText($"if({objectmodel}==null)",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
-
-
-                            sb.Append( 
-                                this.IndentText(
-                                    this.GetSelectOneQueryText(
-                                        action.cmname,
-                                        "",
-                                        action.cmparent,
-                                        action.cmparkey,
-                                        action.cmpkey,
-                                        "System.Guid.NewGuid()",
-                                        action.cmfkey,
-                                        idpropname,
-                                        identitytableid, 
-                                        thisobjectvmuserid,
-                                        indent,
-                                        objectmodel,
-                                        noasync, 
-                                        true
-                                        )
-                                    ,nsindent+indent+indent+indent));
-                            sb.Append(this.IndentText( "// see above",nsindent+indent+indent));
-                            sb.Append(this.IndentText(this.GetModelToVmMappingText(source,action.cmname,action.cvname,"model",objectmodel,thisobjectvm,action.cvpkey.Trim() + ',' + action.cvfkey.Trim() + ',' + action.cvukey.Trim()),nsindent+indent+indent+indent));
-                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "else",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "// handle an item that already exists",nsindent+indent+indent+indent));
-                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
-
-
-                        }
-                        else if(actiontype == "Index")
-                        {
-                            // Index:POST
-                            // sb.AppendLine( 
-                            //     this.IndentText(
-                            //         this.GetSelectOneQueryText(
-                            //             action.cmname,
-                            //             dbpropname,
-                            //             action.cmparent,
-                            //             "",
-                            //             "",
-                            //             action.cmfkey,
-                            //             "id",
-                            //             ukeyparameter, 
-                            //             ukeyname, 
-                            //             indent)
-                            //         ,nsindent+indent+indent));
-                        }
-                        else
-                        {
-                            // Details/Edit/Delete:POST
-                            sb.AppendLine( 
-                                this.IndentText(
-                                    this.GetSelectOneQueryText(
-                                        action.cmname,
-                                        dbpropname,
-                                        action.cmparent,
-                                        action.cmparkey,
-                                        action.cmpkey,
-                                        idpropname,
-                                        "",
-                                        "",
-                                        identitytableid, 
-                                        thisobjectvmuserid,
-                                        indent,
-                                        objectmodel,
-                                        noasync)
-                                    ,nsindent+indent+indent));
-
-                            sb.Append(this.IndentText($"if({objectmodel}!=null)",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
-
-                            sb.Append(this.IndentText(this.GetModelToVmMappingText(source,action.cmname,action.cvname,"model",objectmodel,thisobjectvm,""),nsindent+indent+indent+indent));
-                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "else",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "{",nsindent+indent+indent));
-                            sb.Append(this.IndentText( "// handle an item that cannot be found",nsindent+indent+indent+indent));
-                            sb.Append(this.IndentText( "}",nsindent+indent+indent));
-
-
-                        }
-                    }
-                    else
-                    {
-                        if(source.cdcontext == "")
-                        {
-                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var facade = new {action.cfname}();");
-                        }
-                        else
-                        {
-                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var facade = new {action.cfname}({dbpropname});");
-                        }
-
-                        // if this is a GET, the userid and/or fkey and/or id fields will already be populated
-                        // also note that if there is a message field then this can have the relevant error
-                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"if(!facade.Push({thisobjectvm}))");
-                        sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"return View({thisobjectvm});");
-                    }
-
-                    if(!nodbsave)
-                    {
-                        // we need to do the save in the Controller
-                        if(!noasync)
-                        {
-                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"await {dbpropname}.SaveChangesAsync();");
-                        }
-                        else
-                        {
-                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"{dbpropname}.SaveChanges();");
-                        }
-                    }
+                    // return RedirectToAction("Index",new { id = ballot.electionid });
+                    string redirectparameter = "";
+                    if(thisobjectvmuserid != thisobjectvmfkey)
+                        redirectparameter=  ",new { " + idpropname + " = " + thisobjectvmfkey;
+                    sb.AppendLine(new string(' ', nsindent+indent+indent) + @"return RedirectToAction(""Index""" + redirectparameter + ");");
                 }
-
-
-
-                // This is complex and really requires integration testing
-                // TO DO: fill this in!
-                sb.AppendLine(new string(' ', nsindent+indent+indent) + $"return View({thisobjectvm});");
-
-                // // if the model and viewmodel are the same
-                // if(source.cnouser && source.cnofacade && false)
-                // //  && source.cnoasync && action.cactview.Trim() == "")
-                // {
-                //     sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var model = db.Subject.Include(s => s.SubjectModel);");
-                //     sb.AppendLine(new string(' ', nsindent+indent+indent) + "return View(await model.ToListAsync());");
-                // }
-                // if(!source.cnouser && source.cnofacade && false)
-                // {
-                //     sb.AppendLine(new string(' ', nsindent+indent+indent) + "var lmdbContext = db.Subject.Include(s => s.SubjectModel);");
-                //     sb.AppendLine(new string(' ', nsindent+indent+indent) + "return View(await lmdbContext.ToListAsync());");
-                // }
-
 
                 sb.AppendLine(new string(' ', nsindent+indent) + "}");
 
-            }
 
+
+//                     sb.Append(this.IndentText(this.GetModelVmDefaultValueText(source, vmname, "vm", objectmodel, objectvm ),nsindent+indent+indent+asyncindent));
+
+
+//                             sb.Append(this.IndentText(this.GetModelVmDefaultValueText(source, vmname, "vm", objectmodel, objectvm, action.cvpkey.Trim() + ',' + action.cvfkey.Trim()+',' + action.cvukey.Trim()),nsindent+indent+indent+indent));
+
+
+            // var Item = new Ballot();
+            // Item.BallotId = System.Guid.NewGuid();
+            // Item.Election = Parent;
+            // Item.BallotName = ballot.name ?? "";
+            // Item.BallotOrder = ballot.order;
+            // Item.BallotCode = ballot.code ?? "";
+            // db.Ballot.Add(Item);
+
+                // handle items not found
+                // 
+                //     return ErrorPage($"Election id '{ParentId}' cannot be found.");
+                // if(Parent.User.Id != UserId)
+                //     return ErrorPage($"Election id '{ParentId}' is not owned by user id '{UserId}'.");
+                
+
+
+                         
+
+                // Console.WriteLine(
+                //     "Find Ballot parent from ParentId+UserId: " + 
+                //     cv.GetSelectOneQueryText(
+                //         "Election",
+                //         "db", 
+                //         "User", 
+                //         "Id", 
+                //         "ElectionId", 
+                //         "ParentId", 
+                //         "User", 
+                //         "Id", 
+                //         "UserId", 
+                //         4,
+                //         "Parent",
+                //         false,
+                //         false)
+                // );
+                // Console.WriteLine(
+                //     "Find Ballot from ItemId+UserId: " + 
+                //     cv.GetSelectOneQueryText(
+                //         "Ballot",
+                //         "db", 
+                //         "Election.User", 
+                //         "ElectionId.Id", 
+                //         "BallotId", 
+                //         "ItemId", 
+                //         "User", 
+                //         "Id", 
+                //         "UserId", 
+                //         4,
+                //         "Item",
+                //         false,
+                //         false)
+                // );
+
+
+                //     }
+                //     else
+                //     {
+                //         // just create an empty item here - this cannot be null
+                //     }
+
+
+
+
+                // }
+                
+
+
+
+            }
             return sb.ToString();
         }
 
-        public string GetSelectOneQueryText(
-            string table,
-            string context = "", 
-            string parents = "", 
-            string parentkeyfieldname = "", 
-            string pkeyfieldname = "", 
-            string pkeyparameter = "", 
-            string fkeyfieldname = "", 
-            string fkeyparameter = "", 
-            string ukeyfieldname = "", 
-            string ukeyparameter = "", 
-            int indent = 4,
-            string objectmodel = "", 
-            bool noasync = true,
-            bool novar = false
-        )
-        {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            char separator = '.';
-            string[] parentitems = parents.Trim().Split(separator,StringSplitOptions.None);
-            string[] parentidfields = parentkeyfieldname.Trim().Split(separator,StringSplitOptions.None);
-            string firstmethod = "First";
-            string awaittext = " ";
-            string vartext = "var ";
-            if(!noasync)
-            {
-                firstmethod = "FirstAsync";
-                awaittext = " await ";
-            }
-            if(novar)
-                vartext = "";
 
-            if(objectmodel == "")
-                objectmodel = table;
 
-            if(objectmodel == "")
-            {
-                return "";
-            }
-            else if(context == "")
-            {
-                // there is no parent table, just grab the data
-                sb.AppendLine($"{vartext}{objectmodel} = new {table}();");
-                if(pkeyparameter != "" && pkeyfieldname != "")
-                    sb.AppendLine($"{objectmodel}.{pkeyfieldname} = {pkeyparameter};");
-                if(fkeyparameter != "" && fkeyfieldname != "")
-                    sb.AppendLine($"{objectmodel}.{fkeyfieldname} = {fkeyparameter};");
-            }
-            else if(parentitems[0] == "" && pkeyfieldname != "" && pkeyparameter != "")
-            {
-                // there is no parent table, just grab the data
-                sb.AppendLine($"{vartext}{objectmodel} ={awaittext}{context}.{table}.{firstmethod}(x => x.{pkeyfieldname}.Equals({pkeyparameter});");
-            }
-            else if(parentitems.Length == 1 && pkeyfieldname != "" && pkeyparameter != "" && fkeyfieldname != "" && fkeyparameter != "" && ukeyparameter == "" && ukeyfieldname == "")
-            {
-                // there is exactly one parent table and no Identity.
-                // we need to check that this both exists and is owned by the correct foreign key
-                sb.AppendLine($"{vartext}{objectmodel} ={awaittext}{context}.{table}.Include(x => x.{parentitems[0]}).{firstmethod}(y => y.{pkeyfieldname}.Equals({pkeyparameter}) && y.{parentitems[0]}.{parentidfields[0]}.Equals({fkeyparameter}));");
-            }
-            else if(parentitems.Length == 1 && pkeyfieldname != "" && pkeyparameter != "" && fkeyfieldname != "" && fkeyparameter == ukeyparameter && ukeyfieldname == parentidfields[0])
-            {
-                // there is exactly one parent table and this uses Identity.
-                // The table must be the AspNetUsers table.
-                // we need to check that this both exists and is owned by the correct foreign key
-                sb.AppendLine($"{vartext}{objectmodel} ={awaittext}{context}.{table}.Include(x => x.{parentitems[0]}).{firstmethod}(y => y.{pkeyfieldname}.Equals({pkeyparameter}) && y.{parentitems[0]}.{parentidfields[0]}.Equals({fkeyparameter}));");
-            }
-            else if(pkeyfieldname != "" && pkeyparameter != "" && ukeyparameter != "" && ukeyfieldname != "")
-            {
-                // parentitems.Length > 1 && 
 
-                // this is the main Edit/Details/Delete query where there are grandparents and this uses Identity.
-                // The very top table must be the AspNetUsers table.
-                // we need to check that this both exists and is owned by the correct foreign key
-                sb.AppendLine($"{vartext}{objectmodel} ={awaittext}{context}.{table}");
-                string modelchain = "";
-                for(int i = 0; i < parentitems.Length;i++)
-                {
-                    modelchain += parentitems[i] + '.';
-                    sb.AppendLine(new string(' ', indent) + $".Include(x => x.{modelchain.TrimEnd('.')})");
-                }
-                sb.AppendLine(new string(' ', indent) + $".{firstmethod}(y => y.{pkeyfieldname}.Equals({pkeyparameter})");
-                if(fkeyfieldname != "" && fkeyparameter != "")
-                    sb.AppendLine(new string(' ', indent + indent) + $"&& y.{parentitems[0]}.{parentidfields[0]}.Equals({fkeyparameter})");
-                sb.AppendLine(new string(' ', indent + indent) + $"&& y.{modelchain}{ukeyfieldname}.Equals({ukeyparameter}));");
-            }
-            else if(( pkeyfieldname == "" || pkeyparameter == "" )  &&  fkeyfieldname != "" && fkeyparameter != "")
-            {
-                // this is the main Create query where we need to check ownership by a parent and possibly ownership in the Identity table.
-                // The very top table must be the AspNetUsers table.
-                // we need to check that this both exists and is owned by the correct foreign key
-                sb.AppendLine($"{vartext}{objectmodel} ={awaittext}{context}.{table}");
-                if(ukeyparameter == "" && ukeyfieldname == "")
-                {
-                    sb.AppendLine(new string(' ', indent) + $".{firstmethod}(y => y.{fkeyfieldname}.Equals({fkeyparameter})");
-                }
-                else
-                {
-                    string modelchain = "";
-                    for(int i = 0; i < parentitems.Length;i++)
-                    {
-                        modelchain += parentitems[i] + '.';
-                        sb.AppendLine(new string(' ', indent) + $".Include(x => x.{modelchain.TrimEnd('.')})");
-                    }
-                    sb.AppendLine(new string(' ', indent) + $".{firstmethod}(y => y.{fkeyfieldname}.Equals({fkeyparameter})");
-                    sb.AppendLine(new string(' ', indent + indent) + $"&& y.{modelchain}{ukeyfieldname}.Equals({ukeyparameter}));");
-                }
-            }
+//         public string GetControllerActionParameterText(mvvm source, controlleraction action, string thisactionhttp)
+//         {
+//             // some of the actions will have id fields
+//             // this will be either the pkey (edit, details, delete) or fkey (create, index)
+//             // 
+//             bool hasidparameter = false;
+//             bool hasvmparameter = false;
 
-            return sb.ToString();
-        }
+//             string idpropname = source.cactionparameter;
+//             string actiontype = action.cacttype.Trim().ToLower();
+//             string vmname = action.cvname;
+//             string identitytable = source.identitytable;
+//             string identitytableid = source.identitytableid;
+//             string useranonname = source.useranonname;
+//             string useranonval = source.useranonval;
+//             string objectmodel = source.objectmodel;
+//             string objectvm = source.objectvm;
+//             string modelparent = action.cmparent;
+//             string modelparentpkey = action.cmparkey;
+//             string modelfkey = action.cmfkey;
+
+
+//             if(actiontype == "")
+//                 actiontype = "none";
+
+
+
+//                 if(this.ActionNeedsVmCreation(actiontype, thisactionhttp, vmname))
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var {thisobjectvm} = new {vmname}();");
+
+//                 if(!noidentity && action.cvukey.Trim() != "")
+//                     sb.AppendLine(this.IndentText(this.GetSetVmUserIdControllerText(source,action,thisobjectvm),nsindent+indent+indent));
+
+
+
+//                 if(nofacade)
+//                 {
+
+//                     // if identity is used, we need to check whether this user 'owns' the relevant object
+//                     //   (based on all parents leading back to AspNetUsers...)
+//                     // if identity is not used, we only need to check whether it exists...
+
+//                     // we will start with the GET
+//                     if(thisactionhttp == "POST" && ( actiontype == "Create" || actiontype == "Edit" ) && action.cvname != "")
+//                     {
+//                         // here we need to know the parent model access
+//                         // TO DO - many to many relationships... not today
+
+
+//                     }
+
+
+
+//                     // if there is no facade, this is handled here
+//                     if(thisactionhttp == "POST" && ( actiontype == "Create" || actiontype == "Edit" ) && action.cvname != "")
+//                     {
+//                         // here we need to know the parent model access
+//                         // TO DO - many to many relationships... not today
+
+//                     }
+//                 }
+
+                                
+//                 if(thisactionhttp == "GET")
+//                 {
+//                     // if there is a facade, this will handle the defaults
+//                     if(nofacade || action.cfname=="")
+//                     {
+//                         // if this is a Create, we need to check whether there is a parent
+//                         // if this is Edit/Delete/Details, we need to retrieve the current record AND verify the parent
+//                         // in either case, if there is Identity, we also need to check whether this user owns the relevant item
+//                         // (checking parent tables to AspNetUsers)
+
+//                         if(actiontype == "Create")
+//                         {
+//                             // Create:GET
+//                             // in the corner case that this is a GET + Create + its parent is the Identity table
+//                             // then it will not have an id passed-in
+//                             if(parentmodel == identitytable )
+//                                 sb.Append(this.IndentText($"string {idpropname} = {thisobjectvm}.{action.cvukey.Trim()};",nsindent+indent+indent));
+
+//                              sb.AppendLine( 
+//                                 this.IndentText(
+//                                     this.GetSelectOneQueryText(
+//                                         action.cmname,
+//                                         dbpropname,
+//                                         action.cmparent,
+//                                         action.cmparkey,
+//                                         "",
+//                                         "",
+//                                         idpropname,
+//                                         identitytableid, 
+//                                         thisobjectvmuserid,
+//                                         indent,
+//                                         objectmodel,
+//                                         noasync)
+//                                     ,nsindent+indent+indent));
+
+//                             sb.Append(this.IndentText($"if({objectmodel}==null)",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "{",nsindent+indent+indent));
+//                             // if(action.cvfkey.Trim() != "")
+//                             //     sb.Append(this.IndentText($"{objectvm}.{action.cvfkey.Trim()} = {idpropname};",nsindent+indent+indent+indent));
+//                             sb.Append(this.IndentText(this.GetModelVmDefaultValueText(source, vmname, "vm", objectmodel, objectvm, action.cvpkey.Trim() + ',' + action.cvfkey.Trim()+',' + action.cvukey.Trim()),nsindent+indent+indent+indent));
+//                             sb.Append(this.IndentText( "}",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "else",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "{",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "// handle an item that already exists",nsindent+indent+indent+indent));
+//                             sb.Append(this.IndentText( @"return new ContentResult {Content = ""<p>This item already exists.</p>"",ContentType = ""text/html""};",nsindent+indent+indent+indent));
+//                             sb.Append(this.IndentText( "}",nsindent+indent+indent));
+
+//                         }
+//                         else if(actiontype == "Index")
+//                         {
+//                             // Index:GET
+//                             // sb.AppendLine( 
+//                             //     this.IndentText(
+//                             //         this.GetSelectOneQueryText(
+//                             //             action.cmname,
+//                             //             dbpropname,
+//                             //             action.cmparent,
+//                             //             "",
+//                             //             "",
+//                             //             action.cmfkey,
+//                             //             "id",
+//                             //             ukeyparameter, 
+//                             //             ukeyname, 
+//                             //             indent)
+//                             //         ,nsindent+indent+indent));
+//                         }
+//                         else
+//                         {
+//                             // Details/Edit/Delete:GET
+//                             sb.AppendLine( 
+//                                 this.IndentText(
+//                                     this.GetSelectOneQueryText(
+//                                         action.cmname,
+//                                         dbpropname,
+//                                         action.cmparent,
+//                                         action.cmparkey,
+//                                         action.cmpkey,
+//                                         idpropname,
+//                                         "",
+//                                         identitytableid, 
+//                                         thisobjectvmuserid,
+//                                         indent,
+//                                         objectmodel,
+//                                         noasync)
+//                                     ,nsindent+indent+indent));
+
+//                             sb.Append(this.IndentText($"if({objectmodel}!=null)",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "{",nsindent+indent+indent));
+//                             sb.Append(
+//                                 this.IndentText(
+//                                     this.GetModelToVmMappingText(
+//                                         source,
+//                                         action.cmname,
+//                                         action.cvname,
+//                                         "vm",
+//                                         objectmodel,
+//                                         thisobjectvm,
+//                                         action.cvpkey.Trim() + ',' + action.cvfkey.Trim() + ',' + action.cvukey.Trim())
+//                                     ,nsindent+indent+indent+indent)
+//                                 );
+//                             sb.Append(this.IndentText( "}",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "else",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "{",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "// handle an item that cannot be found",nsindent+indent+indent+indent));
+//                             sb.Append(this.IndentText( @"return new ContentResult {Content = ""<p>This item cannot be found.</p>"",ContentType = ""text/html""};",nsindent+indent+indent+indent));
+//                             sb.Append(this.IndentText( "}",nsindent+indent+indent));
+
+//                         }
+//                     }
+//                     else
+//                     {
+//                         // there is a facade so we can rely on that to do the GET things
+//                         if(source.cdcontext == "")
+//                         {
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var facade = new {action.cfname}();");
+//                         }
+//                         else
+//                         {
+// //                            sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var facade = new {action.cfname}({action.cvname},{dbpropname}));");
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var facade = new {action.cfname}({dbpropname});");
+//                         }
+
+//                         // if this is a GET, the userid and/or fkey and/or id fields will already be populated
+//                         // also note that if there is a message field then this can have the relevant error
+//                         sb.AppendLine(new string(' ', nsindent+indent+indent) + $"if(!facade.Pull({thisobjectvm}))");
+//                         sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"return View({thisobjectvm});");
+//                         //
+//                     }
+//                 }
+//                 else
+//                 {
+//                     // this is an http POST action
+//                     // by this point, the vm is passed-in, had the userid and/or fkey and/or id fields set, and is validated by the Controller
+//                     // now we need to check:
+//                     // existence of the parent object
+//                     // ownership of the parent object
+//                     // validation in the business model
+//                     //
+//                     // if there is no Identity, the ownership part can be skipped
+//                     if(nofacade || action.cfname=="")
+//                     {
+//                         // get either the existing model
+//                         // we need to know the parent-->grandparent-->greatgrandparent-->etc
+//                         // 
+//                         // however we only specify the parent on 
+//                         if(actiontype == "Create")
+//                         {
+//                             // Create:POST
+//                             if(parentmodel == identitytable )
+//                                 sb.Append(this.IndentText($"string {idpropname} = {thisobjectvm}.{action.cvukey.Trim()};",nsindent+indent+indent));
+
+//                             sb.AppendLine( 
+//                                 this.IndentText(
+//                                     this.GetSelectOneQueryText(
+//                                         action.cmname,
+//                                         dbpropname,
+//                                         action.cmparent,
+//                                         action.cmparkey,
+//                                         "",
+//                                         "",
+//                                         idpropname,
+//                                         identitytableid, 
+//                                         thisobjectvmuserid,
+//                                         indent,
+//                                         objectmodel,
+//                                         noasync
+//                                         )
+//                                     ,nsindent+indent+indent));
+
+//                             sb.Append(this.IndentText($"if({objectmodel}==null)",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "{",nsindent+indent+indent));
+
+
+//                             sb.Append( 
+//                                 this.IndentText(
+//                                     this.GetSelectOneQueryText(
+//                                         action.cmname,
+//                                         "",
+//                                         action.cmparent,
+//                                         action.cmparkey,
+//                                         action.cmpkey,
+//                                         "System.Guid.NewGuid()",
+//                                         idpropname,
+//                                         identitytableid, 
+//                                         thisobjectvmuserid,
+//                                         indent,
+//                                         objectmodel,
+//                                         noasync, 
+//                                         true
+//                                         )
+//                                     ,nsindent+indent+indent+indent));
+//                             sb.Append(this.IndentText( "// see above",nsindent+indent+indent));
+//                             sb.Append(this.IndentText(this.GetModelToVmMappingText(source,action.cmname,action.cvname,"model",objectmodel,thisobjectvm,action.cvpkey.Trim() + ',' + action.cvfkey.Trim() + ',' + action.cvukey.Trim()),nsindent+indent+indent+indent));
+
+//                             // 2022-11-04 SNJW put a save method in too
+//                             // db.Election.Remove(election);
+//                             sb.Append(this.IndentText( $"{dbpropname}.{action.cmname}.Add({objectmodel});",nsindent+indent+indent+indent));
+
+//                             sb.Append(this.IndentText( "}",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "else",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "{",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "// handle an item that already exists",nsindent+indent+indent+indent));
+//                             sb.Append(this.IndentText( @"return new ContentResult {Content = ""<p>This record already exists.</p>"",ContentType = ""text/html""};",nsindent+indent+indent+indent));
+//                             sb.Append(this.IndentText( "}",nsindent+indent+indent));
+
+
+//                         }
+//                         else if(actiontype == "Index")
+//                         {
+//                             // Index:POST
+//                             // sb.AppendLine( 
+//                             //     this.IndentText(
+//                             //         this.GetSelectOneQueryText(
+//                             //             action.cmname,
+//                             //             dbpropname,
+//                             //             action.cmparent,
+//                             //             "",
+//                             //             "",
+//                             //             action.cmfkey,
+//                             //             "id",
+//                             //             ukeyparameter, 
+//                             //             ukeyname, 
+//                             //             indent)
+//                             //         ,nsindent+indent+indent));
+//                         }
+//                         else
+//                         {
+//                             // Details/Edit/Delete:POST
+//                             /* TO DO sb.AppendLine( 
+//                                 this.IndentText(
+//                                     this.GetSelectOneQueryText(
+//                                         action.cmname,
+//                                         dbpropname,
+//                                         action.cmparent,
+//                                         action.cmparkey,
+//                                         action.cmpkey,
+//                                         idpropname,
+//                                         identitytableid, 
+//                                         thisobjectvmuserid,
+//                                         indent,
+//                                         objectmodel,
+//                                         noasync)
+//                                     ,nsindent+indent+indent));
+//                             */
+
+//                             sb.Append(this.IndentText($"if({objectmodel}!=null)",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "{",nsindent+indent+indent));
+
+//                             sb.Append(this.IndentText(this.GetModelToVmMappingText(source,action.cmname,action.cvname,"model",objectmodel,thisobjectvm,""),nsindent+indent+indent+indent));
+
+//                             // 2022-11-04 SNJW put the correct method in here
+//                             // db.Election.Remove(election);
+//                             if(actiontype == "Delete")
+//                             {
+//                                 sb.Append(this.IndentText( $"{dbpropname}.{action.cmname}.Remove({objectmodel});",nsindent+indent+indent+indent));
+//                             }
+//                             else
+//                             {
+//                                 sb.Append(this.IndentText( $"{dbpropname}.{action.cmname}.Update({objectmodel});",nsindent+indent+indent+indent));
+//                             }
+
+
+//                             sb.Append(this.IndentText( "}",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "else",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "{",nsindent+indent+indent));
+//                             sb.Append(this.IndentText( "// handle an item that cannot be found",nsindent+indent+indent+indent));
+//                             sb.Append(this.IndentText( @"return new ContentResult {Content = ""<p>Cannot find this record.</p>"",ContentType = ""text/html""};",nsindent+indent+indent+indent));
+//                             sb.Append(this.IndentText( "}",nsindent+indent+indent));
+
+
+//                         }
+//                     }
+//                     else
+//                     {
+//                         if(source.cdcontext == "")
+//                         {
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var facade = new {action.cfname}();");
+//                         }
+//                         else
+//                         {
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var facade = new {action.cfname}({dbpropname});");
+//                         }
+
+//                         // if this is a GET, the userid and/or fkey and/or id fields will already be populated
+//                         // also note that if there is a message field then this can have the relevant error
+//                         sb.AppendLine(new string(' ', nsindent+indent+indent) + $"if(!facade.Push({thisobjectvm}))");
+//                         sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + $"return View({thisobjectvm});");
+//                     }
+
+//                     if(!nodbsave)
+//                     {
+//                         // we need to do the save in the Controller
+//                         if(!noasync)
+//                         {
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent) + $"await {dbpropname}.SaveChangesAsync();");
+//                         }
+//                         else
+//                         {
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent) + $"{dbpropname}.SaveChanges();");
+//                         }
+//                     }
+//                 }
+
+
+
+//                 // This is complex and really requires integration testing
+//                 // TO DO: fill this in!
+//                 sb.AppendLine(new string(' ', nsindent+indent+indent) + $"return View({thisobjectvm});");
+
+//                 // // if the model and viewmodel are the same
+//                 // if(source.cnouser && source.cnofacade && false)
+//                 // //  && source.cnoasync && action.cactview.Trim() == "")
+//                 // {
+//                 //     sb.AppendLine(new string(' ', nsindent+indent+indent) + $"var model = db.Subject.Include(s => s.SubjectModel);");
+//                 //     sb.AppendLine(new string(' ', nsindent+indent+indent) + "return View(await model.ToListAsync());");
+//                 // }
+//                 // if(!source.cnouser && source.cnofacade && false)
+//                 // {
+//                 //     sb.AppendLine(new string(' ', nsindent+indent+indent) + "var lmdbContext = db.Subject.Include(s => s.SubjectModel);");
+//                 //     sb.AppendLine(new string(' ', nsindent+indent+indent) + "return View(await lmdbContext.ToListAsync());");
+//                 // }
+
+
+//                 sb.AppendLine(new string(' ', nsindent+indent) + "}");
+
+//             }
+
+//             return sb.ToString();
+//         }
+
+
 
 
         public string GetSetVmUserIdControllerText(mvvm source, controlleraction action, string objectvm = "")
@@ -1964,81 +2388,40 @@ namespace Seamlex.Utilities
             sb.AppendLine("else");
             sb.AppendLine("{");
             sb.AppendLine(new string(' ', source.indent) + $"// handle anonymous entry here");
+            sb.AppendLine(new string(' ', source.indent) + @"return new ContentResult {Content = ""<p>You cannot access this part of the site anonymously.</p>"",ContentType = ""text/html""};");
             sb.AppendLine("}");
 
             // sb.AppendLine($"var username = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Subject!.Name;");
             // sb.AppendLine($"vmelection.userid = (_context.Users.First(x => x.UserName.Equals(username ?? \"\"))!.Id ?? \"\").ToLower().Replace(\"-\",\"\");");
 
 
-
             return sb.ToString();
         }
 
 
-        public bool ActionHasIdParameter(string actiontype, string http, string modelfkey, string modelparent, string identitytable)
+        public bool MethodHasVmParameter(string actiontype, string http, string vmname)
         {
-
-            // check for whether this action has an id field
-            if((actiontype == "edit" || actiontype == "details" || actiontype == "delete") && modelfkey != "" && modelparent != "" )
-            {
-                return true;
-            }
-            else if(actiontype == "create")
-            {
-                // if the create action has no parent OR the parent is the user table
-                //    then this has no id
-                if(modelfkey=="" || modelparent =="" || modelparent == identitytable )
-                {
-
-                }
-                else
-                {
-                    return true;
-                }
-
-            }
-            else if(actiontype == "index")
-            {
-                // if the index action has no parent OR the parent is the user table
-                //    then this has no id
-                if(modelfkey == "" || modelparent == "" || modelparent == identitytable )
-                {
-
-                }
-                else
-                {
-                    return true;
-                }
-            }            
-            return false;
-        }
-        public bool ActionHasVmParameter(string actiontype, string http, string vmname)
-        {
-            actiontype = actiontype.Trim().ToLower();
-            if((actiontype == "edit" || actiontype == "create" || actiontype == "delete" || actiontype == "details") && vmname !="" && http == "POST")
+            if((actiontype == "Edit" || actiontype == "Create" || actiontype == "Delete" || actiontype == "Details") && vmname !="" && http == "POST")
                 return true;            
             return false;
         }
-        public bool ActionNeedsVmCreation(string actiontype, string http, string vmname)
+        public bool MethodNeedsVmCreation(string actiontype, string http, string vmname)
         {
-            actiontype = actiontype.Trim().ToLower();
             if(vmname =="")
                 return false;
-            if((actiontype == "edit" || actiontype == "create" || actiontype == "delete" || actiontype == "details") && http == "POST")
+            if((actiontype == "Edit" || actiontype == "Create" || actiontype == "Delete" || actiontype == "Details") && http == "POST")
                 return false;
             return true;
         }
 
-        public string GetControllerActionParameterText(mvvm source, controlleraction action, string http)
+        public string GetControllerActionParameterText(mvvm source, controlleraction action, string http, bool hasidparameter = false, bool hasvmparameter = false)
         {
             // some of the actions will have id fields
             // this will be either the pkey (edit, details, delete) or fkey (create, index)
             // 
-            bool hasidparameter = false;
-            bool hasvmparameter = false;
 
             string idpropname = source.cactionparameter;
-            string actiontype = action.cacttype.Trim().ToLower();
+            string actiontype = action.cacttype.Trim();
             string vmname = action.cvname;
             string identitytable = source.identitytable;
             string identitytableid = source.identitytableid;
@@ -2048,15 +2431,14 @@ namespace Seamlex.Utilities
             string objectvm = source.objectvm;
             string modelparent = action.cmparent;
             string modelparentpkey = action.cmparkey;
-            string modelfkey = action.cmfkey;
+            // string modelfkey = action.cmfkey;
 
 
             if(actiontype == "")
                 actiontype = "none";
 
-            hasidparameter = this.ActionHasIdParameter(actiontype, http, modelfkey, modelparent, identitytable);
-            hasvmparameter = this.ActionHasVmParameter(actiontype, http, vmname);
-
+            // hasidparameter = this.MethodHasIdParameter(actiontype, http, modelparent, identitytable);
+            // hasvmparameter = this.MethodHasVmParameter(actiontype, http, vmname);
 
             // check whether there is a vm
             // note that this is only for POST methods
@@ -2083,499 +2465,498 @@ namespace Seamlex.Utilities
 
 #endregion generate-controller
 
-#region generate-facade
+
+// SNJW TO DO LATER
+public string GetFacadeInnerText(mvvm source)
+{
+    return "";
+}
+
+// #region generate-facade
  
-        public string GetFacadeInnerText(mvvm source)
-        {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            int indent = source.indent;
-            int nsindent = 0;
-            if(source.fnamespace != "")
-                nsindent = indent;
+//         public string GetFacadeInnerText(mvvm source)
+//         {
+//             // SNJW TO DO - this needs rework after the Controller code is complete
 
-            bool noidentity = source.cnouser;
-            bool nofacade = source.cnofacade;
-            bool dbsave = source.fdbsave;
-            bool noasync = source.cnoasync;
+//             System.Text.StringBuilder sb = new System.Text.StringBuilder();
+//             int indent = source.indent;
+//             int nsindent = 0;
+//             if(source.fnamespace != "")
+//                 nsindent = indent;
+
+//             bool noidentity = source.cnouser;
+//             bool nofacade = source.cnofacade;
+//             bool dbsave = source.fdbsave;
+//             bool noasync = source.cnoasync;
             
-            string dbpropname = "db";
-            if(source.cdpropname.Trim() != "")
-                dbpropname = source.cdpropname.Trim();
-            string vmname = source.vname;
-            string modelname = source.mname;
-            string modelpkey = source.mpkey;
-            string modelfkey = source.mfkey;
-            string modelparents = source.mparent;
-            string modelparent = source.mparent.Trim().Split('.',StringSplitOptions.None)[0];
-            string modelparkey = source.mparkey;
-            string facadename = source.fname;
-            string facadetype = source.ftype;
+//             string dbpropname = "db";
+//             if(source.cdpropname.Trim() != "")
+//                 dbpropname = source.cdpropname.Trim();
+//             string vmname = source.vname;
+//             string modelname = source.mname;
+//             string modelpkey = source.mpkey;
+//             string modelfkey = source.mfkey;
+//             string modelparents = source.mparent;
+//             string modelparent = source.mparent.Trim().Split('.',StringSplitOptions.None)[0];
+//             string modelparkey = source.mparkey;
+//             string facadename = source.fname;
+//             string facadetype = source.ftype;
 
-            // string identityname = "AspNetUsers";
-            string identitytable = source.identitytable;
-            string identitytableid = source.identitytableid;
-            string useranonname = source.useranonname;
-            string useranonval = source.useranonval;
-            string objectmodel = source.objectmodel;
-            string objectvm = source.objectvm;
+//             // string identityname = "AspNetUsers";
+//             string identitytable = source.identitytable;
+//             string identitytableid = source.identitytableid;
+//             string useranonname = source.useranonname;
+//             string useranonval = source.useranonval;
+//             string objectmodel = source.objectmodel;
+//             string objectvm = source.objectvm;
 
-            string vmpkey = source.vpkey;
-            string vmfkey = source.vfkey;
-            string vmukey = source.vuserkey;
-            string vmmsg = source.vmessage;
+//             string vmpkey = source.vpkey;
+//             string vmfkey = source.vfkey;
+//             string vmukey = source.vuserkey;
+//             string vmmsg = source.vmessage;
 
-            int asyncindent = 0;
-            if(!noasync)
-                asyncindent += indent;
+//             int asyncindent = 0;
+//             if(!noasync)
+//                 asyncindent += indent;
 
-/*
-        // there are three methods in the Facade: Pull,Push,Default
-*/
-            List<string> methods = new List<string>(){"Pull","Push","Default"};
-            foreach(var method in methods)
-            {
-                string linetext = "async Task<bool>";
-                string entrytext = "var output = Task.Run(async () => {";
-                string returntext = "await output;";
-                string parameters = $"{vmname} {objectvm}";
-                if(noasync)
-                {
-                    linetext = "bool";
-                    returntext = "output;";
-                    entrytext = "bool output = true;";
-                }
-                if(method=="Default")
-                {
-                    linetext = linetext.Replace("bool",vmname);
-                    parameters = "";
-                }
+// /*
+//         // there are three methods in the Facade: Pull,Push,Default
+// */
+//             List<string> methods = new List<string>(){"Pull","Push","Default"};
+//             foreach(var method in methods)
+//             {
+//                 string linetext = "async Task<bool>";
+//                 string entrytext = "var output = Task.Run(async () => {";
+//                 string returntext = "await output;";
+//                 string parameters = $"{vmname} {objectvm}";
+//                 if(noasync)
+//                 {
+//                     linetext = "bool";
+//                     returntext = "output;";
+//                     entrytext = "bool output = true;";
+//                 }
+//                 if(method=="Default")
+//                 {
+//                     linetext = linetext.Replace("bool",vmname);
+//                     parameters = "";
+//                 }
 
-                // don't create this method
-                if(method =="Push" && facadetype == "select")
-                    continue;
+//                 // don't create this method
+//                 if(method =="Push" && facadetype == "select")
+//                     continue;
 
-                sb.AppendLine(new string(' ', nsindent+indent) + $"public {linetext} {method}({parameters})");
-                sb.AppendLine(new string(' ', nsindent+indent) + "{");
-                sb.AppendLine(new string(' ', nsindent+indent+indent) + entrytext);
+//                 sb.AppendLine(new string(' ', nsindent+indent) + $"public {linetext} {method}({parameters})");
+//                 sb.AppendLine(new string(' ', nsindent+indent) + "{");
+//                 sb.AppendLine(new string(' ', nsindent+indent+indent) + entrytext);
 
-                // if the Default then set values and exit
+//                 // if the Default then set values and exit
 
-                // therefore when building the Facade we must see if this ViewModel has a pkey/fkey field
-                if(method =="Default")
-                {
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// set default values for '{vmname}' here");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"var {objectvm} = new {vmname}();");
-                    sb.Append(this.IndentText(this.GetModelVmDefaultValueText(source, vmname, "vm", objectmodel, objectvm ),nsindent+indent+indent+asyncindent));
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return {objectvm};");
-                    if(!noasync)
-                        sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
-                    sb.AppendLine(new string(' ', nsindent+indent) + "}");
-                    continue;
-                }
-
-
+//                 // therefore when building the Facade we must see if this ViewModel has a pkey/fkey field
+//                 if(method =="Default")
+//                 {
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// set default values for '{vmname}' here");
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"var {objectvm} = new {vmname}();");
+//                     sb.Append(this.IndentText(this.GetModelVmDefaultValueText(source, vmname, "vm", objectmodel, objectvm ),nsindent+indent+indent+asyncindent));
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return {objectvm};");
+//                     if(!noasync)
+//                         sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
+//                     sb.AppendLine(new string(' ', nsindent+indent) + "}");
+//                     continue;
+//                 }
 
 
-                // if there is no pkey and no fkey then we simply return false
-                // note that where the vm simply does not need the database then this should return true
-                // the idea is that the Controller is 'dumb' and a non-db call is a user decision
-
-                // therefore when building the Facade we must see if this ViewModel has a pkey/fkey field
-                if(vmpkey == "" )
-                {
-                    // no pkey field exists - this is a simple vm
-            // var modelasync = Task.Run(() => {
-            //     return true;
-            //     });
-            // // var model = await modelasync;
-            // return await modelasync;
-
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// no pkey is specified on '{vmname}'");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// add additional logic here");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return true;");
-                    if(!noasync)
-                        sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
-                    sb.AppendLine(new string(' ', nsindent+indent) + "}");
-                    continue;
-                }
-
-                // we need to select/insert/delete according to the parameters
-                // note that the Pull() method is different for each type but the Pull() is the same
-
-                // create the Pull() first
-                if(modelname == "" || modelpkey == "")
-                {
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// no Model has been specified");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// add additional logic here to populate '{vmname}'");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return true;");
-                    if(!noasync)
-                        sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
-                    sb.AppendLine(new string(' ', nsindent+indent) + "}");
-                    continue;
-                }
-                if(method =="Pull" && ( vmpkey != "" && vmfkey != "" && vmukey != "" ) )
-                {
-                    // this is a 'simple' SELECT
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// query {modelname} for a record checking parent+identity");
-                    sb.Append( 
-                        this.IndentText(
-                            this.GetSelectOneQueryText(
-                                modelname,
-                                dbpropname,
-                                modelparents,
-                                modelparkey,
-                                modelpkey,
-                                objectvm + "." + vmpkey,
-                                modelfkey,
-                                objectvm + "." + vmfkey,
-                                identitytableid,
-                                objectvm + "." + vmukey,
-                                indent,
-                                objectmodel,
-                                noasync)
-                            ,nsindent+indent+indent+asyncindent));
-
-                    sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
-                    if(vmmsg == "")
-                    {
-                        sb.AppendLine(this.IndentText("return false;",nsindent+indent+indent+indent+asyncindent));
-                    }
-                    else
-                    {
-                        sb.Append(this.IndentText( "{",nsindent+indent+indent+asyncindent));
-                        sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot find record associated with id:{" + objectvm + "."+vmpkey + "}." + '"' + ';' ,nsindent+indent+indent+indent+asyncindent));
-                        sb.Append(this.IndentText( "return false;",nsindent+indent+indent+indent+asyncindent));
-                        sb.Append(this.IndentText( "}",nsindent+indent+indent+asyncindent));
-                    }
-                    sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "vm","",objectvm,vmpkey + ',' + vmfkey + ',' + vmukey),nsindent+indent+indent+asyncindent));
-
-            // string table,
-            // string context = "", 
-            // string parents = "", 
-            // string parentkeyfieldname = "", 
-            // string pkeyfieldname = "", 
-            // string pkeyparameter = "", 
-            // string fkeyfieldname = "", 
-            // string fkeyparameter = "", 
-            // string ukeyfieldname = "", 
-            // string ukeyparameter = "", 
-
-                    sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return true;");
-                    if(!noasync)
-                        sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
-                    sb.AppendLine(new string(' ', nsindent+indent) + "}");
-                    continue;
-                }
 
 
-                if(method =="Push" && ( vmpkey != "" && vmfkey != "" && vmukey != "" ) )
-                {
-                    // for every Push() we check the existence of a record matching this id
-                    //
-                    // the logic is simple for SQL DELETE/UPDATE: check the existence of the record
-                    // if found, remove it or update it and return true
-                    // if not found, leave a message and return false
-                    //
-                    // for SQL INSERT: check the existence of the record
-                    // if found, leave a message and return false
-                    // if not found, create it and return true
-                    //
+//                 // if there is no pkey and no fkey then we simply return false
+//                 // note that where the vm simply does not need the database then this should return true
+//                 // the idea is that the Controller is 'dumb' and a non-db call is a user decision
+
+//                 // therefore when building the Facade we must see if this ViewModel has a pkey/fkey field
+//                 if(vmpkey == "" )
+//                 {
+//                     // no pkey field exists - this is a simple vm
+//             // var modelasync = Task.Run(() => {
+//             //     return true;
+//             //     });
+//             // // var model = await modelasync;
+//             // return await modelasync;
+
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// no pkey is specified on '{vmname}'");
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// add additional logic here");
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return true;");
+//                     if(!noasync)
+//                         sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
+//                     sb.AppendLine(new string(' ', nsindent+indent) + "}");
+//                     continue;
+//                 }
+
+//                 // we need to select/insert/delete according to the parameters
+//                 // note that the Pull() method is different for each type but the Pull() is the same
+
+//                 // create the Pull() first
+//                 if(modelname == "" || modelpkey == "")
+//                 {
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// no Model has been specified");
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// add additional logic here to populate '{vmname}'");
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return true;");
+//                     if(!noasync)
+//                         sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
+//                     sb.AppendLine(new string(' ', nsindent+indent) + "}");
+//                     continue;
+//                 }
+//                 if(method =="Pull" && ( vmpkey != "" && vmfkey != "" && vmukey != "" ) )
+//                 {
+//                     // this is a 'simple' SELECT
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// query {modelname} for a record checking parent+identity");
+//                     sb.Append( 
+//                         this.IndentText(
+//                             this.GetSelectOneQueryText(
+//                                 modelname,
+//                                 dbpropname,
+//                                 modelparents,
+//                                 modelparkey,
+//                                 modelpkey,
+//                                 objectvm + "." + vmpkey,
+//                                 modelfkey,
+//                                 identitytableid,
+//                                 objectvm + "." + vmukey,
+//                                 objectmodel,
+//                                 noasync)
+//                             ,nsindent+indent+indent+asyncindent));
+
+//                     sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
+//                     if(vmmsg == "")
+//                     {
+//                         sb.AppendLine(this.IndentText("return false;",nsindent+indent+indent+indent+asyncindent));
+//                     }
+//                     else
+//                     {
+//                         sb.Append(this.IndentText( "{",nsindent+indent+indent+asyncindent));
+//                         sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot find record associated with id:{" + objectvm + "."+vmpkey + "}." + '"' + ';' ,nsindent+indent+indent+indent+asyncindent));
+//                         sb.Append(this.IndentText( "return false;",nsindent+indent+indent+indent+asyncindent));
+//                         sb.Append(this.IndentText( "}",nsindent+indent+indent+asyncindent));
+//                     }
+//                     sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "vm","",objectvm,vmpkey + ',' + vmfkey + ',' + vmukey),nsindent+indent+indent+asyncindent));
+
+//             // string table,
+//             // string context = "", 
+//             // string parents = "", 
+//             // string parentkeyfieldname = "", 
+//             // string pkeyfieldname = "", 
+//             // string pkeyparameter = "", 
+//             // string fkeyfieldname = "", 
+//             // string fkeyparameter = "", 
+//             // string ukeyfieldname = "", 
+//             // string ukeyparameter = "", 
+
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return true;");
+//                     if(!noasync)
+//                         sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
+//                     sb.AppendLine(new string(' ', nsindent+indent) + "}");
+//                     continue;
+//                 }
+
+
+//                 if(method =="Push" && ( vmpkey != "" && vmfkey != "" && vmukey != "" ) )
+//                 {
+//                     // for every Push() we check the existence of a record matching this id
+//                     //
+//                     // the logic is simple for SQL DELETE/UPDATE: check the existence of the record
+//                     // if found, remove it or update it and return true
+//                     // if not found, leave a message and return false
+//                     //
+//                     // for SQL INSERT: check the existence of the record
+//                     // if found, leave a message and return false
+//                     // if not found, create it and return true
+//                     //
                     
 
-                    //   for a push with pkey set, grab the model (or default), set the model fields (if found), then update
-                    //   for a push with no pkey (or a new one), grab the parent, get the default model, set the model fields (if found), then add
-                    if(facadetype == "delete" || facadetype == "update" )
-                    {
-                        sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// check whether this {modelname} exists (including parent+identity ownership)");
-                        sb.Append( 
-                            this.IndentText(
-                                this.GetSelectOneQueryText(
-                                    modelname,
-                                    dbpropname,
-                                    modelparents,
-                                    modelparkey,
-                                    modelpkey,
-                                    objectvm + "." + vmpkey,
-                                    modelfkey,
-                                    objectvm + "." + vmfkey,
-                                    identitytableid,
-                                    objectvm + "." + vmukey,
-                                    indent,
-                                    objectmodel,
-                                    noasync)
-                                ,nsindent+indent+indent+asyncindent));
-                        sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
+//                     //   for a push with pkey set, grab the model (or default), set the model fields (if found), then update
+//                     //   for a push with no pkey (or a new one), grab the parent, get the default model, set the model fields (if found), then add
+//                     if(facadetype == "delete" || facadetype == "update" )
+//                     {
+//                         sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// check whether this {modelname} exists (including parent+identity ownership)");
+//                         sb.Append( 
+//                             this.IndentText(
+//                                 this.GetSelectOneQueryText(
+//                                     modelname,
+//                                     dbpropname,
+//                                     modelparents,
+//                                     modelparkey,
+//                                     modelpkey,
+//                                     objectvm + "." + vmpkey,
+//                                     objectvm + "." + vmfkey,
+//                                     identitytableid,
+//                                     objectvm + "." + vmukey,
+//                                     objectmodel,
+//                                     noasync)
+//                                 ,nsindent+indent+indent+asyncindent));
+//                         sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
 
 
-                        if(vmmsg == "")
-                        {
-                            sb.AppendLine(this.IndentText("return false;",nsindent+indent+indent+indent+asyncindent));
-                        }
-                        else
-                        {
-                            sb.Append(this.IndentText( "{",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot find record associated with id:{" + objectvm + "."+vmpkey + "}." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText( "return false;",nsindent+indent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText( "}",nsindent+indent+indent+asyncindent));
-                        }
-                        if(facadetype == "update" )
-                        {
-                            // map the update fields here
-                            sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "model","",objectvm,modelpkey+','+modelfkey),nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText(dbpropname + ".Update(" + modelname + ");",nsindent+indent+indent+asyncindent));
-                        }
-                        else
-                        {
-                            sb.Append(this.IndentText(dbpropname + ".Remove(" + modelname + ");",nsindent+indent+indent+asyncindent));
-                        }
-                        if(dbsave)
-                        {
-                            // the double-negative means that this is NOT saved in the Controller so do it here
-                            sb.Append(this.IndentText("bool success = true;",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("try",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("{",nsindent+indent+indent+asyncindent));
-                            if(noasync)
-                            {
-                                sb.Append(this.IndentText($"{dbpropname}.SaveChanges();",nsindent+indent+indent+indent+asyncindent));
-                            }
-                            else
-                            {
-                                sb.Append(this.IndentText($"await {dbpropname}.SaveChangesAsync();",nsindent+indent+indent+indent+asyncindent));
-                            }
-                            sb.Append(this.IndentText("}",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("catch",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("{",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("success = false;",nsindent+indent+indent+indent+asyncindent));
-                            if(vmmsg == "")
-                                sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot save changes to id:{"+objectvm + "." + vmpkey + "}." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("}",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText($"if(success == false)",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot "+facadetype+" record associated with id:{" + objectvm + "." + vmpkey + "}." + '"' + ';' ,nsindent+indent+indent+indent+asyncindent));
-                            sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return success;");
-                            if(!noasync)
-                                sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
-                            sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
-                            sb.AppendLine(new string(' ', nsindent+indent) + "}");
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        // doing a SQL INSERT
-                        // 
-                        // this code will operate differently if there is:
-                        // pkey value
-                        // fkey + parent table
-                        // ukey + identity table
+//                         if(vmmsg == "")
+//                         {
+//                             sb.AppendLine(this.IndentText("return false;",nsindent+indent+indent+indent+asyncindent));
+//                         }
+//                         else
+//                         {
+//                             sb.Append(this.IndentText( "{",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot find record associated with id:{" + objectvm + "."+vmpkey + "}." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText( "return false;",nsindent+indent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText( "}",nsindent+indent+indent+asyncindent));
+//                         }
+//                         if(facadetype == "update" )
+//                         {
+//                             // map the update fields here
+//                             sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "model","",objectvm,modelpkey+','+modelfkey),nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText(dbpropname + ".Update(" + modelname + ");",nsindent+indent+indent+asyncindent));
+//                         }
+//                         else
+//                         {
+//                             sb.Append(this.IndentText(dbpropname + ".Remove(" + modelname + ");",nsindent+indent+indent+asyncindent));
+//                         }
+//                         if(dbsave)
+//                         {
+//                             // the double-negative means that this is NOT saved in the Controller so do it here
+//                             sb.Append(this.IndentText("bool success = true;",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("try",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("{",nsindent+indent+indent+asyncindent));
+//                             if(noasync)
+//                             {
+//                                 sb.Append(this.IndentText($"{dbpropname}.SaveChanges();",nsindent+indent+indent+indent+asyncindent));
+//                             }
+//                             else
+//                             {
+//                                 sb.Append(this.IndentText($"await {dbpropname}.SaveChangesAsync();",nsindent+indent+indent+indent+asyncindent));
+//                             }
+//                             sb.Append(this.IndentText("}",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("catch",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("{",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("success = false;",nsindent+indent+indent+indent+asyncindent));
+//                             if(vmmsg == "")
+//                                 sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot save changes to id:{"+objectvm + "." + vmpkey + "}." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("}",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText($"if(success == false)",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot "+facadetype+" record associated with id:{" + objectvm + "." + vmpkey + "}." + '"' + ';' ,nsindent+indent+indent+indent+asyncindent));
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return success;");
+//                             if(!noasync)
+//                                 sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
+//                             sb.AppendLine(new string(' ', nsindent+indent) + "}");
+//                             continue;
+//                         }
+//                     }
+//                     else
+//                     {
+//                         // doing a SQL INSERT
+//                         // 
+//                         // this code will operate differently if there is:
+//                         // pkey value
+//                         // fkey + parent table
+//                         // ukey + identity table
 
-                        // if there is no parent + fkey and no identity, but a pkey value passed-in 
-                        //    then we need to see if this exists
-                        //    if it does, don't insert a new record
-                        //    if it does not, insert a new record with this as the pkey
-                        // else if there is no parent + fkey and no identity and no pkey value passed-in 
-                        //    then generate the pkey and insert a new record
+//                         // if there is no parent + fkey and no identity, but a pkey value passed-in 
+//                         //    then we need to see if this exists
+//                         //    if it does, don't insert a new record
+//                         //    if it does not, insert a new record with this as the pkey
+//                         // else if there is no parent + fkey and no identity and no pkey value passed-in 
+//                         //    then generate the pkey and insert a new record
 
-                        if(modelfkey == "" && noidentity)
-                        {
-                            sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// check whether this {modelname} exists");
-                            sb.Append( 
-                                this.IndentText(
-                                    this.GetSelectOneQueryText(
-                                        modelname,
-                                        dbpropname,
-                                        modelparents,
-                                        modelparkey,
-                                        modelpkey,
-                                        objectvm + "."+ vmpkey,
-                                        "",
-                                        "",
-                                        "",
-                                        "",
-                                        indent,
-                                        objectmodel,
-                                        noasync)
-                                    ,nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText($"if({modelname} != null)",nsindent+indent+indent+asyncindent));
-                            if(vmmsg == "")
-                            {
-                                sb.AppendLine(this.IndentText("return false;",nsindent+indent+indent+indent+asyncindent));
-                            }
-                            else
-                            {
-                                sb.Append(this.IndentText( "{",nsindent+indent+indent+asyncindent));
-                                sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot create a new record as id:{" + objectvm + "." + vmpkey + "} exists." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
-                                sb.Append(this.IndentText( "return false;",nsindent+indent+indent+indent+asyncindent));
-                                sb.Append(this.IndentText( "}",nsindent+indent+indent+asyncindent));
-                            }
-                        }
-                        else if(modelfkey != "" && noidentity)
-                        {
-                            // there is a parent - here we check whether the parent exists
-                            sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// check whether the parent {modelparent} exists");
-                            sb.Append( 
-                                this.IndentText(
-                                    this.GetSelectOneQueryText(
-                                        modelname,
-                                        dbpropname,
-                                        modelparents,
-                                        modelparkey,
-                                        modelpkey,
-                                        objectvm + "."+ vmpkey,
-                                        modelfkey,
-                                        objectvm + "." + vmfkey,
-                                        "",
-                                        "",
-                                        indent,
-                                        objectmodel,
-                                        noasync)
-                                    ,nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
-                            if(vmmsg == "")
-                            {
-                                sb.AppendLine(this.IndentText("return false;",nsindent+indent+indent+indent+asyncindent));
-                            }
-                            else
-                            {
-                                sb.Append(this.IndentText( "{",nsindent+indent+indent+asyncindent));
-                                sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot create a new record as "+modelparent+"."+modelparkey+" = {"+objectvm + "." + vmfkey + "} does not exist." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
-                                sb.Append(this.IndentText( "return false;",nsindent+indent+indent+indent+asyncindent));
-                                sb.Append(this.IndentText( "}",nsindent+indent+indent+asyncindent));
-                            }
-                        }
-                        else if(modelfkey != "" && vmukey != "" && !noidentity)
-                        {
-                            // there is a parent - here we check whether the parent exists
-                            sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// check whether the parent {modelparent} exists and is owned by this user");
-                            sb.Append( 
-                                this.IndentText(
-                                    this.GetSelectOneQueryText(
-                                        modelname,
-                                        dbpropname,
-                                        modelparents,
-                                        "",
-                                        "",
-                                        objectvm + "."+ vmpkey,
-                                        modelfkey,
-                                        objectvm + "."+ vmfkey,
-                                        identitytableid,
-                                        objectvm + "."+ vmukey,
-                                        indent,
-                                        objectmodel,
-                                        noasync)
-                                    ,nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
-                            if(vmmsg == "")
-                            {
-                                sb.AppendLine(this.IndentText("return false;",nsindent+indent+indent+indent+asyncindent));
-                            }
-                            else
-                            {
-                                sb.Append(this.IndentText( "{",nsindent+indent+indent+asyncindent));
-                                sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot create a new record as "+modelparent+"."+modelparkey+" = {" + objectvm + "." + vmfkey + "} does not exist." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
-                                sb.Append(this.IndentText( "return false;",nsindent+indent+indent+indent+asyncindent));
-                                sb.Append(this.IndentText( "}",nsindent+indent+indent+asyncindent));
-                            }
-                        }
+//                         if(modelfkey == "" && noidentity)
+//                         {
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// check whether this {modelname} exists");
+//                             sb.Append( 
+//                                 this.IndentText(
+//                                     this.GetSelectOneQueryText(
+//                                         modelname,
+//                                         dbpropname,
+//                                         modelparents,
+//                                         modelparkey,
+//                                         modelpkey,
+//                                         objectvm + "."+ vmpkey,
+//                                         "",
+//                                         "",
+//                                         "",
+//                                         objectmodel,
+//                                         noasync)
+//                                     ,nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText($"if({modelname} != null)",nsindent+indent+indent+asyncindent));
+//                             if(vmmsg == "")
+//                             {
+//                                 sb.AppendLine(this.IndentText("return false;",nsindent+indent+indent+indent+asyncindent));
+//                             }
+//                             else
+//                             {
+//                                 sb.Append(this.IndentText( "{",nsindent+indent+indent+asyncindent));
+//                                 sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot create a new record as id:{" + objectvm + "." + vmpkey + "} exists." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
+//                                 sb.Append(this.IndentText( "return false;",nsindent+indent+indent+indent+asyncindent));
+//                                 sb.Append(this.IndentText( "}",nsindent+indent+indent+asyncindent));
+//                             }
+//                         }
+//                         else if( noidentity)
+//                         {
+//                             // there is a parent - here we check whether the parent exists
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// check whether the parent {modelparent} exists");
+//                             sb.Append( 
+//                                 this.IndentText(
+//                                     this.GetSelectOneQueryText(
+//                                         modelname,
+//                                         dbpropname,
+//                                         modelparents,
+//                                         modelparkey,
+//                                         modelpkey,
+//                                         objectvm + "."+ vmpkey,
+//                                         objectvm + "." + vmfkey,
+//                                         "",
+//                                         "",
+//                                         objectmodel,
+//                                         noasync)
+//                                     ,nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
+//                             if(vmmsg == "")
+//                             {
+//                                 sb.AppendLine(this.IndentText("return false;",nsindent+indent+indent+indent+asyncindent));
+//                             }
+//                             else
+//                             {
+//                                 sb.Append(this.IndentText( "{",nsindent+indent+indent+asyncindent));
+//                                 sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot create a new record as "+modelparent+"."+modelparkey+" = {"+objectvm + "." + vmfkey + "} does not exist." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
+//                                 sb.Append(this.IndentText( "return false;",nsindent+indent+indent+indent+asyncindent));
+//                                 sb.Append(this.IndentText( "}",nsindent+indent+indent+asyncindent));
+//                             }
+//                         }
+//                         else if(vmukey != "" && !noidentity)
+//                         {
+//                             // there is a parent - here we check whether the parent exists
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// check whether the parent {modelparent} exists and is owned by this user");
+//                             sb.Append( 
+//                                 this.IndentText(
+//                                     this.GetSelectOneQueryText(
+//                                         modelname,
+//                                         dbpropname,
+//                                         modelparents,
+//                                         "",
+//                                         "",
+//                                         objectvm + "."+ vmpkey,
+//                                         objectvm + "."+ vmfkey,
+//                                         identitytableid,
+//                                         objectvm + "."+ vmukey,
+//                                         objectmodel,
+//                                         noasync)
+//                                     ,nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText($"if({modelname} == null)",nsindent+indent+indent+asyncindent));
+//                             if(vmmsg == "")
+//                             {
+//                                 sb.AppendLine(this.IndentText("return false;",nsindent+indent+indent+indent+asyncindent));
+//                             }
+//                             else
+//                             {
+//                                 sb.Append(this.IndentText( "{",nsindent+indent+indent+asyncindent));
+//                                 sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot create a new record as "+modelparent+"."+modelparkey+" = {" + objectvm + "." + vmfkey + "} does not exist." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
+//                                 sb.Append(this.IndentText( "return false;",nsindent+indent+indent+indent+asyncindent));
+//                                 sb.Append(this.IndentText( "}",nsindent+indent+indent+asyncindent));
+//                             }
+//                         }
 
-                        // map the create fields here
-                        sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "model","",objectvm,modelpkey+','+modelfkey),nsindent+indent+indent+asyncindent));
+//                         // map the create fields here
+//                         sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "model","",objectvm,modelpkey+','+modelfkey),nsindent+indent+indent+asyncindent));
 
 
-                        // try to save the newly-created record
-                        sb.Append(this.IndentText(dbpropname + ".Add(" + modelname + ");",nsindent+indent+indent+asyncindent));
-                        if(dbsave)
-                        {
-                            // the double-negative means that this is NOT saved in the Controller so do it here
-                            sb.Append(this.IndentText("bool success = true;",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("try",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("{",nsindent+indent+indent+asyncindent));
-                            if(noasync)
-                            {
-                                sb.Append(this.IndentText($"{dbpropname}.SaveChanges();",nsindent+indent+indent+indent+asyncindent));
-                            }
-                            else
-                            {
-                                sb.Append(this.IndentText($"await {dbpropname}.SaveChangesAsync();",nsindent+indent+indent+indent+asyncindent));
-                            }
-                            sb.Append(this.IndentText("}",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("catch",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("{",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("success = false;",nsindent+indent+indent+indent+asyncindent));
-                            if(vmmsg == "")
-                                sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot save changes to id:{"+objectvm + "." + vmpkey + "}." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText("}",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText($"if(success == false)",nsindent+indent+indent+asyncindent));
-                            sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot "+facadetype+" record associated with id:{" + objectvm + "."+ vmpkey + "}." + '"' + ';' ,nsindent+indent+indent+indent+asyncindent));
-                            sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return success;");
-                            if(!noasync)
-                                sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
-                            sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
-                            sb.AppendLine(new string(' ', nsindent+indent) + "}");
-                            continue;
-                        }
-                    }
+//                         // try to save the newly-created record
+//                         sb.Append(this.IndentText(dbpropname + ".Add(" + modelname + ");",nsindent+indent+indent+asyncindent));
+//                         if(dbsave)
+//                         {
+//                             // the double-negative means that this is NOT saved in the Controller so do it here
+//                             sb.Append(this.IndentText("bool success = true;",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("try",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("{",nsindent+indent+indent+asyncindent));
+//                             if(noasync)
+//                             {
+//                                 sb.Append(this.IndentText($"{dbpropname}.SaveChanges();",nsindent+indent+indent+indent+asyncindent));
+//                             }
+//                             else
+//                             {
+//                                 sb.Append(this.IndentText($"await {dbpropname}.SaveChangesAsync();",nsindent+indent+indent+indent+asyncindent));
+//                             }
+//                             sb.Append(this.IndentText("}",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("catch",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("{",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("success = false;",nsindent+indent+indent+indent+asyncindent));
+//                             if(vmmsg == "")
+//                                 sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot save changes to id:{"+objectvm + "." + vmpkey + "}." + '"' + ';',nsindent+indent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText("}",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText($"if(success == false)",nsindent+indent+indent+asyncindent));
+//                             sb.Append(this.IndentText( objectvm + "."+vmmsg+" = $\"Cannot "+facadetype+" record associated with id:{" + objectvm + "."+ vmpkey + "}." + '"' + ';' ,nsindent+indent+indent+indent+asyncindent));
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"return success;");
+//                             if(!noasync)
+//                                 sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
+//                             sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
+//                             sb.AppendLine(new string(' ', nsindent+indent) + "}");
+//                             continue;
+//                         }
+//                     }
 
 
-            // string table,
-            // string context = "", 
-            // string parents = "", 
-            // string parentkeyfieldname = "", 
-            // string pkeyfieldname = "", 
-            // string pkeyparameter = "", 
-            // string fkeyfieldname = "", 
-            // string fkeyparameter = "", 
-            // string ukeyfieldname = "", 
-            // string ukeyparameter = "", 
+//             // string table,
+//             // string context = "", 
+//             // string parents = "", 
+//             // string parentkeyfieldname = "", 
+//             // string pkeyfieldname = "", 
+//             // string pkeyparameter = "", 
+//             // string fkeyfieldname = "", 
+//             // string fkeyparameter = "", 
+//             // string ukeyfieldname = "", 
+//             // string ukeyparameter = "", 
 
-                    if(!noasync)
-                        sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
-                    sb.AppendLine(new string(' ', nsindent+indent) + "}");
-                    continue;
-                }
-
-
-                   // sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// query {modelname} for a record without additional checks");
-
-                // sb.AppendLine();
-                // if(!noasync)
-                // {
-                //     sb.AppendLine(new string(' ', nsindent+indent) + $"public async Task<bool> Push({vmname} vm)");
-                // }
-                // else
-                // {
-                //     sb.AppendLine(new string(' ', nsindent+indent) + $"public bool Push({vmname} vm)");
-                // }
-                // sb.AppendLine(new string(' ', nsindent+indent) + "{");
-                // sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "model") ,nsindent+indent+indent));
-                // sb.AppendLine(new string(' ', nsindent+indent) + "}");
-                // sb.AppendLine();
-
-                // if(!noasync)
-                // {
-                //     sb.AppendLine(new string(' ', nsindent+indent) + $"public async Task<{vmname}> Default()");
-                // }
-                // else
-                // {
-                //     sb.AppendLine(new string(' ', nsindent+indent) + $"public {vmname} Default()");
-                // }
-
-                // sb.AppendLine(new string(' ', nsindent+indent) + "{");
-                // sb.Append(this.IndentText(this.GetModelVmDef aultValueText(source, vmname, "vm"),nsindent+indent+indent));
-                // sb.AppendLine(new string(' ', nsindent+indent) + "}");
+//                     if(!noasync)
+//                         sb.AppendLine(new string(' ', nsindent+indent+indent) + "});");
+//                     sb.AppendLine(new string(' ', nsindent+indent+indent) + "return " + returntext);
+//                     sb.AppendLine(new string(' ', nsindent+indent) + "}");
+//                     continue;
+//                 }
 
 
-            }
+//                    // sb.AppendLine(new string(' ', nsindent+indent+indent+asyncindent) + $"// query {modelname} for a record without additional checks");
+
+//                 // sb.AppendLine();
+//                 // if(!noasync)
+//                 // {
+//                 //     sb.AppendLine(new string(' ', nsindent+indent) + $"public async Task<bool> Push({vmname} vm)");
+//                 // }
+//                 // else
+//                 // {
+//                 //     sb.AppendLine(new string(' ', nsindent+indent) + $"public bool Push({vmname} vm)");
+//                 // }
+//                 // sb.AppendLine(new string(' ', nsindent+indent) + "{");
+//                 // sb.Append(this.IndentText(this.GetModelToVmMappingText(source, modelname, vmname, "model") ,nsindent+indent+indent));
+//                 // sb.AppendLine(new string(' ', nsindent+indent) + "}");
+//                 // sb.AppendLine();
+
+//                 // if(!noasync)
+//                 // {
+//                 //     sb.AppendLine(new string(' ', nsindent+indent) + $"public async Task<{vmname}> Default()");
+//                 // }
+//                 // else
+//                 // {
+//                 //     sb.AppendLine(new string(' ', nsindent+indent) + $"public {vmname} Default()");
+//                 // }
+
+//                 // sb.AppendLine(new string(' ', nsindent+indent) + "{");
+//                 // sb.Append(this.IndentText(this.GetModelVmDef aultValueText(source, vmname, "vm"),nsindent+indent+indent));
+//                 // sb.AppendLine(new string(' ', nsindent+indent) + "}");
 
 
-            return sb.ToString();
-        }
+//             }
 
-#endregion generate-facade
+
+//             return sb.ToString();
+//         }
+
+// #endregion generate-facade
 
 #region general-helper-methods
 
@@ -2592,7 +2973,7 @@ namespace Seamlex.Utilities
             return longtype;
         } 
 
-        public string GetModelToVmMappingText(mvvm source, string modelname, string vmname, string lhs = "model", string modelobject = "", string vmobject = "", string skipfields = "")
+        public string GetModelToVmMappingText(mvvm source, string modelname, string vmname, string lhs = "model", string modelobject = "", string vmobject = "", string skipfields = "", bool nohelper = true, char separator = ';', bool nolhsobject = false)
         {
             // ignore indents (these can be fixed later)
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
@@ -2642,59 +3023,67 @@ namespace Seamlex.Utilities
                     rhsfname = genfield.mfname;
                 }
 
+                string lhsobject = lhsname + '.';
+                if(nolhsobject)
+                    lhsobject = "";
+
                 //WrapProperty
 
                 if(lhstype.Contains("string") && rhstype.Contains("string"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname} ?? \"\";");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = {rhsname}.{rhsfname} ?? \"\"{separator}");
                 }
                 else if(lhstype.Contains("int32") && rhstype.Contains("string"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = System.Int32.Parse('0' + ({rhsname}.{rhsfname} ?? \"0\").ToCharArray().Where(Char.IsDigit)).PadLeft(9,'0'));");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = System.Int32.Parse('0' + ({rhsname}.{rhsfname} ?? \"0\").ToCharArray().Where(Char.IsDigit)).PadLeft(9,'0')){separator}");
                 }
                 else if(lhstype.Contains("bool") && rhstype.Contains("string"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = ( ({rhsname}.{rhsfname} ?? \"\").ToLower().StartsWith('t') || ({rhsname}.{rhsfname} ?? \"\").ToLower().StartsWith('1') || ({rhsname}.{rhsfname} ?? \"\").ToLower().StartsWith('y')  );");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = ( ({rhsname}.{rhsfname} ?? \"\").ToLower().StartsWith('t') || ({rhsname}.{rhsfname} ?? \"\").ToLower().StartsWith('1') || ({rhsname}.{rhsfname} ?? \"\").ToLower().StartsWith('y')  ){separator}");
                 }
                 else if(lhstype.Contains("date") && rhstype.Contains("string"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = System.DateTime.Parse({rhsname}.{rhsfname} ?? \"\");");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = System.DateTime.Parse({rhsname}.{rhsfname} ?? \"\"){separator}");
                 }
                 else if(lhstype.Contains("int") && rhstype.Contains("int"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname} ?? 0;");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = {rhsname}.{rhsfname}{separator}"); //  Operator '??' cannot be applied to operands of type 'int' and 'float' [xp]csharp(CS0019)
                 }
                 else if(lhstype.Contains("bool") && rhstype.Contains("bool"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname} ?? false;");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = {rhsname}.{rhsfname} ?? false{separator}");
                 }
                 else if(lhstype.Contains("double") && rhstype.Contains("double"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname} ?? 0.00;");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = {rhsname}.{rhsfname}{separator}");
                 }
                 else if(lhstype.Contains("float") && rhstype.Contains("float"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname} ?? 0.00f;");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = {rhsname}.{rhsfname}{separator}");
                 }
                 else if(lhstype.Contains("decimal") && rhstype.Contains("decimal"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname} ?? 0.00m;");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = {rhsname}.{rhsfname}{separator}");
                 }
                 else if(lhstype.Contains("long") && rhstype.Contains("long"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname} ?? 0L;");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = {rhsname}.{rhsfname}{separator}");
                 }
                 else if(lhstype.Contains("guid") && rhstype.Contains("guid"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname} ?? System.Guid.NewGuid();");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = {rhsname}.{rhsfname} ?? System.Guid.NewGuid(){separator}");
+                }
+                else if(lhstype.Contains("guid") && rhstype.Contains("string"))
+                {
+                    sb.AppendLine($"{lhsobject}{lhsfname} = new System.Guid({rhsname}.{rhsfname}){separator}");
                 }
                 else if(lhstype.Contains("date") && ( rhstype.Contains("date?") || rhstype.Contains("datetime?") ) )
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname} ?? System.DateTime.Now;");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = {rhsname}.{rhsfname} ?? System.DateTime.Now{separator}");
                 }
                 else if(lhstype.Contains("date") && rhstype.Contains("date"))
                 {
-                    sb.AppendLine($"{lhsname}.{lhsfname} = {rhsname}.{rhsfname};");
+                    sb.AppendLine($"{lhsobject}{lhsfname} = {rhsname}.{rhsfname}{separator}");
                 }
 
             }
@@ -2708,6 +3097,26 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
 
             return sb.ToString();
         }
+
+
+
+        /// <summary>Convert text to proper case.  That is, capitalise the first letter in each word and convert the remainder to lower case.
+        /// </summary>
+        /// <param name="text">The text to convert to proper case.</param>
+        public string ToProper(string text)
+        {
+            if((text ?? "") == "")
+                return "";
+            if(text.Length == 1)
+                return text.ToUpper();
+            if(!text.Contains(' '))
+                return text[0].ToString().ToUpper() + text.Substring(1,text.Length-1).ToLower();
+            string output = "";
+            foreach(string part in text.Split(' ',StringSplitOptions.None))
+                output += (this.ToProper(part) + ' ');
+            return output.Substring(0,output.Length-1);
+        }
+
 
         public string GetModelVmDefaultValueText(mvvm source, string name, string lhs = "model", string modelobject = "", string vmobject = "", string skipfields = "")
         {
@@ -2727,7 +3136,7 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
                     continue;
 
                 string lhstype = genfield.mftype.ToLower().Trim();
-                if(lhs == "model")
+                if(lhs == "vm")
                     lhstype = genfield.vftype.ToLower().Trim();
                 if(lhstype=="")
                     lhstype = "string";
@@ -3017,12 +3426,12 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
                     synonym="cmk",
                     isctrlaction = true
                 },
-                new commafield(){
-                    singlename="cmfkey",
-                    pluralname="cmfkeys",
-                    synonym="cmf",
-                    isctrlaction = true
-                },
+                // new commafield(){
+                //     singlename="cmfkey",
+                //     pluralname="cmfkeys",
+                //     synonym="cmf",
+                //     isctrlaction = true
+                // },
                 new commafield(){
                     singlename="cmparent",
                     pluralname="cmparents",
@@ -3069,6 +3478,197 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
 
 #region parameter-helper-classes
 
+
+
+    public class querygen
+    {
+
+
+        public string table = "";
+        public string context  = "";
+        public string parents = "";
+        public string parentidfieldnames = "";
+        public string pkeyfieldname = "";
+        public string pkeyparameter = "";
+        public string usertable = "";
+        public string ukeyfieldname = ""; 
+        public string ukeyparameter = "";
+        public string objectname = "";
+        public bool noasync = true;
+        public bool novar = false;
+        public bool firstonly = true;
+        public bool checkparent = true;
+
+
+
+        /// <summary>Create an entity framework query to retrieve a single object
+        /// </summary>
+        /// <param name="table">The type name of the entity to be retrieved.</param>
+        /// <param name="context">The object name of the dbcontext.  Usually 'db'.</param>
+        /// <param name="parents">A period-separated list of entities that are parents of 'table'.</param>
+        /// <param name="parentidfieldnames">A period-separated list of the key fields for each parent entity.</param>
+        /// <param name="pkeyfieldname">Primary key field of the table we are retrieving.</param>
+        /// <param name="pkeyparameter">Variable name that we are comparing with the pkeyfieldname.</param>
+        /// <param name="usertable">Name of the Identity User entity.</param>
+        /// <param name="ukeyfieldname">Name of the key field in the Identity User entity.</param>
+        /// <param name="ukeyparameter">Variable name that we are comparing with the ukeyfieldname.</param>
+        /// <param name="indent">Characters to indent.</param>
+        /// <param name="objectname">Variable that will be the result of the query.</param>
+        /// <param name="noasync">Set to true for synchronous method calls.</param>
+        /// <param name="novar">Set to true to not prefix the statement with 'var '.</param>
+        public string GetQueryText()
+        {
+
+/*
+            var Items = db.Election
+                .Include(x => x.User)
+                .Where(y => y.User.Id.Equals(UserId))
+                .ToListAsync();
+
+            var Parent = await db.Election.Include(x => x.User).FirstOrDefaultAsync(x => x.ElectionId.Equals(ParentId) && x.User.Id.Equals(UserId));
+
+            var Item = await db.Ballot.Include(x => x.Election).Include(x => x.Election.User).FirstOrDefaultAsync(y => y.BallotId.Equals(ItemId) && y.Election.User.Id.Equals(UserId));
+
+*/
+
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            char separator = '.';
+            string[] parenttables = parents.Trim().Split(separator,StringSplitOptions.None);
+            string[] parentidfields = parentidfieldnames.Trim().Split(separator,StringSplitOptions.None);
+            string firstmethod = "FirstOrDefault";
+            string collation = "";
+            string awaittext = " ";
+            string vartext = "var ";
+
+            bool checkidentity = (usertable != "" && ukeyfieldname != "");
+            bool parentisidentity = (parents == usertable) && checkidentity;
+            bool hasparent = (parents != "" && parentidfieldnames != "" );
+            bool isidentity = ( table == usertable );
+            if(isidentity)
+                table = "Users";
+
+            if(!noasync)
+            {
+                // 2022-11-07 SNJW this errors if there are no records - changed to allow default
+                // firstmethod = "FirstAsync";
+                firstmethod = "FirstOrDefaultAsync";
+                awaittext = " await ";
+            }
+
+            if(!firstonly)
+            {
+                collation = "." + firstmethod.Replace("FirstOrDefault","ToList") + "()";
+                firstmethod = "Where";
+            }
+
+            if(novar)
+                vartext = "";
+
+            if(objectname == "")
+                objectname = table;
+
+            string includetables = "";
+            string includestatements = "";
+            for (int i = 0; i < parenttables.Length; i++)
+            {
+                // .Include(x => x.{parenttables[0]})
+                if(parenttables[i] != "")
+                {
+                    includetables = (includetables + '.' + parenttables[i]).Trim('.');
+                    includestatements += $".Include(x => x.{includetables})";
+                }
+            }
+
+            if(objectname == "")
+            {
+                return "";
+            }
+            else if(context == "")
+            {
+                // there is no parent table, just grab the data
+                sb.AppendLine($"{vartext}{objectname} = new {table}();");
+                if(pkeyparameter != "" && pkeyfieldname != "")
+                    sb.AppendLine($"{objectname}.{pkeyfieldname} = {pkeyparameter};");
+            }
+            else if(!checkparent && !checkidentity)
+            {
+                // there is no parent table, just grab the data
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}.{firstmethod}(x => x.{pkeyfieldname}.Equals({pkeyparameter}){collation};");
+            }
+            else if(checkparent && parentisidentity)
+            {
+                // we want to retrieve a single record and just need to filter on User.Id
+                // as well as the primary key for the table we are returning
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}.Include(x => x.{usertable}).{firstmethod}(y => y.{usertable}.{ukeyfieldname}.Equals({ukeyparameter})){collation};");
+            }
+            else if(checkparent && checkidentity && !noasync)
+            {
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}{includestatements}.{firstmethod}(y => y.{parenttables[0]}.{pkeyfieldname}.Equals({pkeyparameter}) && y.{parents}.{ukeyfieldname}.Equals({ukeyparameter})){collation};");
+            }
+            else if(parenttables[0] == "" && pkeyfieldname != "" && pkeyparameter != "" && noasync)
+            {
+                // there is no parent table, just grab the data
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}.{firstmethod}(x => x.{pkeyfieldname}.Equals({pkeyparameter}){collation};");
+            }
+            else if(parenttables.Length == 1 && pkeyfieldname != "" && pkeyparameter != "" && ukeyparameter == "" && ukeyfieldname == "")
+            {
+                // there is exactly one parent table and no Identity.
+                // we need to check that this both exists and is owned by the correct foreign key
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}.Include(x => x.{parenttables[0]}).{firstmethod}(y => y.{parenttables[0]}.{pkeyfieldname}.Equals({pkeyparameter})){collation};");
+            }
+            else if(isidentity)
+            {
+                // we are retrieving the User table 
+                // note: this is 'Users' in the db!!
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}.{firstmethod}(y => y.{pkeyfieldname}.Equals({pkeyparameter})){collation};");
+            }
+            else if(pkeyfieldname != "" && pkeyparameter != "" && ukeyparameter != "" && ukeyfieldname != "")
+            {
+                // There is identity-checking AND parent table checking
+//            var Parent = await db.Election.Include(x => x.User).FirstOrDefaultAsync(x => x.ElectionId.Equals(ParentId) && x.User.Id.Equals(UserId));
+
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}{includestatements}.{firstmethod}(y => y.{pkeyfieldname}.Equals({pkeyparameter}) && y.{parents}.{ukeyfieldname}.Equals({ukeyparameter})){collation};");
+            }
+            else 
+            {
+                // an error has occured 
+
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}{includestatements}.{firstmethod}(y => y.{pkeyfieldname}.Equals({pkeyparameter}) && y.{parents}.{ukeyfieldname}.Equals({ukeyparameter})){collation};");
+            }
+
+
+            return sb.ToString();
+        }
+
+/*
+            else if(context == "" && !onerecord)
+            {
+                // there create n empty collection
+                sb.AppendLine($"{vartext}{objectname} = new List<{table}>();");
+            }
+            else if(!checkparent && !checkidentity && !onerecord && !noasync)
+            {
+                // there is no parent table, just grab the data async
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}.ToListAsync();");
+            }
+            else if(!checkparent && !checkidentity && !onerecord && noasync)
+            {
+                // there is no parent table, just grab the data
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}.ToList();");
+            }
+            else if(parentisidentity && !onerecord && !noasync)
+            {
+                // we want to retrieve a bunch of records and just need to filter on User.Id
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}.Include(x => x.{usertable}).Where(y => y.{usertable}.{ukeyfieldname}.Equals({ukeyparameter}).ToListAsync();");
+            }
+            else if(parentisidentity && !onerecord && noasync)
+            {
+                // we want to retrieve a bunch of records and just need to filter on User.Id
+                sb.AppendLine($"{vartext}{objectname} ={awaittext}{context}.{table}.Include(x => x.{usertable}).Where(y => y.{usertable}.{ukeyfieldname}.Equals({ukeyparameter}).ToList();");
+            }
+*/
+
+    }
 
     public class frmbutton
     {
@@ -3146,14 +3746,14 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
         public string cmname {get;set;} = "";  // Model name
         public string cwname {get;set;} = "";  // View name
         public string cfname {get;set;} = "";  // Facade name
-        public string cvpkey {get;set;} = "";  // Colon-delimited ViewModel primary key fields
-        public string cvfkey {get;set;} = "";  // Colon-delimited ViewModel foreign key fields
-        public string cmpkey {get;set;} = "";  // Colon-delimited Model primary key fields
-        public string cmfkey {get;set;} = "";  // Colon-delimited Model foreign key fields
-        public string cmparent {get;set;} = "";  // Colon-delimited Model parent(+grandparent) table names
-        public string cmparkey {get;set;} = "";  // Colon-delimited Model parent(+grandparent) key names
-        public string cvukey {get;set;} = "";  // Colon-delimited action ViewModel user key fields
-        public string cvmsg {get;set;} = "";  // Colon-delimited action ViewModel message fields
+        public string cvpkey {get;set;} = "";  // ViewModel primary key fields
+        public string cvfkey {get;set;} = "";  // ViewModel foreign key fields
+        public string cmpkey {get;set;} = "";  // Model primary key fields
+        public string cmfkey {get;set;} = "";  // Model foreign key fields
+        public string cmparent {get;set;} = "";  // Model parent(+grandparent) table names
+        public string cmparkey {get;set;} = "";  // Model parent(+grandparent) key names
+        public string cvukey {get;set;} = "";  // action ViewModel user key fields
+        public string cvmsg {get;set;} = "";  // action ViewModel message fields
 
     }
 
@@ -3188,6 +3788,7 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
         public string mpkey {get;set;} = "";  // Specifies the primary key field in the Model.
         public string mfkey {get;set;} = "";  // Specifies the foreign key field in the Model.
         public string mparent {get;set;} = "";  // Specifies the parent (and grandparent(s)) of the Model.
+        public string mchild {get;set;} = "";  // Specifies all children of the Model.
         public string mparkey {get;set;} = "";  // Specifies the primary key in the parent of the Model.
 
         public string vpkey {get;set;} = "";  // Specifies the primary key field in the ViewModel.
@@ -3244,13 +3845,22 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
         public string cname {get;set;} = "";  // Name of the Controller class.
         public string cnamespace {get;set;} = "";  // Namespace of the Controller.
         public string croute {get;set;} = "";  // Name of the Action route.
-        public string cparent {get;set;} = "";  // Name of the parent class.
+        public string cparent {get;set;} = "";  // Name of the Controllerparent class.
         public string cdcontext {get;set;} = "";  // Class name of the ApplicationDbContext.
         public string cdpropname {get;set;} = "";  // Property name in each Contorller of the ApplicationDbContext.
         public string careaname {get;set;} = "";  // name of the Area this Controller is associated with
 
+
+        public bool chshared {get;set;} = false;  //  Whether Controller has shared helper methods.
+        public bool chidentity {get;set;} = false;  //  Whether Controller has Identity helper methods.
+        public bool cnoanonmg {get;set;} = false;  //  Whether Controller manages anonymous access.
+        public bool cnohelper {get;set;} = false;  //  Whether Controller uses helper methods.
+
+
         public bool cnofacade {get;set;} = false;  //  Whether Controller uses a facade.
         public bool cnouser {get;set;} = false;  // Whether Controller uses Identity.
+        public bool cnoanon {get;set;} = false;  // Whether Controller allows anonymous access to each method.
+
         public bool cnoasync {get;set;} = false;  // Whether Controller uses asynchronous methods.
         public bool cnodbsave {get;set;} = false;  // Whether Controller issues a dbsave command.
         public bool cnobinding {get;set;} = false;  // Whether Controller binds individual fields.
@@ -3265,7 +3875,7 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
         public string cvpkeys {get;set;} = "";  // Colon-delimited ViewModel primary key fields
         public string cvfkeys {get;set;} = "";  // Colon-delimited ViewModel foreign key fields
         public string cmpkeys {get;set;} = "";  // Colon-delimited Model primary key fields
-        public string cmfkeys {get;set;} = "";  // Colon-delimited Model foreign key fields
+        //public string cmfkeys {get;set;} = "";  // Colon-delimited Model foreign key fields
         public string cmparents {get;set;} = "";  // Colon-delimited Model parent(+grandparent) table names
         public string cmparkeys {get;set;} = "";  // Colon-delimited Model parent(+grandparent) table key fields
         public string cvukeys {get;set;} = "";  // Colon-delimited action ViewModel user key fields

@@ -758,6 +758,7 @@ namespace Seamlex.Utilities
                     helptext.Add("  -mpk|--mpkey       Specifies the primary key field in the Model.");
                     helptext.Add("  -mfk|--mfkey       Specifies the foreign key field in the Model.");
                     helptext.Add("  -mpt|--mparent     Specifies the parent of the Model.");
+                    helptext.Add("  -mpc|--mchild      Specifies the children of the Model.");
                     helptext.Add("  -mpp|--mparkey     Specifies the primary key field in parent of the Model.");
 
                     load.Add(new ParameterSetting(){
@@ -802,6 +803,24 @@ namespace Seamlex.Utilities
                             "Subsequent period-delimited Models (grandparents) are used for cross-checking ownership with Identity.",
                             "If this is the case, the final item should be '.AspNetUsers' or whatever the Identity table name is."
 
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CsFieldName
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--mchild",
+                        synonym = "-mpc",
+                        description = "Model Child Table",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -mpc childtable",
+                            "",
+                            "Specify the children (and lower) name for this Model.",
+                            "",
+                            "The format of this is:",
+                            "cmchild[.cmgrandchild][.cmgreatgrandchild][...]",
+                            "",
+                            "Subsequent period-delimited Models (grandchildren) are used for cross-checking."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.CsFieldName
@@ -888,7 +907,7 @@ namespace Seamlex.Utilities
 
 
 
-                    helptext.Add("  -wpc|--wpageclass  Specifies the CSS class wrapping the Info and Form sections.");
+                    helptext.Add("  -wpc|--wpageclass  Colon-delimited CSS classes wrapping the Info and Form sections.");
                     helptext.Add("  -wic|--winfoclass  Colon-delimited CSS classes wrapping the Info section above form fields.");
                     helptext.Add("  -wih|--winfohclass CSS class of the heading in the Info section.");
                     helptext.Add("  -wid|--winfohead   Heading for the information section.");
@@ -1221,11 +1240,11 @@ namespace Seamlex.Utilities
                         category = category,
                         setting = "--wpageclass",
                         synonym = "-wpc",
-                        description = "Specifies the CSS class wrapping the Info and Form sections",
+                        description = "Colon-delimited CSS classes wrapping the Info and Form sections",
                         helptext = new List<string>(){
-                            $"Usage: csgen {category} -wpc pageclass",
+                            $"Usage: csgen {category} -wpc pageclasses",
                             "",
-                            "Specify a CSS class wrapping the Info and Form sections."
+                            "Colon-delimited CSS classes wrapping the Info and Form sections."
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.CssName,
@@ -1408,11 +1427,19 @@ namespace Seamlex.Utilities
                     helptext.Add("  -cdp|--cdpropname  Property name of the ApplicationDbContext.");
                     helptext.Add("  -cur|--curoute     Name of the Controller URI route.");
 
+
+// SNJW TO DO add these
+                    helptext.Add("  -chs|--chshared    Add shared helper methods to this Controller.");
+                    helptext.Add("  -chi|--chidentity  Add Identity helper methods to this Controller.");
+                    helptext.Add("  -cnm|--cnoanonmg   Controller does not manage anonymous access.");
+                    helptext.Add("  -cnh|--cnohelper   Controller does use helper methods.");
+
                     helptext.Add("  -cnf|--cnofacade   Controller does not use a facade.");
                     helptext.Add("  -cni|--cnouser     Controller does not use Identity.");
+                    helptext.Add("  -cnn|--cnoanon     Controller does not allow anonymous access.");
                     helptext.Add("  -cna|--cnoasync    Controller does not use asynchronous methods.");
                     helptext.Add("  -cnd|--cnodbsave   Controller does not use issue a dbsave command.");
-                    helptext.Add("  -cnb|--cnobinding  Controller does not use bind individual fields.");
+                    helptext.Add("  -cnb|--cnobinding  Controller does not bind individual fields.");
 
                     helptext.Add("  -cap|--cacthttps   Colon-delimited GET/POST action properties.");
                     helptext.Add("  -can|--cactnames   Colon-delimited action names.");
@@ -1464,6 +1491,66 @@ namespace Seamlex.Utilities
                         nextparatype = ParameterType.Any
                     });
 
+
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--chshared",
+                        synonym = "-chs",
+                        description = "Add shared helper methods to this Controller",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -chs",
+                            "",
+                            "By default the Controller will not have shared helper methods.",
+                            "It is assumed that these are in a parent class.",
+                            "Set this parameter to have these created in the current Controller."
+                        },
+                        paratype = ParameterType.Switch
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--chidentity",
+                        synonym = "-chi",
+                        description = "Add Identity helper methods to this Controller",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -chi",
+                            "",
+                            "By default the Controller will not have helper methods for Identity.",
+                            "It is assumed that these are in a parent class.",
+                            "Set this parameter to have these created in the current Controller."
+                        },
+                        paratype = ParameterType.Switch
+                    });
+
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--cnoanonmg",
+                        synonym = "-cnm",
+                        description = "Do not manage anonymous access in this Controller",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -cnm",
+                            "",
+                            "If Identity is set and the --cnoanon option is not set, then anonymous users can access Controller actions.",
+                            "In many situations, anonymous users are handled different to other users.",
+                            "If this flag is set, there will not be boilerplate code to check for an anonymous user."
+                        },
+                        paratype = ParameterType.Switch
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--cnohelper",
+                        synonym = "-cnh",
+                        description = "Do not use helper methods in this Controller",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -cnh",
+                            "",
+                            "By default the Controller will use helper methods for repeated shared and/or Identity actions.",
+                            "These include converting GUIDs and checking for Anonymous Users.",
+                            "If this is set, these actions will be hard-coded in each line where required."
+                        },
+                        paratype = ParameterType.Switch
+                    });
+
+
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--cnofacade",
@@ -1487,6 +1574,21 @@ namespace Seamlex.Utilities
                             "",
                             "By default the Controller will use the Identity framework.",
                             "Set this to not use Identity in the Controller."
+                        },
+                        paratype = ParameterType.Switch
+                    });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--cnoanon",
+                        synonym = "-cnn",
+                        description = "Do not allow anonymous access in each method of the Controller",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -cnn",
+                            "",
+                            "By default the Controller will leave each method anonymous for Identity purposes.",
+                            "It will instead do validation in each method.",
+                            "",
+                            "If -cni|--cnouser is set then this setting does nothing."
                         },
                         paratype = ParameterType.Switch
                     });
@@ -1662,7 +1764,7 @@ namespace Seamlex.Utilities
                     helptext.Add("  -cvk|--cvpkeys     Colon-delimited ViewModel primary key fields.");
                     helptext.Add("  -cvf|--cvfkeys     Colon-delimited ViewModel foreign key fields.");
                     helptext.Add("  -cmk|--cmpkeys     Colon-delimited Model primary key fields.");
-                    helptext.Add("  -cmf|--cmfkeys     Colon-delimited Model foreign key fields.");
+                    //helptext.Add("  -cmf|--cmfkeys     Colon-delimited Model foreign key fields.");
                     helptext.Add("  -cmp|--cmparents   Colon-delimited Model parent(+grandparent) names.");
                     helptext.Add("  -cmy|--cmparkeys   Colon-delimited Model parent(+grandparent) key fields.");
                     helptext.Add("  -cmu|--cmukeys     Colon-delimited action Model User key fields.");
@@ -1711,20 +1813,20 @@ namespace Seamlex.Utilities
                         nextparatype = ParameterType.Any,
                         nextparaseparator = ":"
                     });
-                    load.Add(new ParameterSetting(){
-                        category = category,
-                        setting = "--cmfkeys",
-                        synonym = "-cmf",
-                        description = "Colon-delimited action Model foreign key fields",
-                        helptext = new List<string>(){
-                            $"Usage: csgen {category} -cmf modelfkeynames",
-                            "",
-                            "Colon-delimited action Model foreign key fields."
-                        },
-                        paratype = ParameterType.Input,
-                        nextparatype = ParameterType.Any,
-                        nextparaseparator = ":"
-                    });
+                    // load.Add(new ParameterSetting(){
+                    //     category = category,
+                    //     setting = "--cmfkeys",
+                    //     synonym = "-cmf",
+                    //     description = "Colon-delimited action Model foreign key fields",
+                    //     helptext = new List<string>(){
+                    //         $"Usage: csgen {category} -cmf modelfkeynames",
+                    //         "",
+                    //         "Colon-delimited action Model foreign key fields."
+                    //     },
+                    //     paratype = ParameterType.Input,
+                    //     nextparatype = ParameterType.Any,
+                    //     nextparaseparator = ":"
+                    // });
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--cmparents",
@@ -1741,7 +1843,18 @@ namespace Seamlex.Utilities
                             $"The colon-delimited list is used in the {category.Substring(0,1).ToUpper()}{category.Substring(1,category.Length-1)}.",
                             "",
                             "Subsequent period-delimited Models (grandparents) are used for cross-checking ownership with Identity.",
-                            "If this is the case, the final item should be '.AspNetUsers' or whatever the Identity table name is."
+                            "If this is the case, the final item should be '.User' or '.AspNetUsers' or whatever the Identity table name is.",
+                            "Therefore, if this Entity is a top-level table, this field should simply be 'User'.",
+                            "",
+                            "It is also used to cross-check ownership of parent tables in Controller actions.",
+                            "",
+                            "If this is not set, no checking of parents will be made.",
+                            "",
+                            "If the top-level table is not 'User', then no cross-checking of ownership in Identity will be made.",
+                            "",
+                            "For example, if the Identity table is 'User' and you have Projects and Tasks, when creating the Task Controller:",
+                            "-cmp Project.User",
+                            ""
                         },
                         paratype = ParameterType.Input,
                         nextparatype = ParameterType.Any,

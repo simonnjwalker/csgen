@@ -19,14 +19,156 @@ namespace Seamlex.Utilities
             bool testwparameters = false;
             bool testcparameters = false;
             bool testcontroller = false; // 
+            bool testcontrollers = true; // 
             bool testmodel = false;
             bool testview = false;
             bool testvm = false;
+            bool testonequery = false;
+
+
+
+            if(testcontrollers)
+            {
+
+                // string output = @"c:\SNJW\code\xp\Areas\Election\Controllers\ElectionController2.cs";
+
+                List<string> models = new List<string>();
+                models.Add("Election");
+                models.Add("Ballot");
+                models.Add("Choice");
+                List<string> parents = new List<string>();
+                parents.Add("User");
+                parents.Add("Election.User");
+                parents.Add("Ballot.Election.User");
+                List<string> parkeys = new List<string>();
+                parkeys.Add("Id");
+                parkeys.Add("ElectionId.Id");
+                parkeys.Add("BallotId.ElectionId.Id");
+
+                for (int i = 0; i < models.Count; i++)
+                {
+                    string model = models[i];
+                    string parent = parents[i];
+                    string parkey = parkeys[i];
+
+                    cg.parameters.Clear();
+                    cg.parameters.Add("controller");
+                    cg.parameters.Add("--cname");
+                    cg.parameters.Add($"{model}Controller");
+                    cg.parameters.Add("--cnamespace");
+                    cg.parameters.Add("xp.Controllers");
+                    // cg.parameters.Add("--cparent");
+                    // cg.parameters.Add("Controller");
+                    cg.parameters.Add("--cdcontext");
+                    cg.parameters.Add("xp.Data.ApplicationDbContext");
+                    cg.parameters.Add("--careaname");
+                    cg.parameters.Add("Election");
+
+                    cg.parameters.Add("--cnobinding");
+
+                    cg.parameters.Add("--source");
+                    cg.parameters.Add(@"C:\SNJW\code\scriptloader\scriptloader-election.csv");
+
+                    cg.parameters.Add("--output");
+                    cg.parameters.Add($@"c:\SNJW\code\xp\Areas\Election\Controllers\{model}Controller2.cs");
+
+                    cg.parameters.Add("--cacthttps");
+                    cg.parameters.Add("GET/POST:GET:GET/POST:GET/POST:GET");
+                    cg.parameters.Add("--cactnames");
+                    cg.parameters.Add("Create:Index:Edit:Delete:Details");
+                    cg.parameters.Add("--cacttypes");
+                    cg.parameters.Add("Create:Index:Edit:Delete:Details");
+
+
+                    cg.parameters.Add("--vname");  //  Colon-delimited ViewModel names
+                    cg.parameters.Add(model.ToLower());
+
+                    cg.parameters.Add("--cvnames");  //  Colon-delimited ViewModel names
+                    cg.parameters.Add(model.ToLower());
+                    cg.parameters.Add("--cmnames");  // Colon-delimited Model names
+                    cg.parameters.Add(model);
+                    cg.parameters.Add("--cwnames");  // Colon-delimited View names
+                    cg.parameters.Add($"Create {model}");
+                    cg.parameters.Add("--cvpkeys");  // Colon-delimited ViewModel primary key fields
+                    cg.parameters.Add("id");
+                    cg.parameters.Add("--cvfkeys");  // Colon-delimited ViewModel foreign key fields
+                    cg.parameters.Add("userid");
+                    cg.parameters.Add("--cmpkeys");  // Colon-delimited Model primary key fields
+                    cg.parameters.Add($"{model}Id");
+                    
+                    // cg.parameters.Add("--cmfkeys");  // Colon-delimited Model foreign key fields
+                    // cg.parameters.Add("ElectionAgentId");
+                    cg.parameters.Add("--cmparkeys");  // Colon-delimited Model foreign key fields
+                    cg.parameters.Add(parkey);
+                    cg.parameters.Add("--cmparents");  // Colon-delimited Model parent table names
+                    cg.parameters.Add(parent);
+                    cg.parameters.Add("--cvukeys");  // Colon-delimited action ViewModel user key fields
+                    cg.parameters.Add("userid");
+                    cg.parameters.Add("--cvmsgs");  // Colon-delimited action ViewModel message fields
+                    cg.parameters.Add("message");
+
+                    cg.parameters.Add("--cfnames");  // Colon-delimited Facade names
+                    cg.parameters.Add("enfacade");
+
+                    cg.parameters.Add("--fillempty");
+
+                    cg.parameters.Add("--cnofacade");
+
+                    cg.parameters.Add("--cparent");
+                    cg.parameters.Add("IdentityController");
+                    cg.parameters.Add("--chshared");
+                    cg.parameters.Add("--chidentity");
+                    cg.parameters.Add("--cnoanonmg");
+
+                    cg.Run();
+                
+                }
+
+
+
+                // System.Diagnostics.Process.Start("notepad.exe",output);
+                return;                
+            }
+
+
+            if(testonequery)
+            {
+                var querygen = new querygen();
+                querygen.table = "Election";
+                querygen.context  = "db";
+                querygen.parents = "User";
+                querygen.parentidfieldnames = "Id";
+                querygen.pkeyfieldname = "ElectionId";
+                querygen.pkeyparameter = "ParentId";
+                querygen.usertable = "User";
+                querygen.ukeyfieldname = "Id"; 
+                querygen.ukeyparameter = "UserId";
+                querygen.objectname = "Parent";
+                querygen.noasync = true;
+                querygen.novar = false;
+                Console.WriteLine(querygen.GetQueryText());
+
+                querygen.table = "Choice";
+                querygen.context  = "db";
+                querygen.parents = "Ballot.Election.User";
+                querygen.parentidfieldnames = "BallotId.ElectionId.Id";
+                querygen.pkeyfieldname = "ChoiceId";
+                querygen.pkeyparameter = "ItemId";
+                querygen.usertable = "User";
+                querygen.ukeyfieldname = "Id"; 
+                querygen.ukeyparameter = "UserId";
+                querygen.objectname = "Item";
+                querygen.noasync = true;
+                querygen.novar = false;
+                Console.WriteLine(querygen.GetQueryText());
+
+                return;
+            }
 
 
             if(testview)
             {
-                string output = @"c:\SNJW\code\xp\Areas\Election\Views\Create.cshtml";
+                string output = @"c:\SNJW\code\xp\Areas\Election\Views\Election\Create.cshtml";
                 cg.parameters.Clear();
                 cg.parameters.Add("view");
                 cg.parameters.Add("--wname");
@@ -42,7 +184,7 @@ namespace Seamlex.Utilities
                 cg.parameters.Add("--vfnames");
                 cg.parameters.Add("id,userid,code,name,desc,start,message");
                 cg.parameters.Add("--vftypes");
-                cg.parameters.Add("string,string,string,string,string,DateTime,string");
+                cg.parameters.Add("string,string,string,string,string,string,string");
                 cg.parameters.Add("--vfsizes");
                 cg.parameters.Add("32,32,10,0,0,0,100");
                 cg.parameters.Add("--vfdescs");
@@ -62,7 +204,7 @@ namespace Seamlex.Utilities
                 cg.parameters.Add("--wfdclasses");
                 cg.parameters.Add("col-md-6:single-input,col-md-6:single-input,col-md-6:single-input,col-md-6:single-input,col-md-12:single-input,col-md-6:single-input,col-md-6:single-input");
                 cg.parameters.Add("--wficlasses");
-                cg.parameters.Add(",,lni lni-user,lni lni-phone,lni lni-format,lni lni-comments-alt,lni lni-envelope");
+                cg.parameters.Add(",,lni lni-user,lni lni-phone,lni lni-envelope,lni lni-comments-alt,");
                 cg.parameters.Add("--wfclasses");
                 cg.parameters.Add("form-input,form-input,form-input,form-input,form-input,form-input,form-input");
 
@@ -95,11 +237,11 @@ namespace Seamlex.Utilities
                 cg.parameters.Add("lni lni-telegram-original");
 
                 cg.parameters.Add("--wfrmaction");
-                cg.parameters.Add("ed/Election/Create");
+                cg.parameters.Add("/en/Election/Create");
                 cg.parameters.Add("--wfrmmethod");
                 cg.parameters.Add("POST");
                 cg.parameters.Add("--wfrmclass");
-                cg.parameters.Add("row:col-lg-8:contact-form-wrapper");
+                cg.parameters.Add("row:col-lg-12:contact-form-wrapper");
                 cg.parameters.Add("--wfrmsub");
                 cg.parameters.Add("row");
 
@@ -131,7 +273,7 @@ namespace Seamlex.Utilities
 
 
                 cg.parameters.Add("--wpageclass");
-                cg.parameters.Add("container");
+                cg.parameters.Add("contact-style-3:container");
                 cg.parameters.Add("--winfoclass");
                 cg.parameters.Add("row justify-content-center:col-xxl-5 col-xl-5 col-lg-7 col-md-10:section-title text-center mb-50");
                 cg.parameters.Add("--winfohclass");
@@ -159,16 +301,26 @@ namespace Seamlex.Utilities
             if(testcontroller)
             {
 
-                string output = @"c:\SNJW\code\xp\Areas\Election\Controllers\ElectionController.cs";
+                string output = @"c:\SNJW\code\xp\Areas\Election\Controllers\ElectionController2.cs";
+
+                List<string> models = new List<string>();
+                List<string> parents = new List<string>();
+                List<string> parkeys = new List<string>();
+
+
+                cg.parameters.Add("--cmparkeys");  // Colon-delimited Model foreign key fields
+                cg.parameters.Add("Id");
+                cg.parameters.Add("--cmparents");  // Colon-delimited Model parent table names
+                cg.parameters.Add("User");                
 
                 cg.parameters.Clear();
                 cg.parameters.Add("controller");
                 cg.parameters.Add("--cname");
                 cg.parameters.Add("ElectionController");
                 cg.parameters.Add("--cnamespace");
-                cg.parameters.Add("Seamlex.MyEdApps");
-                cg.parameters.Add("--cparent");
-                cg.parameters.Add("Controller");
+                cg.parameters.Add("xp.Controllers");
+                // cg.parameters.Add("--cparent");
+                // cg.parameters.Add("Controller");
                 cg.parameters.Add("--cdcontext");
                 cg.parameters.Add("xp.Data.ApplicationDbContext");
                 cg.parameters.Add("--careaname");
@@ -206,8 +358,8 @@ namespace Seamlex.Utilities
                 cg.parameters.Add("--cmpkeys");  // Colon-delimited Model primary key fields
                 cg.parameters.Add("ElectionId");
                 
-                cg.parameters.Add("--cmfkeys");  // Colon-delimited Model foreign key fields
-                cg.parameters.Add("ElectionAgentId");
+                // cg.parameters.Add("--cmfkeys");  // Colon-delimited Model foreign key fields
+                // cg.parameters.Add("ElectionAgentId");
                 cg.parameters.Add("--cmparkeys");  // Colon-delimited Model foreign key fields
                 cg.parameters.Add("Id");
                 cg.parameters.Add("--cmparents");  // Colon-delimited Model parent table names
@@ -223,6 +375,13 @@ namespace Seamlex.Utilities
                 cg.parameters.Add("--fillempty");
 
                 cg.parameters.Add("--cnofacade");
+
+                cg.parameters.Add("--cparent");
+                cg.parameters.Add("IdentityController");
+                cg.parameters.Add("--chshared");
+                cg.parameters.Add("--chidentity");
+                cg.parameters.Add("--cnoanonmg");
+                //cg.parameters.Add("--cnohelper");
 
 
                 cg.Run();
@@ -477,7 +636,7 @@ c:\SNJW\code\shared\csgen.exe view --wname "Create Model" --sourcefile xoload-sm
                 cg.parameters.Add("--wfdclasses");
                 cg.parameters.Add("col-md-6:single-input");
                 cg.parameters.Add("--wficlasses");
-                cg.parameters.Add(",,lni lni-user,lni lni-phone,lni lni-format,lni lni-comments-alt,lni lni-envelope");
+                cg.parameters.Add(",,lni lni-user,lni lni-phone,lni lni-envelope,lni lni-comments-alt,");
                 cg.parameters.Add("--wfclasses");
                 cg.parameters.Add("form-input");
 
