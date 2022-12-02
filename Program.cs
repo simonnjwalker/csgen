@@ -19,13 +19,11 @@ namespace Seamlex.Utilities
             bool testwparameters = false;
             bool testcparameters = false;
             bool testcontroller = false; // 
-            bool testcontrollers = true; // 
+            bool testcontrollers = false; // 
             bool testmodel = false;
             bool testview = false;
             bool testvm = false;
             bool testonequery = false;
-
-
 
             if(testcontrollers)
             {
@@ -719,7 +717,7 @@ namespace lm.Controllers
 
 
  // c:\SNJW\code\shared\csgen.exe model --mname Ballot --source "C:\SNJW\code\scriptloader\scriptloader-election.csv" --output c:\SNJW\code\xp\Areas\Election\Models\data\Ballot.cs --mpkey BallotId --mfkey BallotElectionId --mparent Election
-                string output = @"c:\SNJW\code\xp\Areas\Election\Models\data\Ballot.cs";               
+                string output = @"c:\SNJW\code\xp\Areas\Election\Models\data\Ballot2.cs";               
                 cg.parameters.Clear();
                 cg.parameters.Add("model");
                 cg.parameters.Add("--mname");
@@ -736,6 +734,8 @@ namespace lm.Controllers
                 cg.parameters.Add("BallotElectionId");
                 cg.parameters.Add("--mparent");
                 cg.parameters.Add("Election");
+                cg.parameters.Add("--mchild");
+                cg.parameters.Add("Choice+Option");
 
 
                 cg.Run();
@@ -747,14 +747,15 @@ namespace lm.Controllers
 
             if(testvm)
             {
+                string output = @"c:\SNJW\code\xp\Areas\Election\Models\vm\ballot2.cs";               
                 cg.parameters.Clear();
                 cg.parameters.Add("vm");
                 cg.parameters.Add("--vname");
-                cg.parameters.Add("election");
+                cg.parameters.Add("ballot");
                 cg.parameters.Add("--vnamespace");
                 cg.parameters.Add("Seamlex.MyEdApps");
                 cg.parameters.Add("--output");
-                cg.parameters.Add("c:\\temp\\election.cs");
+                cg.parameters.Add(output);
                 cg.parameters.Add("--source");
                 cg.parameters.Add("c:\\temp\\sourcefile.csv");
                 cg.parameters.Add("--vfnames");
@@ -771,6 +772,8 @@ namespace lm.Controllers
                 cg.parameters.Add("Id,UserId,Code,Name,Description,Start Date/Time,System Message");
                 cg.parameters.Add("--vpkey");
                 cg.parameters.Add("id");
+                cg.parameters.Add("--vchild");
+                cg.parameters.Add("ballot+choice");
                 // cg.parameters.Add("--vfkey");
                 // cg.parameters.Add("parentid");
                 // cg.parameters.Add("--vftable");
@@ -778,6 +781,7 @@ namespace lm.Controllers
                 //cg.parameters.Add("--help");
 
                 cg.Run();
+                System.Diagnostics.Process.Start("notepad.exe",output);
                 return;                
             }
 

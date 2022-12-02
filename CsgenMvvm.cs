@@ -1092,6 +1092,7 @@ namespace Seamlex.Utilities
 
             if(source.category == "model" && source.mparent != "")
             {
+                // TO DO: many-to-many relationships split by '+'
                 string parent = source.mparent.Split('.',StringSplitOptions.None)[0];
                 sb.Append(this.GetClassSingleFieldText(
                     parent,
@@ -1108,6 +1109,49 @@ namespace Seamlex.Utilities
 
             // need to put children here also
             //     public ICollection<Ballot> Ballots { get; set; }  
+            if(source.category == "model" && source.mchild != "")
+            {
+                foreach(string childchain in source.mchild.Split('+',StringSplitOptions.None))
+                {
+                    string child = childchain.Split('.',StringSplitOptions.None)[0];
+                    sb.Append(this.GetClassSingleFieldText(
+                        $"{child}s",
+                        $"ICollection<{child}>",
+                        "",
+                        "",
+                        "",
+                        "",
+                        false,
+                        false,
+                        classindent));
+                    sb.AppendLine();
+                }
+                
+            }
+
+            // need to put children here also
+            //     public List<ballot> ballots { get; set; }  
+            if(source.category == "vm" && source.vchild != "")
+            {
+                foreach(string childchain in source.vchild.Split('+',StringSplitOptions.None))
+                {
+                    string child = childchain.Split('.',StringSplitOptions.None)[0];
+                    sb.Append(this.GetClassSingleFieldText(
+                        $"{child}s",
+                        $"List<{child}>",
+                        "",
+                        "",
+                        "",
+                        "",
+                        false,
+                        false,
+                        classindent,
+                        $"= new List<{child}>();"));
+                    sb.AppendLine();
+                }
+                
+            }
+
 
             return sb.ToString();
         }
@@ -1218,7 +1262,9 @@ namespace Seamlex.Utilities
             string required = "",
             bool ispkey = false,
             bool setdefaultgetset = false,
-            int indent = 4)
+            int indent = 4,
+            string initialiser = "{get;set;}"
+            )
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
             if(ispkey)
@@ -1231,7 +1277,7 @@ namespace Seamlex.Utilities
                 sb.AppendLine(new string(' ',indent)+@$"[Display(Name = ""{caption}"")]");
             if(maxsize != "0" && maxsize != "" )
                 sb.AppendLine(new string(' ',indent)+@$"[MaxLength({maxsize})]");
-            sb.AppendLine(new string(' ',indent)+$"public {this.GetShortType(type)} {name} "+"{get;set;}");
+            sb.AppendLine(new string(' ',indent)+$"public {this.GetShortType(type)} {name} "+initialiser);
             return sb.ToString();
         }
 
@@ -3796,6 +3842,7 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
         public string vftable {get;set;} = "";  // Specifies the parent of the ViewModel.
         public string vuserkey {get;set;} = "";  // Specifies the userid field in the ViewModel.
         public string vmessage {get;set;} = "";  // Specifies a field in the ViewModel to relay messages.
+        public string vchild {get;set;} = "";  // Specifies all children of the ViewModel.
 
 
         public string wbtnname {get;set;} = "";  // Colon-separated list of button names on the form.

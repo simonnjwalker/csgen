@@ -678,6 +678,7 @@ namespace Seamlex.Utilities
                     helptext.Add("  -vfk|--vpkey       Specifies the primary key field in the ViewModel.");
                     helptext.Add("  -vfy|--vfkey       Specifies the foreign key field in the ViewModel.");
                     helptext.Add("  -vfb|--vftable     Specifies the parent of the ViewModel.");
+                    helptext.Add("  -vpc|--vchild      Specifies the children of the ViewModel.");
                     load.Add(new ParameterSetting(){
                         category = category,
                         setting = "--vpkey",
@@ -720,6 +721,28 @@ namespace Seamlex.Utilities
                         nextparatype = ParameterType.Any,
                         nextparaseparator = ","
                     });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--vchild",
+                        synonym = "-vpc",
+                        description = "ViewModel Child ViewModel",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -vpc childvm",
+                            "",
+                            "Specify the children (and lower) name for this ViewModel.",
+                            "",
+                            "The format of this is:",
+                            "cvchild1[.cvgrandchild1][.cvgreatgrandchild1][...][+cvchild2][.cvgrandchild2][.cvgreatgrandchild2][...]",
+                            "",
+                            "Subsequent period-delimited Models (grandchildren) are used for cross-checking.",
+                            "",
+                            "Where there are multiple children, then each 'chain' is separated by a plus ('+')."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.CsFieldName,
+                        nextparaseparator = "+"
+                    });
+
                 }
                 if(category == "vm" || category == "controller" || category == "facade" || category == "view" )
                 {
@@ -798,14 +821,17 @@ namespace Seamlex.Utilities
                             "Specify the parent (and higher) name for this Model.",
                             "",
                             "The format of this is:",
-                            "cmparent[.cmgrandparent][.cmgreatgrandparent][...]",
+                            "cmparent1[.cmgrandparent1][.cmgreatgrandparent1][...][+cmparent2[.cmgrandparent2][.cmgreatgrandparent2][...]",
                             "",
                             "Subsequent period-delimited Models (grandparents) are used for cross-checking ownership with Identity.",
-                            "If this is the case, the final item should be '.AspNetUsers' or whatever the Identity table name is."
+                            "If this is the case, the final item should be '.AspNetUsers' or whatever the Identity table name is.",
+                            "",
+                            "Where there are multiple parents (such as a many-to-many linking table), then each 'chain' is separated by a plus ('+')."
 
                         },
                         paratype = ParameterType.Input,
-                        nextparatype = ParameterType.CsFieldName
+                        nextparatype = ParameterType.CsFieldName,
+                        nextparaseparator = "+"
                     });
                     load.Add(new ParameterSetting(){
                         category = category,
@@ -818,12 +844,15 @@ namespace Seamlex.Utilities
                             "Specify the children (and lower) name for this Model.",
                             "",
                             "The format of this is:",
-                            "cmchild[.cmgrandchild][.cmgreatgrandchild][...]",
+                            "cmchild1[.cmgrandchild1][.cmgreatgrandchild1][...][+cmchild2][.cmgrandchild2][.cmgreatgrandchild2][...]",
                             "",
-                            "Subsequent period-delimited Models (grandchildren) are used for cross-checking."
+                            "Subsequent period-delimited Models (grandchildren) are used for cross-checking.",
+                            "",
+                            "Where there are multiple children, then each 'chain' is separated by a plus ('+')."
                         },
                         paratype = ParameterType.Input,
-                        nextparatype = ParameterType.CsFieldName
+                        nextparatype = ParameterType.CsFieldName,
+                        nextparaseparator = "+"
                     });
                     load.Add(new ParameterSetting(){
                         category = category,
