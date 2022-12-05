@@ -193,7 +193,7 @@ namespace Seamlex.Utilities
                                 "If not supplied, the name will be 'newmodel'."
                             },
                             paratype = ParameterType.Input,
-                            nextparatype = ParameterType.CsClassName
+                            nextparatype = ParameterType.CsNameSpace
                         });
                     load.Add(new ParameterSetting(){
                             category = category,
@@ -830,7 +830,7 @@ namespace Seamlex.Utilities
 
                         },
                         paratype = ParameterType.Input,
-                        nextparatype = ParameterType.CsFieldName,
+                        nextparatype = ParameterType.CsNameSpace,
                         nextparaseparator = "+"
                     });
                     load.Add(new ParameterSetting(){
@@ -851,7 +851,7 @@ namespace Seamlex.Utilities
                             "Where there are multiple children, then each 'chain' is separated by a plus ('+')."
                         },
                         paratype = ParameterType.Input,
-                        nextparatype = ParameterType.CsFieldName,
+                        nextparatype = ParameterType.CsNameSpace,
                         nextparaseparator = "+"
                     });
                     load.Add(new ParameterSetting(){
