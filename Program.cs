@@ -19,7 +19,7 @@ namespace Seamlex.Utilities
             bool testwparameters = false;
             bool testcparameters = false;
             bool testcontroller = false; // 
-            bool testcontrollers = false; // 
+            bool testcontrollers = true; // 
             bool testmodel = false;
             bool testview = false;
             bool testvm = false;
@@ -78,8 +78,8 @@ namespace Seamlex.Utilities
                     cg.parameters.Add("Create:Index:Edit:Delete:Details");
 
 
-                    cg.parameters.Add("--vname");  //  Colon-delimited ViewModel names
-                    cg.parameters.Add(model.ToLower());
+                    // cg.parameters.Add("--vname");  //  Colon-delimited ViewModel names
+                    // cg.parameters.Add(model.ToLower());
 
                     cg.parameters.Add("--cvnames");  //  Colon-delimited ViewModel names
                     cg.parameters.Add(model.ToLower());
@@ -177,6 +177,11 @@ namespace Seamlex.Utilities
                 cg.parameters.Add("Seamlex.MyEdApps");
                 cg.parameters.Add("--output");
                 cg.parameters.Add(output);
+
+
+                cg.parameters.Add("--waction");
+                cg.parameters.Add("Create");
+
                 // cg.parameters.Add("--source");
                 // cg.parameters.Add("c:\\temp\\sourcefile.csv");
                 cg.parameters.Add("--vfnames");
@@ -287,9 +292,6 @@ namespace Seamlex.Utilities
                 cg.parameters.Add("Head:Styles:Preload:Header:Client:Footer:Scripts");
                 cg.parameters.Add("--wlayout");
                 cg.parameters.Add("_Layout");
-
-                cg.parameters.Add("--waction");
-                cg.parameters.Add("create");
 
                 cg.Run();
                 System.Diagnostics.Process.Start("notepad.exe",output);

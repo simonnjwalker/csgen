@@ -499,21 +499,37 @@ namespace Seamlex.Utilities
             // this will be a table - see lamod subject designer
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
 
+            var fields = source.genfields.Where(x => x.vname.Equals(source.vname)).ToList();
+            var actions = new List<string>();
+            string[] frmactions = source.wfrmaction.Split(':',StringSplitOptions.None);
+            string[] frmmethods = source.wfrmmethod.Split(':',StringSplitOptions.None);
+
+            for (int i = 0; i < frmactions.Length; i++)
+            {
+                string actiontext = "";
+                if(frmmethods.Length>i)
+                    actiontext = frmmethods[i];
+                string separator = " |";
+                if(i == (frmactions.Length - 1))
+                    separator = "";
+                actions.Add($"<a asp-action=\"{frmactions[i]}\" asp-route-id=\"@item.{source.vpkey}\">{actiontext}</a>{separator}");
+            }
+
+
             // the default viewmodel is a List<> so throw something together here
             // TO DO: fix this up by adding table-classes
-
             sb.AppendLine($"<table class=\"table\">");
             sb.AppendLine($"<thead>");
             sb.AppendLine($"<tr>");
 
             int fieldcount = 0;            
-            foreach(var genfield in source.genfields.Where(x => x.vname.Equals(source.vname) && x.vfname != ""))
+            foreach(var field in fields)
             {
-                if(genfield.wftype.Trim().ToLower() != "hidden")
+                if(field.wftype.Trim().ToLower() != "hidden")
                 {
                     fieldcount++;
                     sb.AppendLine("<th>");
-                    sb.AppendLine($"@Html.DisplayNameFor(model => model.{genfield.vfname})");
+                    sb.AppendLine(field.vfdesc);
                     sb.AppendLine("</th>");
                 }
             }
@@ -524,21 +540,24 @@ namespace Seamlex.Utilities
             sb.AppendLine($"<tbody>");
             sb.AppendLine("@foreach (var item in Model) {");
             sb.AppendLine($"<tr>");
-            foreach(var genfield in source.genfields.Where(x => x.vname.Equals(source.vname)))
+            foreach(var field in fields)
             {
-                if(genfield.wftype.Trim().ToLower() != "hidden")
+                if(field.wftype.Trim().ToLower() != "hidden")
                 {
                     sb.AppendLine("<td>");
-                    sb.AppendLine($"@Html.DisplayFor(model => model.{genfield.vfname})");
+                    sb.AppendLine($"@Html.DisplayFor(item.{field.vfname})");
                     sb.AppendLine("</td>");
                 }
-                sb.AppendLine($"<td>");
-                sb.AppendLine($"<a asp-action=\"Edit\" asp-route-id=\"@item.{source.vpkey}\">Edit</a> |");
-                sb.AppendLine($"<a asp-action=\"Details\" asp-route-id=\"@item.{source.vpkey}\">Details</a> |");
-                sb.AppendLine($"<a asp-action=\"Delete\" asp-route-id=\"@item.{source.vpkey}\">Delete</a>" );
-                sb.AppendLine($"</td>");
             }
+            sb.AppendLine($"<td>");
+            foreach(var action in actions)
+                sb.AppendLine(action);
+            // sb.AppendLine($"<a asp-action=\"{source.}\" asp-route-id=\"@item.{source.vpkey}\">Edit</a> |");
+            // sb.AppendLine($"<a asp-action=\"Details\" asp-route-id=\"@item.{source.vpkey}\">Details</a> |");
+            // sb.AppendLine($"<a asp-action=\"Delete\" asp-route-id=\"@item.{source.vpkey}\">Delete</a>" );
+            sb.AppendLine($"</td>");
             sb.AppendLine($"</tr>");
+            sb.AppendLine("}");
             sb.AppendLine($"</tbody>");
             sb.AppendLine($"</table>");
 
