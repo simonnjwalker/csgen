@@ -545,7 +545,7 @@ namespace Seamlex.Utilities
                 if(field.wftype.Trim().ToLower() != "hidden")
                 {
                     sb.AppendLine("<td>");
-                    sb.AppendLine($"@Html.DisplayFor(item.{field.vfname})");
+                    sb.AppendLine($"@item.{field.vfname}");
                     sb.AppendLine("</td>");
                 }
             }

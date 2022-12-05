@@ -19,7 +19,7 @@ namespace Seamlex.Utilities
             bool testwparameters = false;
             bool testcparameters = false;
             bool testcontroller = false; // 
-            bool testcontrollers = true; // 
+            bool testcontrollers = false; // 
             bool testmodel = false;
             bool testview = false;
             bool testvm = false;
