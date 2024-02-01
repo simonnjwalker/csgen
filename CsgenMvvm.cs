@@ -939,13 +939,18 @@ namespace Seamlex.Utilities
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
             if(source.vname != "")
             {
+                // 2024-02-01 SNJW include namespace text
+                string namespacetext = "";
+                if(source.vnamespace != "")
+                    namespacetext = source.vnamespace + ".";
+                
                 if(source.waction.ToLower().Trim() == "index")
                 {
-                    sb.AppendLine($"@model List<{source.vname}>");
+                    sb.AppendLine($"@model List<{namespacetext}{source.vname}>");
                 }
                 else
                 {
-                    sb.AppendLine($"@model {source.vname}");
+                    sb.AppendLine($"@model {namespacetext}{source.vname}");
                 }
             }
             if(source.wlayout != "")

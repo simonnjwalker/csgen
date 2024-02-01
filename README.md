@@ -12,7 +12,7 @@ A helper for building C# projects and generating clean code
 
 0.14 generic parameters for model/vm creation
 
-0.15 TBA
+0.15 fixed namespaces in create cshtml views
 
 
 
