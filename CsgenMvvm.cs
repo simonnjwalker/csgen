@@ -1435,6 +1435,7 @@ namespace Seamlex.Utilities
             string routename = "";
             string actionname = "Index";
             string actiontype= this.ToProper(action.cacttype.Trim());
+            string actionpath= action.cactpath.Trim();
             string actionhttp = "GET";
             string vmname = action.cvname;
             string modelname = action.cmname;
@@ -1591,7 +1592,14 @@ namespace Seamlex.Utilities
                 // if there is no vm then we will just return a View()
                 if(vmname == "")
                 {
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + "return View();");
+                    if(actionpath=="")
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + "return View();");
+                    }
+                    else
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"return View(\"{actionpath}\");");
+                    }
                     sb.AppendLine(new string(' ', nsindent+indent) + "{");
                 }
 
@@ -1629,7 +1637,14 @@ namespace Seamlex.Utilities
 
                     if(!nohelper)
                     {
-                        sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + commentmodelstatecheck + $"return View({thisobjectvm});");
+                        if(actionpath=="")
+                        {
+                            sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + commentmodelstatecheck + $"return View({thisobjectvm});");
+                        }
+                        else
+                        {
+                            sb.AppendLine(new string(' ', nsindent+indent+indent+indent) + commentmodelstatecheck + $"return View(\"{actionpath}\",{thisobjectvm});");
+                        }
                     }
                     else
                     {
@@ -1923,7 +1938,14 @@ namespace Seamlex.Utilities
                 // now determine where the page should redirect to
                 if(thisactionhttp == "GET" )
                 {
-                    sb.AppendLine(new string(' ', nsindent+indent+indent) + $"return View(vm);");
+                    if(actionpath=="")
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"return View(vm);");
+                    }
+                    else
+                    {
+                        sb.AppendLine(new string(' ', nsindent+indent+indent) + $"return View(\"{actionpath}\",vm);");
+                    }
                 }
                 else
                 {
@@ -2492,6 +2514,7 @@ namespace Seamlex.Utilities
 
             string idpropname = source.cactionparameter;
             string actiontype = action.cacttype.Trim();
+            string actionpath = action.cactpath.Trim();
             string vmname = action.cvname;
             string identitytable = source.identitytable;
             string identitytableid = source.identitytableid;
@@ -3451,6 +3474,12 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
                     isctrlaction = true
                 },
                 new commafield(){
+                    singlename="cactpath",
+                    pluralname="cactpaths",
+                    synonym="cah",
+                    isctrlaction = true
+                },
+                new commafield(){
                     singlename="cactvm",
                     pluralname="cactvms",
                     synonym="cav",
@@ -3809,6 +3838,7 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
         public string cactname {get;set;} = "";  // action name
         public string cactsyn {get;set;} = "";  // action synonyms
         public string cacttype {get;set;} = "";  // type (Create/Delete/Edit/Index/Details)
+        public string cactpath {get;set;} = "";  // path (including file name)
 
 
         public string cvname {get;set;} = "";  // ViewModel names
@@ -3939,6 +3969,7 @@ c:\SNJW\code\shared\csgen.exe controller --cname ModelController --source "C:\SN
         public string cactnames {get;set;} = "";  // Colon-delimited action names.
         public string cactsyns {get;set;} = "";  // Colon-delimited action synonyms.
         public string cacttypes {get;set;} = "";  // Colon-delimited action types (Create/Delete/Edit/Index/Details).
+        public string cactpaths {get;set;} = "";  // Colon-delimited action paths (full file name needed).
 
         public string cvnames {get;set;} = "";  // ViewModel names
         public string cmnames {get;set;} = "";  // Model names

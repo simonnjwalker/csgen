@@ -1474,6 +1474,7 @@ namespace Seamlex.Utilities
                     helptext.Add("  -can|--cactnames   Colon-delimited action names.");
                     helptext.Add("  -cas|--cactsyns    Colon-delimited action synonyms.");
                     helptext.Add("  -cat|--cacttypes   Colon-delimited action types (Create/Delete/Edit/Index/Details).");
+                    helptext.Add("  -cah|--cactpaths   Colon-delimited action paths.");
 
                     helptext.Add("  -cvn|--cvnames     Colon-delimited ViewModel names.");
                     helptext.Add("  -cmn|--cmnames     Colon-delimited Model names.");
@@ -1724,6 +1725,22 @@ namespace Seamlex.Utilities
                         nextparatype = ParameterType.Any,
                         nextparaseparator = ":"
                     });
+                    load.Add(new ParameterSetting(){
+                        category = category,
+                        setting = "--cactpaths",
+                        synonym = "-cah",
+                        description = "Colon-delimited action paths (Create/Delete/Edit/Index/Details)",
+                        helptext = new List<string>(){
+                            $"Usage: csgen {category} -cah cactpaths",
+                            "",
+                            "Colon-delimited paths to each .cshtml file {path/filename.cshtml}.",
+                            "The full file name must be included."
+                        },
+                        paratype = ParameterType.Input,
+                        nextparatype = ParameterType.Any,
+                        nextparaseparator = ":"
+                    });
+
 
                     load.Add(new ParameterSetting(){
                         category = category,

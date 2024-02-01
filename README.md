@@ -2,18 +2,20 @@
 A helper for building C# projects and generating clean code
 
 # history
-0.01 Hello World uploaded to github
 
-0.09 Functionally have search-replace and nth-item replace
-
-0.10 Added an insert text to a particular line function
-
-0.11 Fixed error with replacenth where index out-of-range
-
-0.14 generic parameters for model/vm creation
+0.25 added full path option for contorller actions 
 
 0.15 fixed namespaces in create cshtml views
 
+0.14 generic parameters for model/vm creation
+
+0.11 Fixed error with replacenth where index out-of-range
+
+0.10 Added an insert text to a particular line function
+
+0.09 Functionally have search-replace and nth-item replace
+
+0.01 Hello World uploaded to github
 
 
 # Wishlist
